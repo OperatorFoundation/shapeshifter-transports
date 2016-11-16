@@ -42,7 +42,7 @@ import (
 
 	"git.torproject.org/pluggable-transports/goptlib.git"
 	"github.com/OperatorFoundation/obfs4/common/csrand"
-	"github.com/OperatorFoundation/obfs4/transports/base"
+	"github.com/OperatorFoundation/shapeshifter-transports/transports/base"
 )
 
 const (

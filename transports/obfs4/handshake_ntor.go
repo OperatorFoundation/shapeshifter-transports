@@ -41,7 +41,7 @@ import (
 	"github.com/OperatorFoundation/obfs4/common/csrand"
 	"github.com/OperatorFoundation/obfs4/common/ntor"
 	"github.com/OperatorFoundation/obfs4/common/replayfilter"
-	"github.com/OperatorFoundation/obfs4/transports/obfs4/framing"
+	"github.com/OperatorFoundation/shapeshifter-transports/transports/obfs4/framing"
 )
 
 const (
