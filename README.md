@@ -116,8 +116,7 @@ control a separate process (called the dispatcher) which provides access to the
 transports through a proxy interface. When using this method, your application
 can be written in any language. You just need to implement the IPC protocol so
 that you can communicate with the dispatcher. The IPC protocol is specified in
-the [Pluggable Transports 2.0 draft 1 specification](http://www.pluggabletransports.info/assets/PTSpecV2Draft1.pdf) and is
-an implementation of the dispatcher is available which you can bundle with your
+the [Pluggable Transports 2.0 draft 1 specification](http://www.pluggabletransports.info/assets/PTSpecV2Draft1.pdf) section 3.3 and an implementation of the dispatcher is available which you can bundle with your
 application here: <https://github.com/OperatorFoundation/shapeshifter-dispatcher>
 
 ### Credits
