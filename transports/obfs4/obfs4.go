@@ -40,7 +40,7 @@ import (
 	"syscall"
 	"time"
 
-	"git.torproject.org/pluggable-transports/goptlib.git"
+	"github.com/OperatorFoundation/shapeshifter-ipc"
 	"github.com/OperatorFoundation/obfs4/common/drbg"
 	"github.com/OperatorFoundation/obfs4/common/ntor"
 	"github.com/OperatorFoundation/obfs4/common/probdist"

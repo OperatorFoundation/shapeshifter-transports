@@ -42,7 +42,7 @@ import (
 	"net"
 	"time"
 
-	"git.torproject.org/pluggable-transports/goptlib.git"
+	"github.com/OperatorFoundation/shapeshifter-ipc"
 	"github.com/OperatorFoundation/obfs4/common/csrand"
 	"github.com/OperatorFoundation/obfs4/common/drbg"
 	"github.com/OperatorFoundation/obfs4/common/probdist"

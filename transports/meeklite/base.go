@@ -36,7 +36,7 @@ import (
 	"fmt"
 	"net"
 
-	"git.torproject.org/pluggable-transports/goptlib.git"
+	"github.com/OperatorFoundation/shapeshifter-ipc"
 	"github.com/OperatorFoundation/shapeshifter-transports/transports/base"
 )
 
