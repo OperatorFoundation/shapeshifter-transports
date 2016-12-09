@@ -69,8 +69,21 @@ If you just installed Go for the first time, you will need to create a directory
 to keep all of your Go source code:
 
     mkdir ~/go
-    export GOPATH=~/go
+
+If you already have Go installed, make sure it is a compatible version:
+
+    go version
+
+The version should be 1.5.1 or higher.
+
+If you get the error "go: command not found", then trying exiting your terminal
+and starting a new one.
+
+If you have a compatible Go installed, you should go to the directory where you
+keep all of your Go source code and set your GOPATH:
+
     cd ~/go
+    export GOPATH=~/go
 
 Software written in Go is installed using the `go get` command. You need to
 install the transports that you want to use in your application. For instance,
