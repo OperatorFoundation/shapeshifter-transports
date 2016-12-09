@@ -35,56 +35,42 @@ import (
 	"github.com/OperatorFoundation/shapeshifter-ipc"
 )
 
-type DialFunc func(string, string) (net.Conn, error)
+// Pluggable Transport Specification v2.0, draft 1
+// 3.2.4.1.1. Module pt
+// The Transport interface provides a way to make outgoing transport connections and to accept
+// incoming transport connections.
+// It also exposes access to an underlying network connection Dialer.
+// The Dialer can be modified to change how the network connections are made.
+interface Transport {
+	// Dialer for the underlying network connection
+	networkDialer() *Dialer
 
-// ClientFactory is the interface that defines the factory for creating
-// pluggable transport protocol client instances.
-type ClientFactory interface {
-	// Transport returns the Transport instance that this ClientFactory belongs
-	// to.
-	Transport() Transport
+	// Create outgoing transport connection
+	(transport *Transport) Dial(address string) pt.TransportConn
 
-	// ParseArgs parses the supplied arguments into an internal representation
-	// for use with WrapConn.  This routine is called before the outgoing
-	// TCP/IP connection is created to allow doing things (like keypair
-	// generation) to be hidden from third parties.
-	ParseArgs(args *pt.Args) (interface{}, error)
-
-	// Dial creates an outbound net.Conn, and does whatever is required
-	// (eg: handshaking) to get the connection to the point where it is
-	// ready to relay data.
-	Dial(network, address string, dialFn DialFunc, args interface{}) (net.Conn, error)
+	// Create listener for incoming transport connection
+	(transport *Transport) Listen(address string) pt.TransportListener
 }
 
-// ServerFactory is the interface that defines the factory for creating
-// plugable transport protocol server instances.  As the arguments are the
-// property of the factory, validation is done at factory creation time.
-type ServerFactory interface {
-	// Transport returns the Transport instance that this ServerFactory belongs
-	// to.
-	Transport() Transport
-
-	// Args returns the Args required on the client side to handshake with
-	// server connections created by this factory.
-	Args() *pt.Args
-
-	// WrapConn wraps the provided net.Conn with a transport protocol
-	// implementation, and does whatever is required (eg: handshaking) to get
-	// the connection to a point where it is ready to relay data.
-	WrapConn(conn net.Conn) (net.Conn, error)
+// The TransportConn interface represents a transport connection.
+// The primary function of a transport connection is to provide the net.Conn interface.
+// This interface also exposes access to an underlying network connection,
+// which also implements net.Conn.
+interface TransportConn extends net.Conn {
+	// Conn for the underlying network connection
+	networkConn *Conn
 }
 
-// Transport is an interface that defines a pluggable transport protocol.
-type Transport interface {
-	// Name returns the name of the transport protocol.  It MUST be a valid C
-	// identifier.
-	Name() string
+// The TransportListener interface represents a listener for a transport connection.
+// This interface also exposes access to an underlying network listener.
+interface TransportListener {
+	// Listener for underlying network connection
+	networkListener *Listener
 
-	// ClientFactory returns a ClientFactory instance for this transport
-	// protocol.
-	ClientFactory(stateDir string) (ClientFactory, error)
+	// Accept waits for and returns the next connection to the listener.
+	TransportAccept() (TransportConn, error)
 
-	// ServerFactory returns a ServerFactory instance for this transport
-	// protocol.  This can fail if the provided arguments are invalid.
-	ServerFactory(stateDir string, args *pt.Args) (ServerFactory, error)
+	// Close closes the transport listener.
+	// Any blocked TransportAccept operations will be unblocked and return errors.
+	Close() error
 }
