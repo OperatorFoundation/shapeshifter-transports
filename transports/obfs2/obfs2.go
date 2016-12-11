@@ -40,8 +40,10 @@ import (
 	"net"
 	"time"
 
-	"github.com/OperatorFoundation/shapeshifter-ipc"
+	"golang.org/x/net/proxy"
+
 	"github.com/OperatorFoundation/obfs4/common/csrand"
+	"github.com/OperatorFoundation/shapeshifter-ipc"
 	"github.com/OperatorFoundation/shapeshifter-transports/transports/base"
 )
 
@@ -63,78 +65,91 @@ const (
 	hsLen              = 4 + 4
 )
 
-func validateArgs(args *pt.Args) error {
-	if _, ok := args.Get(sharedSecretArg); ok {
-		// "shared-secret" is something no bridges use in practice and is thus
-		// unimplemented.
-		return fmt.Errorf("unsupported argument '%s'", sharedSecretArg)
+// obfs2Transport is the obfs2 implementation of the base.Transport interface.
+type obfs2Transport struct {
+	dialer *net.Dialer
+}
+
+func NewObfs2Transport() *obfs2Transport {
+	return &obfs2Transport{dialer: nil}
+}
+
+type obfs2TransportListener struct {
+	listener *net.TCPListener
+}
+
+func newObfs2TransportListener(listener *net.TCPListener) *obfs2TransportListener {
+	return &obfs2TransportListener{listener: listener}
+}
+
+// Methods that the implement base.Transport interface
+// Dialer for the underlying network connection
+// The Dialer can be modified to change how the network connections are made.
+func (transport *obfs2Transport) NetworkDialer() net.Dialer {
+	return *transport.dialer
+}
+
+// Create outgoing transport connection
+func (transport *obfs2Transport) Dial(address string) base.TransportConn {
+	// FIXME - should use dialer
+	dialFn := proxy.Direct.Dial
+	conn, dialErr := dialFn("tcp", address)
+	if dialErr != nil {
+		return nil
 	}
-	return nil
-}
 
-// Transport is the obfs2 implementation of the base.Transport interface.
-type Transport struct{}
-
-// Name returns the name of the obfs2 transport protocol.
-func (t *Transport) Name() string {
-	return transportName
-}
-
-// ClientFactory returns a new obfs2ClientFactory instance.
-func (t *Transport) ClientFactory(stateDir string) (base.ClientFactory, error) {
-	cf := &obfs2ClientFactory{transport: t}
-	return cf, nil
-}
-
-// ServerFactory returns a new obfs2ServerFactory instance.
-func (t *Transport) ServerFactory(stateDir string, args *pt.Args) (base.ServerFactory, error) {
-	if err := validateArgs(args); err != nil {
-		return nil, err
+	dialConn := conn
+	transportConn, err := newObfs2ClientConn(conn)
+	if err != nil {
+		dialConn.Close()
+		return nil
 	}
 
-	sf := &obfs2ServerFactory{t}
-	return sf, nil
+	return transportConn
 }
 
-type obfs2ClientFactory struct {
-	transport base.Transport
+// Create listener for incoming transport connection
+func (transport *obfs2Transport) Listen(address string) base.TransportListener {
+	addr, resolveErr := pt.ResolveAddr(address)
+	if resolveErr != nil {
+		fmt.Println(resolveErr.Error())
+		return nil
+	}
+
+	ln, err := net.ListenTCP("tcp", addr)
+	if err != nil {
+		fmt.Println(err.Error())
+		return nil
+	}
+
+	return newObfs2TransportListener(ln)
 }
 
-func (cf *obfs2ClientFactory) Transport() base.Transport {
-	return cf.transport
+// Methods that implement the base.TransportConn interface
+func (transportConn *obfs2Conn) NetworkConn() net.Conn {
+	return transportConn
 }
 
-func (cf *obfs2ClientFactory) ParseArgs(args *pt.Args) (interface{}, error) {
-	return nil, validateArgs(args)
+// Methods that implement the base.TransportListener interface
+// Listener for underlying network connection
+func (listener *obfs2TransportListener) NetworkListener() net.Listener {
+	return listener.listener
 }
 
-func (cf *obfs2ClientFactory) Dial(network, addr string, dialFn base.DialFunc, args interface{}) (net.Conn, error) {
-	conn, err := dialFn(network, addr)
+// Accept waits for and returns the next connection to the listener.
+func (listener *obfs2TransportListener) TransportAccept() (base.TransportConn, error) {
+	conn, err := listener.listener.Accept()
 	if err != nil {
 		return nil, err
 	}
-	dialConn := conn
-	if conn, err = newObfs2ClientConn(conn); err != nil {
-		dialConn.Close()
-		return nil, err
-	}
-	return conn, nil
-}
 
-type obfs2ServerFactory struct {
-	transport base.Transport
-}
-
-func (sf *obfs2ServerFactory) Transport() base.Transport {
-	return sf.transport
-}
-
-func (sf *obfs2ServerFactory) Args() *pt.Args {
-	return nil
-}
-
-func (sf *obfs2ServerFactory) WrapConn(conn net.Conn) (net.Conn, error) {
 	return newObfs2ServerConn(conn)
+}
+
+// Close closes the transport listener.
+// Any blocked TransportAccept operations will be unblocked and return errors.
+func (listener *obfs2TransportListener) Close() error {
+	return listener.listener.Close()
 }
 
 type obfs2Conn struct {
@@ -368,7 +383,7 @@ func mac(s, x []byte) []byte {
 	return h.Sum(nil)
 }
 
-var _ base.ClientFactory = (*obfs2ClientFactory)(nil)
-var _ base.ServerFactory = (*obfs2ServerFactory)(nil)
-var _ base.Transport = (*Transport)(nil)
+var _ base.Transport = (*obfs2Transport)(nil)
+var _ base.TransportListener = (*obfs2TransportListener)(nil)
+var _ base.TransportConn = (*obfs2Conn)(nil)
 var _ net.Conn = (*obfs2Conn)(nil)
