@@ -29,11 +29,10 @@
 // protocol must implement.
 package base
 
-import (
-	"net"
+import "net"
 
-	"github.com/OperatorFoundation/shapeshifter-ipc"
-)
+type ClientFactory func(address string) TransportConn
+type ServerFactory func(address string) TransportListener
 
 // Pluggable Transport Specification v2.0, draft 1
 // 3.2.4.1.1. Module pt
@@ -41,31 +40,34 @@ import (
 // incoming transport connections.
 // It also exposes access to an underlying network connection Dialer.
 // The Dialer can be modified to change how the network connections are made.
-interface Transport {
+type Transport interface {
 	// Dialer for the underlying network connection
-	networkDialer() *Dialer
+	NetworkDialer() net.Dialer
 
 	// Create outgoing transport connection
-	(transport *Transport) Dial(address string) pt.TransportConn
+	Dial(address string) TransportConn
 
 	// Create listener for incoming transport connection
-	(transport *Transport) Listen(address string) pt.TransportListener
+	Listen(address string) TransportListener
 }
 
 // The TransportConn interface represents a transport connection.
 // The primary function of a transport connection is to provide the net.Conn interface.
 // This interface also exposes access to an underlying network connection,
 // which also implements net.Conn.
-interface TransportConn extends net.Conn {
+type TransportConn interface {
+	//type TransportConn interface extends net.Conn {
+	net.Conn
+
 	// Conn for the underlying network connection
-	networkConn *Conn
+	NetworkConn() net.Conn
 }
 
 // The TransportListener interface represents a listener for a transport connection.
 // This interface also exposes access to an underlying network listener.
-interface TransportListener {
+type TransportListener interface {
 	// Listener for underlying network connection
-	networkListener *Listener
+	NetworkListener() net.Listener
 
 	// Accept waits for and returns the next connection to the listener.
 	TransportAccept() (TransportConn, error)
