@@ -41,11 +41,10 @@ var transportMapLock sync.Mutex
 var transportMap map[string]base.Transport = make(map[string]base.Transport)
 
 // Register registers a transport protocol.
-func Register(transport base.Transport) error {
+func Register(name string, transport base.Transport) error {
 	transportMapLock.Lock()
 	defer transportMapLock.Unlock()
 
-	name := transport.Name()
 	_, registered := transportMap[name]
 	if registered {
 		return fmt.Errorf("transport '%s' already registered", name)
@@ -80,7 +79,7 @@ func Get(name string) base.Transport {
 
 // Init initializes all of the integrated transports.
 func Init() error {
-	Register(new(obfs2.Transport))
+	Register("obfs2", obfs2.NewObfs2Transport())
 
 	return nil
 }
