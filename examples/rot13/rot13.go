@@ -135,7 +135,7 @@ type rot13Conn struct {
 	conn net.Conn
 }
 
-// Private nitializer methods
+// Private initializer methods
 func newRot13ClientConn(conn net.Conn) (c *rot13Conn, err error) {
 	// Initialize a client connection, and start the handshake timeout.
 	return &rot13Conn{conn: conn}, nil
