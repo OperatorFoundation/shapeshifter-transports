@@ -40,11 +40,14 @@ func main() {
 	reader := bufio.NewReader(os.Stdin)
 
 	for {
-		text, _ := reader.ReadString('\n')
+		text, readErr := reader.ReadString('\n')
+		if readErr != nil {
+			return
+		}
 
 		var buffer []byte = []byte(text)
-		bytesWritten, err := conn.Write(buffer)
-		if err != nil {
+		bytesWritten, writeErr := conn.Write(buffer)
+		if writeErr != nil {
 			return
 		}
 
