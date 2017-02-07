@@ -47,9 +47,11 @@ func main() {
 		bytesRead, err := conn.Read(buffer)
 		for {
 			if err != nil {
-				return
+				conn.Close()
+				break
 			}
 			fmt.Println("Received", bytesRead)
+			fmt.Print(string(buffer))
 			bytesRead, err = conn.Read(buffer)
 		}
 	}
