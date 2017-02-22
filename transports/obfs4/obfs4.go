@@ -87,7 +87,7 @@ type obfs4Transport struct {
 	dialer *net.Dialer
 
 	serverFactory *obfs4ServerFactory
-	clientArgs    *obfs4ClientArgs
+	clientArgs    *Obfs4ClientArgs
 }
 
 type obfs4ServerFactory struct {
@@ -104,120 +104,80 @@ type obfs4ServerFactory struct {
 	closeDelay      int
 }
 
-type obfs4ClientArgs struct {
+type Obfs4ClientArgs struct {
 	nodeID     *ntor.NodeID
 	publicKey  *ntor.PublicKey
 	sessionKey *ntor.Keypair
 	iatMode    int
 }
 
-func NewObfs4Transport(server bool, stateDir string, options string) *obfs4Transport {
-	if server {
-		argsMap, err := pt.ParseServerTransportOptions(options)
-		if err != nil {
-			return nil
-		}
-
-		// FIXME - is this right?
-		args := argsMap["obfs4"]
-
-		st, err := serverStateFromArgs(stateDir, &args)
-		if err != nil {
-			return nil
-		}
-
-		var iatSeed *drbg.Seed
-		if st.iatMode != iatNone {
-			iatSeedSrc := sha256.Sum256(st.drbgSeed.Bytes()[:])
-			var err error
-			iatSeed, err = drbg.SeedFromBytes(iatSeedSrc[:])
-			if err != nil {
-				return nil
-			}
-		}
-
-		// Store the arguments that should appear in our descriptor for the clients.
-		ptArgs := pt.Args{}
-		ptArgs.Add(certArg, st.cert.String())
-		ptArgs.Add(iatArg, strconv.Itoa(st.iatMode))
-
-		// Initialize the replay filter.
-		filter, err := replayfilter.New(replayTTL)
-		if err != nil {
-			return nil
-		}
-
-		// Initialize the close thresholds for failed connections.
-		drbg, err := drbg.NewHashDrbg(st.drbgSeed)
-		if err != nil {
-			return nil
-		}
-		rng := rand.New(drbg)
-
-		sf := &obfs4ServerFactory{&ptArgs, st.nodeID, st.identityKey, st.drbgSeed, iatSeed, st.iatMode, filter, rng.Intn(maxCloseDelayBytes), rng.Intn(maxCloseDelay)}
-
-		return &obfs4Transport{dialer: nil, serverFactory: sf, clientArgs: nil}
-	} else {
-		var nodeID *ntor.NodeID
-		var publicKey *ntor.PublicKey
-
-		argsMap, err := pt.ParseServerTransportOptions(options)
-		if err != nil {
-			return nil
-		}
-
-		// FIXME - is this right?
-		args := argsMap["obfs4"]
-
-		// The "new" (version >= 0.0.3) bridge lines use a unified "cert" argument
-		// for the Node ID and Public Key.
-		certStr, ok := args.Get(certArg)
-		if ok {
-			cert, err := serverCertFromString(certStr)
-			if err != nil {
-				return nil
-			}
-			nodeID, publicKey = cert.unpack()
-		} else {
-			// The "old" style (version <= 0.0.2) bridge lines use separate Node ID
-			// and Public Key arguments in Base16 encoding and are a UX disaster.
-			nodeIDStr, ok := args.Get(nodeIDArg)
-			if !ok {
-				return nil
-			}
-			var err error
-			if nodeID, err = ntor.NodeIDFromHex(nodeIDStr); err != nil {
-				return nil
-			}
-
-			publicKeyStr, ok := args.Get(publicKeyArg)
-			if !ok {
-				return nil
-			}
-			if publicKey, err = ntor.PublicKeyFromHex(publicKeyStr); err != nil {
-				return nil
-			}
-		}
-
-		// IAT config is common across the two bridge line formats.
-		iatStr, ok := args.Get(iatArg)
-		if !ok {
-			return nil
-		}
-		iatMode, err := strconv.Atoi(iatStr)
-		if err != nil || iatMode < iatNone || iatMode > iatParanoid {
-			return nil
-		}
-
-		// Generate the session key pair before connectiong to hide the Elligator2
-		// rejection sampling from network observers.
-		sessionKey, err := ntor.NewKeypair(true)
-		if err != nil {
-			return nil
-		}
-
-		return &obfs4Transport{dialer: nil, serverFactory: nil, clientArgs: &obfs4ClientArgs{nodeID, publicKey, sessionKey, iatMode}}
+func NewObfs4Server(stateDir string, options string) *obfs4Transport {
+	argsMap, err := pt.ParseServerTransportOptions(options)
+	if err != nil {
+		return nil
 	}
+
+	// FIXME - is this right?
+	args := argsMap["obfs4"]
+
+	st, err := serverStateFromArgs(stateDir, &args)
+	if err != nil {
+		return nil
+	}
+
+	var iatSeed *drbg.Seed
+	if st.iatMode != iatNone {
+		iatSeedSrc := sha256.Sum256(st.drbgSeed.Bytes()[:])
+		var err error
+		iatSeed, err = drbg.SeedFromBytes(iatSeedSrc[:])
+		if err != nil {
+			return nil
+		}
+	}
+
+	// Store the arguments that should appear in our descriptor for the clients.
+	ptArgs := pt.Args{}
+	ptArgs.Add(certArg, st.cert.String())
+	ptArgs.Add(iatArg, strconv.Itoa(st.iatMode))
+
+	// Initialize the replay filter.
+	filter, err := replayfilter.New(replayTTL)
+	if err != nil {
+		return nil
+	}
+
+	// Initialize the close thresholds for failed connections.
+	drbg, err := drbg.NewHashDrbg(st.drbgSeed)
+	if err != nil {
+		return nil
+	}
+	rng := rand.New(drbg)
+
+	sf := &obfs4ServerFactory{&ptArgs, st.nodeID, st.identityKey, st.drbgSeed, iatSeed, st.iatMode, filter, rng.Intn(maxCloseDelayBytes), rng.Intn(maxCloseDelay)}
+
+	return &obfs4Transport{dialer: nil, serverFactory: sf, clientArgs: nil}
+}
+
+func NewObfs4Client(certString string, iatMode int) *obfs4Transport {
+	var nodeID *ntor.NodeID
+	var publicKey *ntor.PublicKey
+
+	// The "new" (version >= 0.0.3) bridge lines use a unified "cert" argument
+	// for the Node ID and Public Key.
+	cert, err := serverCertFromString(certString)
+	if err != nil {
+		return nil
+	}
+	nodeID, publicKey = cert.unpack()
+
+	// Generate the session key pair before connectiong to hide the Elligator2
+	// rejection sampling from network observers.
+	sessionKey, err := ntor.NewKeypair(true)
+	if err != nil {
+		return nil
+	}
+
+	return &obfs4Transport{dialer: nil, serverFactory: nil, clientArgs: &Obfs4ClientArgs{nodeID, publicKey, sessionKey, iatMode}}
 }
 
 // Methods that implement the base.Transport interface
@@ -323,7 +283,7 @@ type obfs4Conn struct {
 
 // Private initializer methods
 
-func newObfs4ClientConn(conn net.Conn, args *obfs4ClientArgs) (c *obfs4Conn, err error) {
+func newObfs4ClientConn(conn net.Conn, args *Obfs4ClientArgs) (c *obfs4Conn, err error) {
 	// Generate the initial protocol polymorphism distribution(s).
 	var seed *drbg.Seed
 	if seed, err = drbg.NewSeed(); err != nil {

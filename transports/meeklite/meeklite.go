@@ -49,7 +49,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/OperatorFoundation/shapeshifter-ipc"
 	"github.com/OperatorFoundation/shapeshifter-transports/transports/base"
 )
 
@@ -83,16 +82,17 @@ type meekTransport struct {
 }
 
 // Public initializer method to get a new meek transport
-func NewMeekTransport(options string) *meekTransport {
-	argsMap, err := pt.ParseServerTransportOptions(options)
+func NewMeekTransport(url string) *meekTransport {
+	clientArgs, err := newClientArgs(url)
 	if err != nil {
 		return nil
 	}
 
-	// FIXME - is this right?
-	args := argsMap["obfs4"]
+	return &meekTransport{dialer: nil, clientArgs: clientArgs}
+}
 
-	clientArgs, err := newClientArgs(&args)
+func NewMeekTransportWithFront(url string, front string) *meekTransport {
+	clientArgs, err := newClientArgsWithFront(url, front)
 	if err != nil {
 		return nil
 	}
@@ -139,17 +139,30 @@ func (ca *meekClientArgs) String() string {
 	return "meek" + ":" + ca.front + ":" + ca.url.String()
 }
 
-func newClientArgs(args *pt.Args) (ca *meekClientArgs, err error) {
+func newClientArgs(url string) (ca *meekClientArgs, err error) {
 	ca = &meekClientArgs{}
 
 	// Parse the URL argument.
-	str, ok := args.Get(urlArg)
-	if !ok {
-		return nil, fmt.Errorf("missing argument '%s'", urlArg)
-	}
-	ca.url, err = gourl.Parse(str)
+	ca.url, err = gourl.Parse(url)
 	if err != nil {
-		return nil, fmt.Errorf("malformed url: '%s'", str)
+		return nil, fmt.Errorf("malformed url: '%s'", url)
+	}
+	switch ca.url.Scheme {
+	case "http", "https":
+	default:
+		return nil, fmt.Errorf("invalid scheme: '%s'", ca.url.Scheme)
+	}
+
+	return ca, nil
+}
+
+func newClientArgsWithFront(url string, front string) (ca *meekClientArgs, err error) {
+	ca = &meekClientArgs{}
+
+	// Parse the URL argument.
+	ca.url, err = gourl.Parse(url)
+	if err != nil {
+		return nil, fmt.Errorf("malformed url: '%s'", url)
 	}
 	switch ca.url.Scheme {
 	case "http", "https":
@@ -158,7 +171,7 @@ func newClientArgs(args *pt.Args) (ca *meekClientArgs, err error) {
 	}
 
 	// Parse the (optional) front argument.
-	ca.front, _ = args.Get(frontArg)
+	ca.front = front
 
 	return ca, nil
 }
