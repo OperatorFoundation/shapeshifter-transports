@@ -30,6 +30,14 @@ func NewShadowTransport(password string, cipherName string) *shadowTransport {
 	return &shadowTransport{dialer: nil, password: password, cipherName: cipherName}
 }
 
+func NewShadowClient(password string, cipherName string) *shadowTransport {
+	return &shadowTransport{dialer: nil, password: password, cipherName: cipherName}
+}
+
+func NewShadowServer(password string, cipherName string) *shadowTransport {
+	return &shadowTransport{dialer: nil, password: password, cipherName: cipherName}
+}
+
 type shadowTransportListener struct {
 	listener  *net.TCPListener
 	transport *shadowTransport
@@ -130,36 +138,36 @@ type shadowConn struct {
 	conn *shadowsocks.Conn
 }
 
-func (conn *shadowConn) Read(b []byte) (int, error) {
-	return conn.Read(b)
+func (sconn *shadowConn) Read(b []byte) (int, error) {
+	return sconn.conn.Read(b)
 }
 
-func (conn *shadowConn) Write(b []byte) (int, error) {
-	return conn.Write(b)
+func (sconn *shadowConn) Write(b []byte) (int, error) {
+	return sconn.conn.Write(b)
 }
 
-func (conn *shadowConn) Close() error {
-	return conn.Close()
+func (sconn *shadowConn) Close() error {
+	return sconn.conn.Close()
 }
 
-func (conn *shadowConn) LocalAddr() net.Addr {
-	return conn.LocalAddr()
+func (sconn *shadowConn) LocalAddr() net.Addr {
+	return sconn.conn.LocalAddr()
 }
 
-func (conn *shadowConn) RemoteAddr() net.Addr {
-	return conn.RemoteAddr()
+func (sconn *shadowConn) RemoteAddr() net.Addr {
+	return sconn.conn.RemoteAddr()
 }
 
-func (conn *shadowConn) SetDeadline(t time.Time) error {
-	return conn.SetDeadline(t)
+func (sconn *shadowConn) SetDeadline(t time.Time) error {
+	return sconn.conn.SetDeadline(t)
 }
 
-func (conn *shadowConn) SetReadDeadline(t time.Time) error {
-	return conn.SetReadDeadline(t)
+func (sconn *shadowConn) SetReadDeadline(t time.Time) error {
+	return sconn.conn.SetReadDeadline(t)
 }
 
-func (conn *shadowConn) SetWriteDeadline(t time.Time) error {
-	return conn.SetWriteDeadline(t)
+func (sconn *shadowConn) SetWriteDeadline(t time.Time) error {
+	return sconn.conn.SetWriteDeadline(t)
 }
 
 func newShadowClientConn(conn *shadowsocks.Conn) (c *shadowConn, err error) {
