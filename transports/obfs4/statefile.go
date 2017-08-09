@@ -37,10 +37,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/OperatorFoundation/shapeshifter-ipc"
 	"github.com/OperatorFoundation/obfs4/common/csrand"
 	"github.com/OperatorFoundation/obfs4/common/drbg"
 	"github.com/OperatorFoundation/obfs4/common/ntor"
+	"github.com/OperatorFoundation/shapeshifter-ipc"
 )
 
 const (
