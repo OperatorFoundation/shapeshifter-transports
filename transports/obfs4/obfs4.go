@@ -111,15 +111,8 @@ type Obfs4ClientArgs struct {
 	iatMode    int
 }
 
-func NewObfs4Server(stateDir string, options string) *obfs4Transport {
-	argsMap, err := pt.ParseServerTransportOptions(options)
-	if err != nil {
-		return nil
-	}
-
-	// FIXME - is this right?
-	args := argsMap["obfs4"]
-
+func NewObfs4Server(stateDir string) *obfs4Transport {
+	args := make(pt.Args)
 	st, err := serverStateFromArgs(stateDir, &args)
 	if err != nil {
 		return nil
