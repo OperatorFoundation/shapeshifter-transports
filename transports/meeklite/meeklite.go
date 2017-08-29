@@ -340,13 +340,16 @@ func (c *meekConn) roundTrip(sndBuf []byte) (recvBuf []byte, err error) {
 		if c.args.front != "" {
 			url.Host = c.args.front
 		}
+
 		req, err = http.NewRequest("POST", url.String(), bytes.NewReader(sndBuf))
 		if err != nil {
 			return nil, err
 		}
+
 		if c.args.front != "" {
 			req.Host = host
 		}
+
 		req.Header.Set("X-Session-Id", c.sessionID)
 		req.Header.Set("User-Agent", "")
 
@@ -354,15 +357,21 @@ func (c *meekConn) roundTrip(sndBuf []byte) (recvBuf []byte, err error) {
 		if err != nil {
 			return nil, err
 		}
+
 		if resp.StatusCode != http.StatusOK {
 			err = fmt.Errorf("status code was %d, not %d", resp.StatusCode, http.StatusOK)
-			time.Sleep(retryDelay)
+			if resp.StatusCode == http.StatusInternalServerError {
+				return
+			} else {
+				time.Sleep(retryDelay)
+			}
 		} else {
 			defer resp.Body.Close()
 			recvBuf, err = ioutil.ReadAll(io.LimitReader(resp.Body, maxPayloadLength))
 			return
 		}
 	}
+
 	return
 }
 
