@@ -83,7 +83,7 @@ const (
 var biasedDist bool
 
 // Transport that uses the obfs4 protocol to shapeshift the application network traffic
-type obfs4Transport struct {
+type Obfs4Transport struct {
 	dialer *net.Dialer
 
 	serverFactory *obfs4ServerFactory
@@ -111,7 +111,7 @@ type Obfs4ClientArgs struct {
 	iatMode    int
 }
 
-func NewObfs4Server(stateDir string) *obfs4Transport {
+func NewObfs4Server(stateDir string) *Obfs4Transport {
 	args := make(pt.Args)
 	st, err := serverStateFromArgs(stateDir, &args)
 	if err != nil {
@@ -148,10 +148,10 @@ func NewObfs4Server(stateDir string) *obfs4Transport {
 
 	sf := &obfs4ServerFactory{&ptArgs, st.nodeID, st.identityKey, st.drbgSeed, iatSeed, st.iatMode, filter, rng.Intn(maxCloseDelayBytes), rng.Intn(maxCloseDelay)}
 
-	return &obfs4Transport{dialer: nil, serverFactory: sf, clientArgs: nil}
+	return &Obfs4Transport{dialer: nil, serverFactory: sf, clientArgs: nil}
 }
 
-func NewObfs4Client(certString string, iatMode int) *obfs4Transport {
+func NewObfs4Client(certString string, iatMode int) *Obfs4Transport {
 	var nodeID *ntor.NodeID
 	var publicKey *ntor.PublicKey
 
@@ -170,19 +170,19 @@ func NewObfs4Client(certString string, iatMode int) *obfs4Transport {
 		return nil
 	}
 
-	return &obfs4Transport{dialer: nil, serverFactory: nil, clientArgs: &Obfs4ClientArgs{nodeID, publicKey, sessionKey, iatMode}}
+	return &Obfs4Transport{dialer: nil, serverFactory: nil, clientArgs: &Obfs4ClientArgs{nodeID, publicKey, sessionKey, iatMode}}
 }
 
 // Methods that implement the base.Transport interface
 
 // Dialer for the underlying network connection
 // The Dialer can be modified to change how the network connections are made.
-func (transport *obfs4Transport) NetworkDialer() net.Dialer {
+func (transport *Obfs4Transport) NetworkDialer() net.Dialer {
 	return *transport.dialer
 }
 
 // Create outgoing transport connection
-func (transport *obfs4Transport) Dial(address string) base.TransportConn {
+func (transport *Obfs4Transport) Dial(address string) base.TransportConn {
 	// FIXME - should use dialer
 	dialFn := proxy.Direct.Dial
 	conn, dialErr := dialFn("tcp", address)
@@ -201,7 +201,7 @@ func (transport *obfs4Transport) Dial(address string) base.TransportConn {
 }
 
 // Create listener for incoming transport connection
-func (transport *obfs4Transport) Listen(address string) base.TransportListener {
+func (transport *Obfs4Transport) Listen(address string) base.TransportListener {
 	addr, resolveErr := pt.ResolveAddr(address)
 	if resolveErr != nil {
 		fmt.Println(resolveErr.Error())
@@ -689,7 +689,7 @@ func init() {
 // End private methods implementing the obfs4 protocol
 
 // Force type checks to make sure that instances conform to interfaces
-var _ base.Transport = (*obfs4Transport)(nil)
+var _ base.Transport = (*Obfs4Transport)(nil)
 var _ base.TransportListener = (*obfs4TransportListener)(nil)
 var _ base.TransportConn = (*obfs4Conn)(nil)
 var _ net.Conn = (*obfs4Conn)(nil)
