@@ -217,6 +217,10 @@ func (transport *Obfs4Transport) Listen(address string) base.TransportListener {
 	return newObfs4TransportListener(transport.serverFactory, ln)
 }
 
+func (transport *Obfs4Transport) Close() error {
+	return nil
+}
+
 // End methods that implement the base.Transport interface
 
 // Listener that accepts connections using the obfs4 transport to communicate
