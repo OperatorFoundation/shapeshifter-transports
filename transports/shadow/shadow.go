@@ -99,7 +99,7 @@ func (listener *shadowTransportListener) Addr() net.Addr {
 	return addrs[0]
 }
 
-// Methods that implement the base.TransportConn interface
+// Methods that implement the net.Conn interface
 func (transportConn *shadowConn) NetworkConn() net.Conn {
 	// This returns the real net.Conn used by the shadowsocks.Conn wrapped by the shadowConn.
 	// This may seem confusing, but this is the correct behavior for the semantics
@@ -110,7 +110,7 @@ func (transportConn *shadowConn) NetworkConn() net.Conn {
 	return transportConn.conn.Conn
 }
 
-// Methods that implement the base.TransportListener interface
+// Methods that implement the net.Listener interface
 // Listener for underlying network connection
 func (listener *shadowTransportListener) NetworkListener() net.Listener {
 	return listener.listener
@@ -134,7 +134,7 @@ func (listener *shadowTransportListener) Accept() (net.Conn, error) {
 }
 
 // Close closes the transport listener.
-// Any blocked TransportAccept operations will be unblocked and return errors.
+// Any blocked Accept operations will be unblocked and return errors.
 func (listener *shadowTransportListener) Close() error {
 	return listener.listener.Close()
 }

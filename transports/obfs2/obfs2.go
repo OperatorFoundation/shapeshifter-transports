@@ -44,7 +44,6 @@ import (
 
 	"github.com/OperatorFoundation/obfs4/common/csrand"
 	"github.com/OperatorFoundation/shapeshifter-ipc"
-	"github.com/OperatorFoundation/shapeshifter-transports/transports/base"
 )
 
 const (
@@ -87,7 +86,7 @@ func (transport *obfs2Transport) NetworkDialer() net.Dialer {
 }
 
 // Create outgoing transport connection
-func (transport *obfs2Transport) Dial(address string) base.TransportConn {
+func (transport *obfs2Transport) Dial(address string) net.Conn {
 	// FIXME - should use dialer
 	dialFn := proxy.Direct.Dial
 	conn, dialErr := dialFn("tcp", address)
@@ -106,7 +105,7 @@ func (transport *obfs2Transport) Dial(address string) base.TransportConn {
 }
 
 // Create listener for incoming transport connection
-func (transport *obfs2Transport) Listen(address string) base.TransportListener {
+func (transport *obfs2Transport) Listen(address string) net.Listener {
 	addr, resolveErr := pt.ResolveAddr(address)
 	if resolveErr != nil {
 		fmt.Println(resolveErr.Error())
@@ -122,19 +121,19 @@ func (transport *obfs2Transport) Listen(address string) base.TransportListener {
 	return newObfs2TransportListener(ln)
 }
 
-// Methods that implement the base.TransportConn interface
+// Methods that implement the net.Conn interface
 func (transportConn *obfs2Conn) NetworkConn() net.Conn {
 	return transportConn
 }
 
-// Methods that implement the base.TransportListener interface
+// Methods that implement the net.Listener interface
 // Listener for underlying network connection
 func (listener *obfs2TransportListener) NetworkListener() net.Listener {
 	return listener.listener
 }
 
 // Accept waits for and returns the next connection to the listener.
-func (listener *obfs2TransportListener) TransportAccept() (base.TransportConn, error) {
+func (listener *obfs2TransportListener) Accept() (net.Conn, error) {
 	conn, err := listener.listener.Accept()
 	if err != nil {
 		return nil, err
@@ -143,8 +142,14 @@ func (listener *obfs2TransportListener) TransportAccept() (base.TransportConn, e
 	return newObfs2ServerConn(conn)
 }
 
+func (listener *obfs2TransportListener) Addr() net.Addr {
+	interfaces, _ := net.Interfaces()
+	addrs, _ := interfaces[0].Addrs()
+	return addrs[0]
+}
+
 // Close closes the transport listener.
-// Any blocked TransportAccept operations will be unblocked and return errors.
+// Any blocked Accept operations will be unblocked and return errors.
 func (listener *obfs2TransportListener) Close() error {
 	return listener.listener.Close()
 }
@@ -380,7 +385,5 @@ func mac(s, x []byte) []byte {
 	return h.Sum(nil)
 }
 
-var _ base.Transport = (*obfs2Transport)(nil)
-var _ base.TransportListener = (*obfs2TransportListener)(nil)
-var _ base.TransportConn = (*obfs2Conn)(nil)
+var _ net.Listener = (*obfs2TransportListener)(nil)
 var _ net.Conn = (*obfs2Conn)(nil)

@@ -78,6 +78,8 @@ const (
 	// including overhead.
 	MaximumSegmentLength = 1500 - (40 + 12)
 
+	lengthLength = 2
+
 	// FrameOverhead is the length of the framing overhead.
 	FrameOverhead = lengthLength + secretbox.Overhead
 
@@ -96,8 +98,6 @@ const (
 	noncePrefixLength  = 16
 	nonceCounterLength = 8
 	nonceLength        = noncePrefixLength + nonceCounterLength
-
-	lengthLength = 2
 )
 
 // Error returned when Decoder.Decode() requires more data to continue.
