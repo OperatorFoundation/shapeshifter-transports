@@ -15,7 +15,6 @@ import (
 	"github.com/shadowsocks/shadowsocks-go/shadowsocks"
 
 	"github.com/OperatorFoundation/shapeshifter-ipc"
-	"github.com/OperatorFoundation/shapeshifter-transports/transports/base"
 )
 
 // shadowTransport is the shadow implementation of the base.Transport interface.
@@ -55,7 +54,7 @@ func (transport *shadowTransport) NetworkDialer() net.Dialer {
 }
 
 // Create outgoing transport connection
-func (transport *shadowTransport) Dial(address string) base.TransportConn {
+func (transport *shadowTransport) Dial(address string) net.Conn {
 	var cipher *shadowsocks.Cipher
 
 	cipher, err := shadowsocks.NewCipher(transport.cipherName, transport.password)
@@ -78,7 +77,7 @@ func (transport *shadowTransport) Dial(address string) base.TransportConn {
 }
 
 // Create listener for incoming transport connection
-func (transport *shadowTransport) Listen(address string) base.TransportListener {
+func (transport *shadowTransport) Listen(address string) net.Listener {
 	addr, resolveErr := pt.ResolveAddr(address)
 	if resolveErr != nil {
 		fmt.Println(resolveErr.Error())
@@ -92,6 +91,12 @@ func (transport *shadowTransport) Listen(address string) base.TransportListener 
 	}
 
 	return newShadowTransportListener(ln, transport)
+}
+
+func (listener *shadowTransportListener) Addr() net.Addr {
+	interfaces, _ := net.Interfaces()
+	addrs, _ := interfaces[0].Addrs()
+	return addrs[0]
 }
 
 // Methods that implement the base.TransportConn interface
@@ -112,7 +117,7 @@ func (listener *shadowTransportListener) NetworkListener() net.Listener {
 }
 
 // Accept waits for and returns the next connection to the listener.
-func (listener *shadowTransportListener) TransportAccept() (base.TransportConn, error) {
+func (listener *shadowTransportListener) Accept() (net.Conn, error) {
 	conn, err := listener.listener.Accept()
 	if err != nil {
 		return nil, err
@@ -184,7 +189,5 @@ func newShadowServerConn(conn *shadowsocks.Conn) (c *shadowConn, err error) {
 	return
 }
 
-var _ base.Transport = (*shadowTransport)(nil)
-var _ base.TransportListener = (*shadowTransportListener)(nil)
-var _ base.TransportConn = (*shadowConn)(nil)
+var _ net.Listener = (*shadowTransportListener)(nil)
 var _ net.Conn = (*shadowConn)(nil)
