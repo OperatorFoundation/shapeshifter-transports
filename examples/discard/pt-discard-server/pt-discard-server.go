@@ -26,19 +26,19 @@ package main
 
 import (
 	"fmt"
+	"net"
 
-	"github.com/OperatorFoundation/shapeshifter-transports/transports/base"
 	"github.com/OperatorFoundation/shapeshifter-transports/transports/obfs2"
 )
 
 func main() {
-	var transport base.Transport = obfs2.NewObfs2Transport()
-	var listener base.TransportListener = transport.Listen("0.0.0.0:1234")
+	var transport = obfs2.NewObfs2Transport()
+	var listener net.Listener = transport.Listen("0.0.0.0:1234")
 
 	for {
-		var conn base.TransportConn
+		var conn net.Conn
 		var acceptErr error
-		conn, acceptErr = listener.TransportAccept()
+		conn, acceptErr = listener.Accept()
 		if acceptErr != nil {
 			return
 		}

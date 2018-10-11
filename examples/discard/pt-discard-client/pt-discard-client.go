@@ -28,14 +28,14 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"net"
 
-	"github.com/OperatorFoundation/shapeshifter-transports/transports/base"
 	"github.com/OperatorFoundation/shapeshifter-transports/transports/obfs2"
 )
 
 func main() {
-	var transport base.Transport = obfs2.NewObfs2Transport()
-	var conn base.TransportConn = transport.Dial("127.0.0.1:1234")
+	var transport = obfs2.NewObfs2Transport()
+	var conn net.Conn = transport.Dial("127.0.0.1:1234")
 
 	reader := bufio.NewReader(os.Stdin)
 

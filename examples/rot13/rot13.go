@@ -35,7 +35,6 @@ import (
 	"golang.org/x/net/proxy"
 
 	"github.com/OperatorFoundation/shapeshifter-ipc"
-	"github.com/OperatorFoundation/shapeshifter-transports/transports/base"
 )
 
 // Transport that uses a ROT13 cipher to shapeshift the application network traffic
@@ -57,7 +56,7 @@ func (transport *rot13Transport) NetworkDialer() net.Dialer {
 }
 
 // Create outgoing transport connection
-func (transport *rot13Transport) Dial(address string) base.TransportConn {
+func (transport *rot13Transport) Dial(address string) net.Conn {
 	// FIXME - should use dialer
 	dialFn := proxy.Direct.Dial
 	conn, dialErr := dialFn("tcp", address)
@@ -76,7 +75,7 @@ func (transport *rot13Transport) Dial(address string) base.TransportConn {
 }
 
 // Create listener for incoming transport connection
-func (transport *rot13Transport) Listen(address string) base.TransportListener {
+func (transport *rot13Transport) Listen(address string) net.Listener {
 	addr, resolveErr := pt.ResolveAddr(address)
 	if resolveErr != nil {
 		fmt.Println(resolveErr.Error())
@@ -105,7 +104,7 @@ func newRot13TransportListener(listener *net.TCPListener) *rot13TransportListene
 	return &rot13TransportListener{listener: listener}
 }
 
-// Methods that implement the base.TransportListener interface
+// Methods that implement the net.Listener interface
 
 // Listener for underlying network connection
 func (listener *rot13TransportListener) NetworkListener() net.Listener {
@@ -113,7 +112,7 @@ func (listener *rot13TransportListener) NetworkListener() net.Listener {
 }
 
 // Accept waits for and returns the next connection to the listener.
-func (listener *rot13TransportListener) TransportAccept() (base.TransportConn, error) {
+func (listener *rot13TransportListener) Accept() (net.Conn, error) {
 	conn, err := listener.listener.Accept()
 	if err != nil {
 		return nil, err
@@ -122,15 +121,21 @@ func (listener *rot13TransportListener) TransportAccept() (base.TransportConn, e
 	return newRot13ServerConn(conn)
 }
 
+func (listener *rot13TransportListener) Addr() net.Addr {
+	interfaces, _ := net.Interfaces()
+	addrs, _ := interfaces[0].Addrs()
+	return addrs[0]
+}
+
 // Close closes the transport listener.
-// Any blocked TransportAccept operations will be unblocked and return errors.
+// Any blocked Accept operations will be unblocked and return errors.
 func (listener *rot13TransportListener) Close() error {
 	return listener.listener.Close()
 }
 
-// End methods that implement the base.TransportListener interface
+// End methods that implement the net.Listener interface
 
-// Implementation of base.TransportConn, which also requires implementing net.Conn
+// Implementation of net.Conn, which also requires implementing net.Conn
 type rot13Conn struct {
 	conn net.Conn
 }
@@ -148,12 +153,12 @@ func newRot13ServerConn(conn net.Conn) (c *rot13Conn, err error) {
 
 // End initializer methods
 
-// Methods that implement the base.TransportConn interface
+// Methods that implement the net.Conn interface
 func (transportConn *rot13Conn) NetworkConn() net.Conn {
 	return transportConn.conn
 }
 
-// End methods that implement the base.TransportConn interface
+// End methods that implement the net.Conn interface
 
 // Methods implementing net.Conn
 func (conn *rot13Conn) Read(b []byte) (int, error) {
@@ -226,7 +231,5 @@ func unshift(b []byte) {
 // End private methods implementing the ROT13 cipher
 
 // Force type checks to make sure that instances conform to interfaces
-var _ base.Transport = (*rot13Transport)(nil)
-var _ base.TransportListener = (*rot13TransportListener)(nil)
-var _ base.TransportConn = (*rot13Conn)(nil)
+var _ net.Listener = (*rot13TransportListener)(nil)
 var _ net.Conn = (*rot13Conn)(nil)
