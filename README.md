@@ -39,10 +39,9 @@ programming language. If you are looking for a tool which you can install and
 use from the command line, take a look at the dispatcher instead:
 <https://github.com/OperatorFoundation/shapeshifter-transports>
 
-The transports implement the Pluggable Transports 2.0 draft 1 specification available here:
-<http://www.pluggabletransports.info/assets/PTSpecV2Draft1.pdf> Specifically,
-they implement the Go interface specified in section 3.2.4. (This is a work in
-progress. Not all transports have been ported to this API yet.)
+The transports implement the Pluggable Transports 2.1 draft 1 specification available here:
+<https://github.com/Pluggable-Transports/Pluggable-Transports-spec/blob/master/releases/PTSpecV2.1Draft1/Pluggable%20Transport%20Specification%20v2.1%20-%20Go%20Transport%20API%20v2.1%2C%20Draft%201.pdf> Specifically,
+they implement the Go Transports API v2.1 draft 1.
 
 The purpose of the transport library is to provide a set of different
 transports. Each transport implements a different method of shapeshifting
@@ -127,7 +126,7 @@ control a separate process (called the dispatcher) which provides access to the
 transports through a proxy interface. When using this method, your application
 can be written in any language. You just need to implement the IPC protocol so
 that you can communicate with the dispatcher. The IPC protocol is specified in
-the [Pluggable Transports 2.0 draft 1 specification](http://www.pluggabletransports.info/assets/PTSpecV2Draft1.pdf) section 3.3 and an implementation of the dispatcher is available which you can bundle with your
+the [Pluggable Transports 2.0 specification](https://github.com/Pluggable-Transports/Pluggable-Transports-spec/blob/master/releases/pt-2_0.pdf) section 3.3 and an implementation of the dispatcher is available which you can bundle with your
 application here: <https://github.com/OperatorFoundation/shapeshifter-dispatcher>
 
 ### Credits
