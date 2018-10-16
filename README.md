@@ -52,11 +52,9 @@ the application to work on networks where it would otherwise be blocked or
 heavily throttled.
 
 The following transports are currently provided by the library:
- * meek
  * obfs4
- * obfs3
  * obfs2
- * scramblesuit
+ * shadow (Shadowsocks)
 
 #### Installation
 
@@ -114,8 +112,8 @@ Transports, refer to the [Pluggable Transports 2.0 draft 1 specification](http:/
 
 You should use a transport that is likely to work on the network where your
 application is currently being blocked. This changes over time as the network
-administrators alter their blocking rules. Two popular transports are meek and
-obfs4, so those might be a good starting point if you don't know how blocking is
+administrators alter their blocking rules. obfs4 is a popular transport, so
+that might be a good starting point if you don't know how blocking is
 implementing on your network. If you are an application developer using
 Pluggable Transports, feel free to reach out to the Operator Foundation for
 help in determining which transport might work best for your application. Email
