@@ -208,22 +208,22 @@ func (conn *rot13Conn) SetWriteDeadline(t time.Time) error {
 // End of methods implementing net.Conn
 
 // Private methods implementing the ROT13 cipher
-func shift(b []byte) {
-	for i := 0; i < len(b); i++ {
-		if b[i] > (255 - 13) {
-			b[i] = b[i] - (255 - 13) + 13
+func shift(bs []byte) {
+	for i, _ := range bs {
+		if bs[i] > (255 - 13) {
+			bs[i] = bs[i] - (255 - 13) + 13
 		} else {
-			b[i] += 13
+			bs[i] += 13
 		}
 	}
 }
 
-func unshift(b []byte) {
-	for i := 0; i < len(b); i++ {
-		if b[i] < 13 {
-			b[i] = b[i] + (255 - 13) - 13
+func unshift(bs []byte) {
+	for i, _ := range bs {
+		if bs[i] < 13 {
+			bs[i] = bs[i] + (255 - 13) - 13
 		} else {
-			b[i] -= 13
+			bs[i] -= 13
 		}
 	}
 }
