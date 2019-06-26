@@ -210,21 +210,19 @@ func (conn *rot13Conn) SetWriteDeadline(t time.Time) error {
 // Private methods implementing the ROT13 cipher
 func shift(bs []byte) {
 	for i, _ := range bs {
-		if bs[i] > (255 - 13) {
-			bs[i] = bs[i] - (255 - 13) + 13
-		} else {
-			bs[i] += 13
-		}
+		var n int
+		n = int(bs[i])
+		n = (n + 13) % 255
+		bs[i] =  byte(n)
 	}
 }
 
 func unshift(bs []byte) {
 	for i, _ := range bs {
-		if bs[i] < 13 {
-			bs[i] = bs[i] + (255 - 13) - 13
-		} else {
-			bs[i] -= 13
-		}
+		var n int
+		n = int(bs[i])
+		n = (n + 255 - 13) % 255
+		bs[i] =  byte(n)
 	}
 }
 
