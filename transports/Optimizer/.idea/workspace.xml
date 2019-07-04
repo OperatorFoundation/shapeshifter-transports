@@ -108,6 +108,7 @@
   </component>
   <component name="ToolWindowManager">
     <frame x="40" y="51" width="1400" height="743" extended-state="0" />
+    <editor active="true" />
     <layout>
       <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.26435935" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
