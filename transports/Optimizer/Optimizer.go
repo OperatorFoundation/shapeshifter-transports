@@ -56,6 +56,7 @@ type Obfs4ClientArgs struct {
 	iatMode    int
 }
 
+//I created this function in optimizers code because it doesn't exist in obfs4's code
 func NewObfs4Transport(serverFactory *Obfs4ServerFactory, clientArgs *Obfs4ClientArgs) *Obfs4Transport {
 	return &Obfs4Transport{serverFactory:serverFactory, clientArgs:clientArgs}
 }
