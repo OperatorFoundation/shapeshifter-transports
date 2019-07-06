@@ -85,11 +85,11 @@ var biasedDist bool
 type Obfs4Transport struct {
 	dialer *net.Dialer
 
-	serverFactory *obfs4ServerFactory
+	serverFactory *Obfs4ServerFactory
 	clientArgs    *Obfs4ClientArgs
 }
 
-type obfs4ServerFactory struct {
+type Obfs4ServerFactory struct {
 	args *pt.Args
 
 	nodeID       *ntor.NodeID
@@ -145,7 +145,7 @@ func NewObfs4Server(stateDir string) *Obfs4Transport {
 	}
 	rng := rand.New(drbg)
 
-	sf := &obfs4ServerFactory{&ptArgs, st.nodeID, st.identityKey, st.drbgSeed, iatSeed, st.iatMode, filter, rng.Intn(maxCloseDelayBytes), rng.Intn(maxCloseDelay)}
+	sf := &Obfs4ServerFactory{&ptArgs, st.nodeID, st.identityKey, st.drbgSeed, iatSeed, st.iatMode, filter, rng.Intn(maxCloseDelayBytes), rng.Intn(maxCloseDelay)}
 
 	return &Obfs4Transport{dialer: nil, serverFactory: sf, clientArgs: nil}
 }
@@ -224,14 +224,14 @@ func (transport *Obfs4Transport) Close() error {
 
 // Listener that accepts connections using the obfs4 transport to communicate
 type obfs4TransportListener struct {
-	serverFactory *obfs4ServerFactory
+	serverFactory *Obfs4ServerFactory
 
 	listener *net.TCPListener
 }
 
 // Private initializer for the obfs4 listener.
 // You get a new listener instance by calling the Listen method on the Transport.
-func newObfs4TransportListener(sf *obfs4ServerFactory, listener *net.TCPListener) *obfs4TransportListener {
+func newObfs4TransportListener(sf *Obfs4ServerFactory, listener *net.TCPListener) *obfs4TransportListener {
 	return &obfs4TransportListener{serverFactory: sf, listener: listener}
 }
 
@@ -324,7 +324,7 @@ func newObfs4ClientConn(conn net.Conn, args *Obfs4ClientArgs) (c *obfs4Conn, err
 	return
 }
 
-func newObfs4ServerConn(conn net.Conn, sf *obfs4ServerFactory) (*obfs4Conn, error) {
+func newObfs4ServerConn(conn net.Conn, sf *Obfs4ServerFactory) (*obfs4Conn, error) {
 	// Not much point in having a separate newObfs4ServerConn routine when
 	// wrapping requires using values from the factory instance.
 
@@ -560,7 +560,7 @@ func (conn *obfs4Conn) clientHandshake(nodeID *ntor.NodeID, peerIdentityKey *nto
 	}
 }
 
-func (conn *obfs4Conn) serverHandshake(sf *obfs4ServerFactory, sessionKey *ntor.Keypair) error {
+func (conn *obfs4Conn) serverHandshake(sf *Obfs4ServerFactory, sessionKey *ntor.Keypair) error {
 	if !conn.isServer {
 		return fmt.Errorf("serverHandshake called on client connection")
 	}
@@ -632,7 +632,7 @@ func (conn *obfs4Conn) serverHandshake(sf *obfs4ServerFactory, sessionKey *ntor.
 	return nil
 }
 
-func (conn *obfs4Conn) closeAfterDelay(sf *obfs4ServerFactory, startTime time.Time) {
+func (conn *obfs4Conn) closeAfterDelay(sf *Obfs4ServerFactory, startTime time.Time) {
 	// I-it's not like I w-wanna handshake with you or anything.  B-b-baka!
 	defer conn.Conn.Close()
 
