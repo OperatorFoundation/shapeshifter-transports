@@ -9,15 +9,18 @@ package Optimizer
 import (
 	"github.com/OperatorFoundation/shapeshifter-transports/transports/obfs4"
 	"github.com/OperatorFoundation/shapeshifter-transports/transports/shadow"
-	 _"github.com/OperatorFoundation/shapeshifter-transports/transports/shadow"
+	_ "github.com/OperatorFoundation/shapeshifter-transports/transports/shadow"
+	"math/rand"
 	"net"
 )
+
 type Transport interface {
 	Dial() net.Conn
 }
 
 type optimizerTransport struct {
 	transports []Transport
+	strategy   Strategy
 }
 
 type ShadowTransport struct {
@@ -29,19 +32,15 @@ type ShadowTransport struct {
 type Obfs4Transport struct {
 	certString string
 	iatMode    int
+	address    string
 }
 
-func NewOptimizerTransport(transports []Transport) *optimizerTransport {
-	return &optimizerTransport{transports}
-}
-
-func NewOptimizerClient (transports []Transport) *optimizerTransport {
-	return &optimizerTransport{transports}
+func NewOptimizerClient(transports []Transport, strategy Strategy) *optimizerTransport {
+	return &optimizerTransport{transports, strategy}
 }
 
 func (opTransport *optimizerTransport) Dial() net.Conn {
-	var transport Transport
-	transport = opTransport.transports[0]
+	transport := opTransport.strategy.Choose(opTransport.transports)
 
 	conn := transport.Dial()
 	if conn == nil {
@@ -59,6 +58,34 @@ func (transport ShadowTransport) Dial() net.Conn {
 
 func (transport Obfs4Transport) Dial() net.Conn {
 	Obfs4Transport := obfs4.NewObfs4Client(transport.certString, transport.iatMode)
-	conn := Obfs4Transport.Dial(transport.certString)
+	conn := Obfs4Transport.Dial(transport.address)
 	return conn
+}
+
+type Strategy interface {
+	Choose([]Transport) Transport
+}
+
+type FirstStrategy struct {
+}
+
+func (strategy FirstStrategy) Choose(transports []Transport) Transport {
+	return transports[0]
+}
+
+type RandomStrategy struct {
+}
+
+func (strategy RandomStrategy) Choose(transports []Transport) Transport {
+	return transports[rand.Intn(len(transports))]
+}
+
+type RotateStrategy struct {
+	index int
+}
+
+func (strategy RotateStrategy) Choose(transports []Transport) Transport {
+	transport := transports[strategy.index]
+	strategy.index += 1
+	return transport
 }
