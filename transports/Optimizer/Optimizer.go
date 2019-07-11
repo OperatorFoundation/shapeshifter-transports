@@ -87,5 +87,8 @@ type RotateStrategy struct {
 func (strategy RotateStrategy) Choose(transports []Transport) Transport {
 	transport := transports[strategy.index]
 	strategy.index += 1
+	if strategy.index >= len(transports) {
+		strategy.index = 0
+	}
 	return transport
 }
