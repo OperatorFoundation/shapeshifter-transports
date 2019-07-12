@@ -26,8 +26,16 @@ func acceptConnections(listener net.Listener) {
 }
 
 
-func TestShadowDial(t *testing.T) {
+func TestShadowDial1(t *testing.T) {
 	shadowTransport := ShadowTransport{"orange", "aes-128-ctr", "127.0.0.1:1234"}
+	conn := shadowTransport.Dial()
+	if conn == nil {
+		t.Fail()
+	}
+}
+
+func TestShadowDial2(t *testing.T) {
+	shadowTransport := ShadowTransport{"banana", "aes-192-ctr", "127.0.0.1:1234"}
 	conn := shadowTransport.Dial()
 	if conn == nil {
 		t.Fail()
@@ -56,8 +64,16 @@ func TestOptimizerShadowDial2(t *testing.T) {
 	}
 }
 
-func TestObfs4Transport_Dial(t *testing.T) {
+func TestObfs4Transport_Dial1(t *testing.T) {
 	Obfs4Transport := Obfs4Transport{"UsuF7oN4KNKviZP54JOyTCoCphrdM5gwZK4vT8GnCAcmqLUJEJxyw1dpko9a/ii6He4iZg", 0, "77.81.104.251:443"}
+	conn := Obfs4Transport.Dial()
+	if conn == nil {
+		t.Fail()
+	}
+}
+
+func TestObfs4Transport_Dial2(t *testing.T) {
+	Obfs4Transport := Obfs4Transport{"BBKeJPokZXigyKpn+E/iKim/BwNEiIdifbHfaXQmyu1GpSHtNlruAIWebci9m8Yb0tGUOw", 0, "5.253.87.21:443"}
 	conn := Obfs4Transport.Dial()
 	if conn == nil {
 		t.Fail()
