@@ -51,10 +51,16 @@ the application to work on networks where it would otherwise be blocked or
 heavily throttled.
 
 The following transports are currently provided by the library:
- * obfs4
- * obfs2
- * shadow (Shadowsocks)
-
+####obfs4
+*sample text*
+####obfs2
+*sample text*
+####shadow (Shadowsocks)
+*sample text*
+####Optimizer
+Optimizer is a pluggable transport in the works that finds the optimal pluggable 
+transport, pulled from multiple servers from the transports above and assigns you the 
+transport that is most effective for each individual user.
 #### Installation
 
 The dispatcher is written in the Go programming language. To compile it you need
