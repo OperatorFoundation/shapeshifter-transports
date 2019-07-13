@@ -1,6 +1,7 @@
 package Optimizer
 
 import (
+	"github.com/OperatorFoundation/shapeshifter-transports/transports/obfs4"
 	"github.com/OperatorFoundation/shapeshifter-transports/transports/shadow"
 	"net"
 	"os"
@@ -15,7 +16,6 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-
 func acceptConnections(listener net.Listener) {
 	for {
 		_, err := listener.Accept()
@@ -25,9 +25,8 @@ func acceptConnections(listener net.Listener) {
 	}
 }
 
-
 func TestShadowDial1(t *testing.T) {
-	shadowTransport := ShadowTransport{"orange", "aes-128-ctr", "127.0.0.1:1234"}
+	shadowTransport := shadow.ShadowTransport{"orange", "aes-128-ctr", "127.0.0.1:1234"}
 	conn := shadowTransport.Dial()
 	if conn == nil {
 		t.Fail()
@@ -35,7 +34,7 @@ func TestShadowDial1(t *testing.T) {
 }
 
 func TestShadowDial2(t *testing.T) {
-	shadowTransport := ShadowTransport{"banana", "aes-192-ctr", "127.0.0.1:1234"}
+	shadowTransport := shadow.ShadowTransport{"banana", "aes-192-ctr", "127.0.0.1:1234"}
 	conn := shadowTransport.Dial()
 	if conn == nil {
 		t.Fail()
@@ -43,7 +42,7 @@ func TestShadowDial2(t *testing.T) {
 }
 
 func TestOptimizerShadowDial1(t *testing.T) {
-	shadowTransport := ShadowTransport{"orange", "aes-128-ctr", "127.0.0.1:1234"}
+	shadowTransport := shadow.ShadowTransport{"orange", "aes-128-ctr", "127.0.0.1:1234"}
 	transports := []Transport{shadowTransport}
 	strategy := FirstStrategy{}
 	optimizerTransport := NewOptimizerClient(transports, strategy)
@@ -54,7 +53,7 @@ func TestOptimizerShadowDial1(t *testing.T) {
 }
 
 func TestOptimizerShadowDial2(t *testing.T) {
-	shadowTransport := ShadowTransport{"banana", "aes-192-ctr", "127.0.0.1:1234"}
+	shadowTransport := shadow.ShadowTransport{"banana", "aes-192-ctr", "127.0.0.1:1234"}
 	transports := []Transport{shadowTransport}
 	strategy := FirstStrategy{}
 	optimizerTransport := NewOptimizerClient(transports, strategy)
@@ -65,7 +64,7 @@ func TestOptimizerShadowDial2(t *testing.T) {
 }
 
 func TestObfs4Transport_Dial1(t *testing.T) {
-	Obfs4Transport := Obfs4Transport{"UsuF7oN4KNKviZP54JOyTCoCphrdM5gwZK4vT8GnCAcmqLUJEJxyw1dpko9a/ii6He4iZg", 0, "77.81.104.251:443"}
+	Obfs4Transport := obfs4.Obfs4Transport_{"UsuF7oN4KNKviZP54JOyTCoCphrdM5gwZK4vT8GnCAcmqLUJEJxyw1dpko9a/ii6He4iZg", 0, "77.81.104.251:443"}
 	conn := Obfs4Transport.Dial()
 	if conn == nil {
 		t.Fail()
@@ -73,7 +72,7 @@ func TestObfs4Transport_Dial1(t *testing.T) {
 }
 
 func TestObfs4Transport_Dial2(t *testing.T) {
-	Obfs4Transport := Obfs4Transport{"BBKeJPokZXigyKpn+E/iKim/BwNEiIdifbHfaXQmyu1GpSHtNlruAIWebci9m8Yb0tGUOw", 0, "5.253.87.21:443"}
+	Obfs4Transport := obfs4.Obfs4Transport_{"BBKeJPokZXigyKpn+E/iKim/BwNEiIdifbHfaXQmyu1GpSHtNlruAIWebci9m8Yb0tGUOw", 0, "5.253.87.21:443"}
 	conn := Obfs4Transport.Dial()
 	if conn == nil {
 		t.Fail()
@@ -81,7 +80,7 @@ func TestObfs4Transport_Dial2(t *testing.T) {
 }
 
 func TestOptimizerObfs4Transport_Dial1(t *testing.T) {
-	Obfs4Transport := Obfs4Transport{"UsuF7oN4KNKviZP54JOyTCoCphrdM5gwZK4vT8GnCAcmqLUJEJxyw1dpko9a/ii6He4iZg", 0, "77.81.104.251:443"}
+	Obfs4Transport := obfs4.Obfs4Transport_{"UsuF7oN4KNKviZP54JOyTCoCphrdM5gwZK4vT8GnCAcmqLUJEJxyw1dpko9a/ii6He4iZg", 0, "77.81.104.251:443"}
 	transports := []Transport{Obfs4Transport}
 	strategy := FirstStrategy{}
 	optimizerTransport := NewOptimizerClient(transports, strategy)
@@ -92,7 +91,7 @@ func TestOptimizerObfs4Transport_Dial1(t *testing.T) {
 }
 
 func TestOptimizerObfs4Transport_Dial2(t *testing.T) {
-	Obfs4Transport := Obfs4Transport{"BBKeJPokZXigyKpn+E/iKim/BwNEiIdifbHfaXQmyu1GpSHtNlruAIWebci9m8Yb0tGUOw", 0, "5.253.87.21:443"}
+	Obfs4Transport := obfs4.Obfs4Transport_{"BBKeJPokZXigyKpn+E/iKim/BwNEiIdifbHfaXQmyu1GpSHtNlruAIWebci9m8Yb0tGUOw", 0, "5.253.87.21:443"}
 	transports := []Transport{Obfs4Transport}
 	strategy := FirstStrategy{}
 	optimizerTransport := NewOptimizerClient(transports, strategy)
@@ -103,8 +102,8 @@ func TestOptimizerObfs4Transport_Dial2(t *testing.T) {
 }
 
 func TestOptimizerTransportFirstDial(t *testing.T) {
-	obfs4Transport := Obfs4Transport{"UsuF7oN4KNKviZP54JOyTCoCphrdM5gwZK4vT8GnCAcmqLUJEJxyw1dpko9a/ii6He4iZg", 0, "77.81.104.251:443"}
-	shadowTransport := ShadowTransport{"orange", "aes-128-ctr", "127.0.0.1:1234"}
+	obfs4Transport := obfs4.Obfs4Transport_{"UsuF7oN4KNKviZP54JOyTCoCphrdM5gwZK4vT8GnCAcmqLUJEJxyw1dpko9a/ii6He4iZg", 0, "77.81.104.251:443"}
+	shadowTransport := shadow.ShadowTransport{"orange", "aes-128-ctr", "127.0.0.1:1234"}
 	transports := []Transport{obfs4Transport, shadowTransport}
 	optimizerTransport := NewOptimizerClient(transports, FirstStrategy{})
 	for i := 1; i <= 3; i++ {
@@ -116,8 +115,8 @@ func TestOptimizerTransportFirstDial(t *testing.T) {
 }
 
 func TestOptimizerTransportRandomDial(t *testing.T) {
-	obfs4Transport := Obfs4Transport{"UsuF7oN4KNKviZP54JOyTCoCphrdM5gwZK4vT8GnCAcmqLUJEJxyw1dpko9a/ii6He4iZg", 0, "77.81.104.251:443"}
-	shadowTransport := ShadowTransport{"orange", "aes-128-ctr", "127.0.0.1:1234"}
+	obfs4Transport := obfs4.Obfs4Transport_{"UsuF7oN4KNKviZP54JOyTCoCphrdM5gwZK4vT8GnCAcmqLUJEJxyw1dpko9a/ii6He4iZg", 0, "77.81.104.251:443"}
+	shadowTransport := shadow.ShadowTransport{"orange", "aes-128-ctr", "127.0.0.1:1234"}
 	transports := []Transport{obfs4Transport, shadowTransport}
 	optimizerTransport := NewOptimizerClient(transports, RandomStrategy{})
 
@@ -130,8 +129,8 @@ func TestOptimizerTransportRandomDial(t *testing.T) {
 }
 
 func TestOptimizerTransportRotateDial(t *testing.T) {
-	obfs4Transport := Obfs4Transport{"UsuF7oN4KNKviZP54JOyTCoCphrdM5gwZK4vT8GnCAcmqLUJEJxyw1dpko9a/ii6He4iZg", 0, "77.81.104.251:443"}
-	shadowTransport := ShadowTransport{"orange", "aes-128-ctr", "127.0.0.1:1234"}
+	obfs4Transport := obfs4.Obfs4Transport_{"UsuF7oN4KNKviZP54JOyTCoCphrdM5gwZK4vT8GnCAcmqLUJEJxyw1dpko9a/ii6He4iZg", 0, "77.81.104.251:443"}
+	shadowTransport := shadow.ShadowTransport{"orange", "aes-128-ctr", "127.0.0.1:1234"}
 	transports := []Transport{obfs4Transport, shadowTransport}
 	optimizerTransport := NewOptimizerClient(transports, RotateStrategy{})
 
