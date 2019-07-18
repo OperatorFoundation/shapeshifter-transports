@@ -46,7 +46,7 @@ func TestOptimizerShadowDial1(t *testing.T) {
 	transports := []Transport{shadowTransport}
 	strategy := FirstStrategy{}
 	optimizerTransport := NewOptimizerClient(transports, strategy)
-	conn := optimizerTransport.Dial()
+	conn, _ := optimizerTransport.Dial()
 	if conn == nil {
 		t.Fail()
 	}
@@ -57,7 +57,7 @@ func TestOptimizerShadowDial2(t *testing.T) {
 	transports := []Transport{shadowTransport}
 	strategy := FirstStrategy{}
 	optimizerTransport := NewOptimizerClient(transports, strategy)
-	conn := optimizerTransport.Dial()
+	conn, _:= optimizerTransport.Dial()
 	if conn == nil {
 		t.Fail()
 	}
@@ -84,8 +84,8 @@ func TestOptimizerObfs4Transport_Dial1(t *testing.T) {
 	transports := []Transport{Obfs4Transport}
 	strategy := FirstStrategy{}
 	optimizerTransport := NewOptimizerClient(transports, strategy)
-	conn := optimizerTransport.Dial()
-	if conn == nil {
+	_, err := optimizerTransport.Dial()
+	if err != nil {
 		t.Fail()
 	}
 }
@@ -95,7 +95,7 @@ func TestOptimizerObfs4Transport_Dial2(t *testing.T) {
 	transports := []Transport{Obfs4Transport}
 	strategy := FirstStrategy{}
 	optimizerTransport := NewOptimizerClient(transports, strategy)
-	conn := optimizerTransport.Dial()
+	conn, _ := optimizerTransport.Dial()
 	if conn == nil {
 		t.Fail()
 	}
@@ -107,7 +107,7 @@ func TestOptimizerTransportFirstDial(t *testing.T) {
 	transports := []Transport{obfs4Transport, shadowTransport}
 	optimizerTransport := NewOptimizerClient(transports, FirstStrategy{})
 	for i := 1; i <= 3; i++ {
-		conn := optimizerTransport.Dial()
+		conn, _ := optimizerTransport.Dial()
 		if conn == nil {
 			t.Fail()
 		}
@@ -121,7 +121,7 @@ func TestOptimizerTransportRandomDial(t *testing.T) {
 	optimizerTransport := NewOptimizerClient(transports, RandomStrategy{})
 
 	for i := 1; i <= 3; i++ {
-		conn := optimizerTransport.Dial()
+		conn, _ := optimizerTransport.Dial()
 		if conn == nil {
 			t.Fail()
 		}
@@ -135,7 +135,7 @@ func TestOptimizerTransportRotateDial(t *testing.T) {
 	optimizerTransport := NewOptimizerClient(transports, RotateStrategy{})
 
 	for i := 1; i <= 3; i++ {
-		conn := optimizerTransport.Dial()
+		conn, _ := optimizerTransport.Dial()
 		if conn == nil {
 			t.Fail()
 		}

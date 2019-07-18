@@ -198,7 +198,19 @@ func (transport *Obfs4Transport) Dial(address string) net.Conn {
 
 	return transportConn
 }
+//begin code added from optimizer
+type Obfs4Transport_ struct {
+	certString string
+	iatMode    int
+	address    string
+}
 
+func (transport Obfs4Transport_) Dial() net.Conn {
+	Obfs4Transport := NewObfs4Client(transport.certString, transport.iatMode)
+	conn := Obfs4Transport.Dial(transport.address)
+	return conn
+}
+//end code added from optimizer
 // Create listener for incoming transport connection
 func (transport *Obfs4Transport) Listen(address string) net.Listener {
 	addr, resolveErr := pt.ResolveAddr(address)

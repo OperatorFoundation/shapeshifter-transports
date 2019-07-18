@@ -7,10 +7,13 @@
 package Optimizer
 
 import (
-	"golang.org/x/net/proxy"
+	"errors"
 	"math/rand"
 	"net"
+	"time"
 )
+
+const timeoutInSeconds = 60
 
 type Transport interface {
 	Dial() net.Conn
@@ -25,32 +28,22 @@ func NewOptimizerClient(transports []Transport, strategy Strategy) *optimizerTra
 	return &optimizerTransport{transports, strategy}
 }
 
-//func (opTransport *optimizerTransport) Dial() net.Conn {
-//	transport := opTransport.strategy.Choose(opTransport.transports)
-//
-//	conn:= transport.Dial()
-//	if conn == nil {
-//		return nil
-//	}
-//
-//	return conn
-//}
-func (opTransport *optimizerTransport) Dial(address string) net.Conn {
-	dialFn := proxy.Direct.Dial
+func (opTransport *optimizerTransport) Dial() (net.Conn, error) {
+	firstTryTime := time.Now()
 	transport := opTransport.strategy.Choose(opTransport.transports)
-
-	conn, dialErr := dialFn("tcp", address)
-	if dialErr != nil {
-		//find a way to move to the next or pass the current one
-		return nil
+	conn := transport.Dial()
+	for conn == nil {
+		opTransport.strategy.Report(transport, false)
+		currentTryTime := time.Now()
+		durationElapsed := currentTryTime.Sub(firstTryTime)
+		if durationElapsed >= timeoutInSeconds {
+			return nil, errors.New("timeout. Dial time exceeded")
+		}
+		transport = opTransport.strategy.Choose(opTransport.transports)
+		conn = transport.Dial()
 	}
-
-	conn = transport.Dial()
-	if conn == nil {
-		return nil
-	}
-
-	return conn
+	opTransport.strategy.Report(transport, true)
+	return conn, nil
 }
 
 type Strategy interface {
@@ -59,7 +52,6 @@ type Strategy interface {
 }
 
 type FirstStrategy struct {
-
 }
 
 func (strategy FirstStrategy) Choose(transports []Transport) Transport {
@@ -71,7 +63,6 @@ func (strategy FirstStrategy) Report(transport Transport, success bool) {
 }
 
 type RandomStrategy struct {
-
 }
 
 func (strategy RandomStrategy) Choose(transports []Transport) Transport {
@@ -100,21 +91,53 @@ func (strategy RotateStrategy) Report(transport Transport, success bool) {
 }
 
 type TrackStrategy struct {
-index int
+	index    int
+	trackMap map[Transport]int
+}
+
+func NewTrackStrategy() TrackStrategy {
+	track := TrackStrategy{}
+	track.trackMap = make(map[Transport]int)
+	return track
 }
 
 func (strategy TrackStrategy) Choose(transports []Transport) Transport {
-	//i think the track/feedback strat is going to need to cycle through transports like rotate does
 	transport := transports[strategy.index]
+	score := strategy.findScore(transports)
+	startIndex := strategy.index
+	strategy.incrementIndex(transports)
+	for startIndex != strategy.index {
+		if score == 1 {
+			return transport
+		} else {
+			transport = transports[strategy.index]
+			score = strategy.findScore(transports)
+			strategy.incrementIndex(transports)
+		}
+	}
+	return nil
+}
+
+func (strategy TrackStrategy) findScore(transports []Transport) int {
+	transport := transports[strategy.index]
+	score, ok := strategy.trackMap[transport]
+	if ok {
+		return score
+	} else {
+		return 1
+	}
+}
+
+func (strategy TrackStrategy) incrementIndex(transports []Transport) {
 	strategy.index += 1
 	if strategy.index >= len(transports) {
 		strategy.index = 0
 	}
-	return transport
 }
-
 func (strategy TrackStrategy) Report(transport Transport, success bool) {
-	map[Transport]float64
-	//if _  == <true>
-	//_
+	if success {
+		strategy.trackMap[transport] = 1
+	} else {
+		strategy.trackMap[transport] = 0
 	}
+}

@@ -41,7 +41,18 @@ type shadowTransportListener struct {
 	listener  *net.TCPListener
 	transport *shadowTransport
 }
-
+//begin code added from optimizer
+type ShadowTransport struct {
+	password   string
+	cipherName string
+	address    string
+}
+func (transport ShadowTransport) Dial() net.Conn {
+	shadowTransport := NewShadowTransport(transport.password, transport.cipherName)
+	conn := shadowTransport.Dial(transport.address)
+	return conn
+}
+//end code added from optimizer
 func newShadowTransportListener(listener *net.TCPListener, transport *shadowTransport) *shadowTransportListener {
 	return &shadowTransportListener{listener: listener, transport: transport}
 }
