@@ -46,8 +46,8 @@ func TestOptimizerShadowDial1(t *testing.T) {
 	transports := []Transport{shadowTransport}
 	strategy := FirstStrategy{}
 	optimizerTransport := NewOptimizerClient(transports, strategy)
-	conn, _ := optimizerTransport.Dial()
-	if conn == nil {
+	_, err := optimizerTransport.Dial()
+	if err != nil {
 		t.Fail()
 	}
 }
@@ -57,8 +57,8 @@ func TestOptimizerShadowDial2(t *testing.T) {
 	transports := []Transport{shadowTransport}
 	strategy := FirstStrategy{}
 	optimizerTransport := NewOptimizerClient(transports, strategy)
-	conn, _:= optimizerTransport.Dial()
-	if conn == nil {
+	_, err:= optimizerTransport.Dial()
+	if err != nil {
 		t.Fail()
 	}
 }
@@ -95,8 +95,8 @@ func TestOptimizerObfs4Transport_Dial2(t *testing.T) {
 	transports := []Transport{Obfs4Transport}
 	strategy := FirstStrategy{}
 	optimizerTransport := NewOptimizerClient(transports, strategy)
-	conn, _ := optimizerTransport.Dial()
-	if conn == nil {
+	_, err := optimizerTransport.Dial()
+	if err != nil {
 		t.Fail()
 	}
 }
@@ -107,8 +107,8 @@ func TestOptimizerTransportFirstDial(t *testing.T) {
 	transports := []Transport{obfs4Transport, shadowTransport}
 	optimizerTransport := NewOptimizerClient(transports, FirstStrategy{})
 	for i := 1; i <= 3; i++ {
-		conn, _ := optimizerTransport.Dial()
-		if conn == nil {
+		_, err := optimizerTransport.Dial()
+		if err != nil {
 			t.Fail()
 		}
 	}
@@ -121,8 +121,8 @@ func TestOptimizerTransportRandomDial(t *testing.T) {
 	optimizerTransport := NewOptimizerClient(transports, RandomStrategy{})
 
 	for i := 1; i <= 3; i++ {
-		conn, _ := optimizerTransport.Dial()
-		if conn == nil {
+		_, err := optimizerTransport.Dial()
+		if err != nil {
 			t.Fail()
 		}
 	}
@@ -135,8 +135,22 @@ func TestOptimizerTransportRotateDial(t *testing.T) {
 	optimizerTransport := NewOptimizerClient(transports, RotateStrategy{})
 
 	for i := 1; i <= 3; i++ {
-		conn, _ := optimizerTransport.Dial()
-		if conn == nil {
+		_, err := optimizerTransport.Dial()
+		if err != nil {
+			t.Fail()
+		}
+	}
+}
+
+func TestOptimizerTransportTrackDial(t *testing.T) {
+	obfs4Transport := obfs4.Obfs4Transport_{"UsuF7oN4KNKviZP54JOyTCoCphrdM5gwZK4vT8GnCAcmqLUJEJxyw1dpko9a/ii6He4iZg", 0, "77.81.104.251:443"}
+	shadowTransport := shadow.ShadowTransport{"orange", "aes-128-ctr", "127.0.0.1:1234"}
+	transports := []Transport{obfs4Transport, shadowTransport}
+	optimizerTransport := NewOptimizerClient(transports, TrackStrategy{})
+
+	for i := 1; i <= 3; i++ {
+		_, err := optimizerTransport.Dial()
+		if err != nil {
 			t.Fail()
 		}
 	}
