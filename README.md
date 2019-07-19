@@ -52,7 +52,7 @@ heavily throttled.
 
 The following transports are currently provided by the library:
 
-####obfs4
+#### obfs4
 
 This is a look-like nothing obfuscation protocol that incorporates ideas and concepts from Philipp Winter's ScrambleSuit protocol. The obfs naming was chosen primarily because it was shorter, in terms of protocol ancestery obfs4 is much closer to ScrambleSuit than obfs2/obfs3.
 
@@ -63,11 +63,11 @@ The notable differences between ScrambleSuit and obfs4:
 * The link layer encryption uses NaCl secret boxes (Poly1305/XSalsa20).
 * As an added bonus, obfs4proxy also supports acting as an obfs2/3 client and bridge to ease the transition to the new protocol.
 
-####shadow (Shadowsocks)
+#### shadow (Shadowsocks)
 
 Shadowsocks is a fast, free, and open-source encrypted proxy project, used to circumvent Internet censorship by utilizing a simple, but effective  encryption and a shared password
 
-####Optimizer
+#### Optimizer
 
 Optimizer is a pluggable transport that finds the optimal pluggable 
 transport, pulled from multiple servers from the transports above and assigns you the 
