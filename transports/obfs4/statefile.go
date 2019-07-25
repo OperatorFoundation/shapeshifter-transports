@@ -244,7 +244,7 @@ func newBridgeFile(stateDir string, st *obfs4ServerState) error {
 		"#\n" +
 		"# Before distributing this Bridge, edit the placeholder fields\n" +
 		"# to contain the actual values:\n" +
-		"#  <IP ADDRESS>  - The public IP address of your obfs4 bridge.\n" +
+		"#  <IP ADDRESS>  - The public IP Address of your obfs4 bridge.\n" +
 		"#  <PORT>        - The TCP/IP port of your obfs4 bridge.\n" +
 		"#  <FINGERPRINT> - The bridge's fingerprint.\n\n"
 

@@ -25,10 +25,6 @@ type shadowTransport struct {
 	cipherName string
 }
 
-func NewShadowTransport(password string, cipherName string) *shadowTransport {
-	return &shadowTransport{dialer: nil, password: password, cipherName: cipherName}
-}
-
 func NewShadowClient(password string, cipherName string) *shadowTransport {
 	return &shadowTransport{dialer: nil, password: password, cipherName: cipherName}
 }
@@ -42,14 +38,15 @@ type shadowTransportListener struct {
 	transport *shadowTransport
 }
 //begin code added from optimizer
-type ShadowTransport struct {
-	password   string
-	cipherName string
-	address    string
+type Transport struct {
+	Password   string
+	CipherName string
+	Address    string
 }
-func (transport ShadowTransport) Dial() net.Conn {
-	shadowTransport := NewShadowTransport(transport.password, transport.cipherName)
-	conn := shadowTransport.Dial(transport.address)
+
+func (transport Transport) Dial() net.Conn {
+	shadowTransport := NewShadowClient(transport.Password, transport.CipherName)
+	conn := shadowTransport.Dial(transport.Address)
 	return conn
 }
 //end code added from optimizer
@@ -66,6 +63,7 @@ func (transport *shadowTransport) NetworkDialer() net.Dialer {
 
 // Create outgoing transport connection
 func (transport *shadowTransport) Dial(address string) net.Conn {
+	//could maybe use the idiomatic way to introduce a variable
 	var cipher *shadowsocks.Cipher
 
 	cipher, err := shadowsocks.NewCipher(transport.cipherName, transport.password)
@@ -80,7 +78,7 @@ func (transport *shadowTransport) Dial(address string) net.Conn {
 
 	transportConn, err := newShadowClientConn(conn)
 	if err != nil {
-		conn.Close()
+		_ = conn.Close()
 		return nil
 	}
 
@@ -111,14 +109,14 @@ func (listener *shadowTransportListener) Addr() net.Addr {
 }
 
 // Methods that implement the net.Conn interface
-func (transportConn *shadowConn) NetworkConn() net.Conn {
+func (sconn *shadowConn) NetworkConn() net.Conn {
 	// This returns the real net.Conn used by the shadowsocks.Conn wrapped by the shadowConn.
 	// This may seem confusing, but this is the correct behavior for the semantics
 	// required by the PT 2.0 specification.
 	// The reason we must wrap it this way is that Go does not allow extension of
 	// types defined in another module. So NetworkConn() cannot be defined directly
 	// on shadowsocks.Conn.
-	return transportConn.conn.Conn
+	return sconn.conn.Conn
 }
 
 // Methods that implement the net.Listener interface

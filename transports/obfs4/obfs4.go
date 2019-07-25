@@ -199,15 +199,15 @@ func (transport *Obfs4Transport) Dial(address string) net.Conn {
 	return transportConn
 }
 //begin code added from optimizer
-type Obfs4Transport_ struct {
-	certString string
-	iatMode    int
-	address    string
+type Transport struct {
+	CertString string
+	IatMode    int
+	Address    string
 }
 
-func (transport Obfs4Transport_) Dial() net.Conn {
-	Obfs4Transport := NewObfs4Client(transport.certString, transport.iatMode)
-	conn := Obfs4Transport.Dial(transport.address)
+func (transport Transport) Dial() net.Conn {
+	Obfs4Transport := NewObfs4Client(transport.CertString, transport.IatMode)
+	conn := Obfs4Transport.Dial(transport.Address)
 	return conn
 }
 //end code added from optimizer
