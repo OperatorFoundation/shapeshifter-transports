@@ -201,3 +201,13 @@ func (strategy *minimizeDialDuration) Report(transport Transport, success bool, 
 		strategy.trackMap[transport] = 60.0
 	}
 }
+
+func (Strategy *minimizeDialDuration) minDuration(transports []Transport) {
+	min := transports[0]
+	for _, value := range transports {
+		if value < min {
+			min = value
+		}
+	}
+	return min
+}
