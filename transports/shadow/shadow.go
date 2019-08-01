@@ -44,10 +44,10 @@ type Transport struct {
 	Address    string
 }
 
-func (transport Transport) Dial() net.Conn {
+func (transport Transport) Dial() (net.Conn, error) {
 	shadowTransport := NewShadowClient(transport.Password, transport.CipherName)
 	conn := shadowTransport.Dial(transport.Address)
-	return conn
+	return conn, nil
 }
 //end code added from optimizer
 func newShadowTransportListener(listener *net.TCPListener, transport *shadowTransport) *shadowTransportListener {

@@ -48,8 +48,6 @@ import (
 	"runtime"
 	"sync"
 	"time"
-
-	"github.com/OperatorFoundation/shapeshifter-transports/transports/base"
 )
 
 const (
@@ -109,7 +107,7 @@ func (transport *meekTransport) NetworkDialer() net.Dialer {
 }
 
 // Create outgoing transport connection
-func (transport *meekTransport) Dial(address string) base.TransportConn {
+func (transport *meekTransport) Dial(address string) net.Conn {
 	// FIXME - should use dialer
 	transportConn, err := newMeekClientConn(address, transport.clientArgs)
 	if err != nil {
@@ -120,7 +118,7 @@ func (transport *meekTransport) Dial(address string) base.TransportConn {
 }
 
 // The meek transport does not have a corresponding server, only a client
-func (transport *meekTransport) Listen(address string) base.TransportListener {
+func (transport *meekTransport) Listen(address string) net.Listener {
 	return nil
 }
 
@@ -467,7 +465,5 @@ func newSessionID() (string, error) {
 // End private methods implementing the ROT13 cipher
 
 // Force type checks to make sure that instances conform to interfaces
-var _ base.Transport = (*meekTransport)(nil)
-var _ base.TransportConn = (*meekConn)(nil)
 var _ net.Conn = (*meekConn)(nil)
 var _ net.Addr = (*meekClientArgs)(nil)

@@ -181,22 +181,22 @@ func (transport *Obfs4Transport) NetworkDialer() net.Dialer {
 }
 
 // Create outgoing transport connection
-func (transport *Obfs4Transport) Dial(address string) net.Conn {
+func (transport *Obfs4Transport) Dial(address string) (net.Conn, error) {
 	// FIXME - should use dialer
 	dialFn := proxy.Direct.Dial
 	conn, dialErr := dialFn("tcp", address)
 	if dialErr != nil {
-		return nil
+		return nil, dialErr
 	}
 
 	dialConn := conn
 	transportConn, err := newObfs4ClientConn(conn, transport.clientArgs)
 	if err != nil {
 		dialConn.Close()
-		return nil
+		return nil, err
 	}
 
-	return transportConn
+	return transportConn, nil
 }
 //begin code added from optimizer
 type Transport struct {
@@ -205,10 +205,13 @@ type Transport struct {
 	Address    string
 }
 
-func (transport Transport) Dial() net.Conn {
+func (transport Transport) Dial() (net.Conn, error) {
 	Obfs4Transport := NewObfs4Client(transport.CertString, transport.IatMode)
-	conn := Obfs4Transport.Dial(transport.Address)
-	return conn
+	conn, err := Obfs4Transport.Dial(transport.Address)
+	if err != nil {
+		return nil, err
+	}
+	return conn, nil
 }
 //end code added from optimizer
 // Create listener for incoming transport connection
