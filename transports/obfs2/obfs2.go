@@ -86,22 +86,22 @@ func (transport *obfs2Transport) NetworkDialer() net.Dialer {
 }
 
 // Create outgoing transport connection
-func (transport *obfs2Transport) Dial(address string) net.Conn {
+func (transport *obfs2Transport) Dial(address string) (net.Conn, error) {
 	// FIXME - should use dialer
 	dialFn := proxy.Direct.Dial
 	conn, dialErr := dialFn("tcp", address)
 	if dialErr != nil {
-		return nil
+		return nil, dialErr
 	}
 
 	dialConn := conn
 	transportConn, err := newObfs2ClientConn(conn)
 	if err != nil {
 		dialConn.Close()
-		return nil
+		return nil, err
 	}
 
-	return transportConn
+	return transportConn, nil
 }
 
 // Create listener for incoming transport connection

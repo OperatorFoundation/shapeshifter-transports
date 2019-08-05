@@ -55,19 +55,19 @@ func newDustTransportListener(listener *net.TCPListener, transport *dustServer) 
 }
 
 // Create outgoing transport connection
-func (transport *dustClient) Dial(address string) net.Conn {
+func (transport *dustClient) Dial(address string) (net.Conn, error) {
 	conn, dialErr := net.Dial("tcp", address)
 	if dialErr != nil {
-		return nil
+		return nil, dialErr
 	}
 
 	transportConn, err := Dust.BeginRawStreamClient(conn, transport.serverPubkey)
 	if err != nil {
 		conn.Close()
-		return nil
+		return nil, err
 	}
 
-	return transportConn
+	return transportConn, nil
 }
 
 // Create listener for incoming transport connection
