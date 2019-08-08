@@ -132,7 +132,19 @@ type meekClientArgs struct {
 func (ca *meekClientArgs) Network() string {
 	return "meek"
 }
+//begin optimizer code
+type Transport struct {
+	url     *gourl.URL
+	front   string
+	address string
+}
 
+func (transport Transport) Dial() (net.Conn, error) {
+	meekTransport := NewMeekTransportWithFront("url", transport.front )
+	conn := meekTransport.Dial(transport.address)
+	return conn, nil
+}
+//end optimizer code
 func (ca *meekClientArgs) String() string {
 	return "meek" + ":" + ca.front + ":" + ca.url.String()
 }
@@ -396,6 +408,7 @@ loop:
 		sndBuf = append(leftBuf, sndBuf...)
 		wrSz := len(sndBuf)
 		for len(c.workerWrChan) > 0 && wrSz < maxPayloadLength {
+
 			b := <-c.workerWrChan
 			sndBuf = append(sndBuf, b...)
 			wrSz = len(sndBuf)
@@ -410,6 +423,7 @@ loop:
 			// Welp, something went horrifically wrong.
 			break loop
 		}
+
 
 		// Stash the remaining payload if any.
 		leftBuf = sndBuf[wrSz:] // Store the remaining data
