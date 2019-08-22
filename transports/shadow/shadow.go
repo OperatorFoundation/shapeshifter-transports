@@ -46,8 +46,12 @@ type Transport struct {
 
 func (transport Transport) Dial() (net.Conn, error) {
 	shadowTransport := NewShadowClient(transport.Password, transport.CipherName)
-	conn := shadowTransport.Dial(transport.Address)
-	return conn, nil
+	conn, err := shadowTransport.Dial(transport.Address)
+	if err != nil {
+		return nil, err
+	} else {
+		return conn, nil
+	}
 }
 //end code added from optimizer
 func newShadowTransportListener(listener *net.TCPListener, transport *shadowTransport) *shadowTransportListener {
@@ -62,7 +66,7 @@ func (transport *shadowTransport) NetworkDialer() net.Dialer {
 }
 
 // Create outgoing transport connection
-func (transport *shadowTransport) Dial(address string) net.Conn {
+func (transport *shadowTransport) Dial(address string) (net.Conn, error) {
 	//could maybe use the idiomatic way to introduce a variable
 	var cipher *shadowsocks.Cipher
 
@@ -73,16 +77,16 @@ func (transport *shadowTransport) Dial(address string) net.Conn {
 
 	conn, dialErr := shadowsocks.Dial("0.0.0.0:0", address, cipher)
 	if dialErr != nil {
-		return nil
+		return nil, dialErr
 	}
 
-	transportConn, err := newShadowClientConn(conn)
-	if err != nil {
+	transportConn, transportErr := newShadowClientConn(conn)
+	if transportErr != nil {
 		_ = conn.Close()
-		return nil
+		return nil, transportErr
+	} else {
+		return transportConn, nil
 	}
-
-	return transportConn
 }
 
 // Create listener for incoming transport connection
