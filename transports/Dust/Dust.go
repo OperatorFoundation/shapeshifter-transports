@@ -50,24 +50,41 @@ type dustTransportListener struct {
 	transport *dustServer
 }
 
+//begin optimizer code
+type Transport struct {
+	serverPublic string
+	Address      string
+}
+
+func (transport Transport) Dial() (net.Conn, error) {
+	dustTransport := NewDustClient(transport.serverPublic)
+	conn, err := dustTransport.Dial(transport.Address)
+	if err != nil {
+		return nil, err
+	} else {
+		return conn, nil
+	}
+}
+//end optimizer code
+
 func newDustTransportListener(listener *net.TCPListener, transport *dustServer) *dustTransportListener {
 	return &dustTransportListener{listener: listener, transport: transport}
 }
 
 // Create outgoing transport connection
-func (transport *dustClient) Dial(address string) net.Conn {
+func (transport *dustClient) Dial(address string) (net.Conn, error) {
 	conn, dialErr := net.Dial("tcp", address)
 	if dialErr != nil {
-		return nil
+		return conn, dialErr
 	}
 
 	transportConn, err := Dust.BeginRawStreamClient(conn, transport.serverPubkey)
 	if err != nil {
 		conn.Close()
-		return nil
+		return conn, dialErr
 	}
 
-	return transportConn
+	return transportConn, err
 }
 
 // Create listener for incoming transport connection
