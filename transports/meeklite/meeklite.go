@@ -134,14 +134,14 @@ func (ca *meekClientArgs) Network() string {
 }
 //begin optimizer code
 type Transport struct {
-	url     *gourl.URL
-	front   string
-	address string
+	Url     *gourl.URL
+	Front   string
+	Address string
 }
 
 func (transport Transport) Dial() (net.Conn, error) {
-	meekTransport := NewMeekTransportWithFront("url", transport.front )
-	conn := meekTransport.Dial(transport.address)
+	meekTransport := NewMeekTransportWithFront(transport.Url.String(), transport.Front )
+	conn := meekTransport.Dial(transport.Address)
 	return conn, nil
 }
 //end optimizer code
@@ -481,3 +481,4 @@ func newSessionID() (string, error) {
 // Force type checks to make sure that instances conform to interfaces
 var _ net.Conn = (*meekConn)(nil)
 var _ net.Addr = (*meekClientArgs)(nil)
+
