@@ -8,7 +8,7 @@ package Optimizer
 
 import (
 	"errors"
-	"math/rand"
+	_ "math/rand"
 	"net"
 	"time"
 )
@@ -19,115 +19,121 @@ type Transport interface {
 	Dial() (net.Conn, error)
 }
 
-type optimizerTransport struct {
-	transports []Transport
-	strategy   Strategy
+type OptimizerTransport struct {
+	Transports []Transport
+	Strategy   Strategy
 }
 
-func NewOptimizerClient(transports []Transport, strategy Strategy) *optimizerTransport {
-	return &optimizerTransport{transports, strategy}
+func NewOptimizerClient(Transports []Transport, Strategy Strategy) *OptimizerTransport {
+	return &OptimizerTransport{Transports, Strategy}
 }
 
-func (opTransport *optimizerTransport) Dial() (net.Conn, error) {
+func (OptT *OptimizerTransport) Dial() (net.Conn, error) {
 	firstTryTime := time.Now()
-	transport := opTransport.strategy.Choose(opTransport.transports)
+	transport := OptT.Strategy.Choose()
 	if transport == nil {
 		return nil, errors.New("optimizer strategy returned nil")
 	}
 	conn, err := transport.Dial()
 	for err != nil {
-		opTransport.strategy.Report(transport, false, 60)
+		OptT.Strategy.Report(transport, false, 60)
 		currentTryTime := time.Now()
 		durationElapsed := currentTryTime.Sub(firstTryTime)
 		if durationElapsed >= timeoutInSeconds {
 			return nil, errors.New("timeout. Dial time exceeded")
 		}
-		transport = opTransport.strategy.Choose(opTransport.transports)
+		transport = OptT.Strategy.Choose()
 		conn, err = transport.Dial()
 	}
-	opTransport.strategy.Report(transport, true, 60)
+	OptT.Strategy.Report(transport, true, 60)
 	return conn, nil
 }
 
 type Strategy interface {
-	Choose([]Transport) Transport
+	Choose() Transport
 	Report(transport Transport, success bool, durationElapsed float64)
 }
 
+//begin refactor
 type FirstStrategy struct {
+	transports []Transport
 }
 
-func NewFirstStrategy() Strategy {
-	return FirstStrategy{}
+func NewFirstStrategy(transports []Transport) Strategy {
+	return &FirstStrategy{transports}
 }
 
-func (strategy FirstStrategy) Choose(transports []Transport) Transport {
-	return transports[0]
+func (strategy *FirstStrategy) Choose() Transport {
+	return strategy.transports[0]
 }
 
-func (strategy FirstStrategy) Report(transport Transport, success bool, durationElapsed float64) {
+func (strategy *FirstStrategy) Report(transport Transport, success bool, durationElapsed float64) {
 
 }
 
+//end refactor
 type RandomStrategy struct {
+	transports []Transport
 }
 
-func NewRandomStrategy() Strategy{
-	return RandomStrategy{}
+func NewRandomStrategy(transports []Transport) Strategy {
+	return &RandomStrategy{transports}
 }
 
-func (strategy RandomStrategy) Choose(transports []Transport) Transport {
-	return transports[rand.Intn(len(transports))]
+func (strategy *RandomStrategy) Choose() Transport {
+	return strategy.transports[0]
 }
 
-func (strategy RandomStrategy) Report(transport Transport, success bool, durationElapsed float64) {
+func (strategy *RandomStrategy) Report(transport Transport, success bool, durationElapsed float64) {
 
 }
 
 type RotateStrategy struct {
-	index int
+	transports []Transport
+	index      int
 }
 
-func NewRotateStrategy() Strategy{
-	return RotateStrategy{}
+func NewRotateStrategy(transports []Transport) Strategy {
+	return &RotateStrategy{transports, 0}
 }
 
-func (strategy RotateStrategy) Choose(transports []Transport) Transport {
-	transport := transports[strategy.index]
+func (strategy *RotateStrategy) Choose() Transport {
+	transport := strategy.transports[strategy.index]
 	strategy.index += 1
-	if strategy.index >= len(transports) {
+	if strategy.index >= len(strategy.transports) {
 		strategy.index = 0
 	}
 	return transport
 }
 
-func (strategy RotateStrategy) Report(transport Transport, success bool, durationElapsed float64) {
+func (strategy *RotateStrategy) Report(transport Transport, success bool, durationElapsed float64) {
 
 }
 
 type TrackStrategy struct {
-	index    int
-	trackMap map[Transport]int
+	index     int
+	trackMap  map[Transport]int
+	transport []Transport
 }
 
-func NewTrackStrategy() *TrackStrategy {
-	track := TrackStrategy{}
+func NewTrackStrategy(transport []Transport) Strategy {
+	track := TrackStrategy{0, map[Transport]int{}, transport}
 	track.trackMap = make(map[Transport]int)
 	return &track
 }
 
-func (strategy *TrackStrategy) Choose(transports []Transport) Transport {
-	transport := transports[strategy.index]
-	score := strategy.findScore(transports)
+func (strategy *TrackStrategy) Choose() Transport {
+	transport := strategy.transport[strategy.index]
+	score := strategy.findScore(strategy.transport)
 	startIndex := strategy.index
-	strategy.incrementIndex(transports)
+	strategy.incrementIndex(strategy.transport)
 	for startIndex != strategy.index {
 		if score == 1 {
 			return transport
 		} else {
-			transport = transports[strategy.index]
-			score = strategy.findScore(transports)
-			strategy.incrementIndex(transports)
+			transport = strategy.transport[strategy.index]
+			score = strategy.findScore(strategy.transport)
+			strategy.incrementIndex(strategy.transport)
 		}
 	}
 	return nil
@@ -159,30 +165,31 @@ func (strategy *TrackStrategy) Report(transport Transport, success bool, duratio
 }
 
 type minimizeDialDuration struct {
-	index    int
-	trackMap map[Transport]float64
+	index      int
+	trackMap   map[Transport]float64
+	transports []Transport
 }
 
-func NewMinimizeDialDuration() *minimizeDialDuration {
-	duration := minimizeDialDuration{}
+func NewMinimizeDialDuration(transport []Transport) Strategy {
+	duration := minimizeDialDuration{0, map[Transport]float64{}, transport}
 	duration.trackMap = make(map[Transport]float64)
 	return &duration
 }
 
-func (strategy *minimizeDialDuration) Choose(transports []Transport) Transport {
-	transport := transports[strategy.index]
-	score := strategy.findScore(transports)
+func (strategy *minimizeDialDuration) Choose() Transport {
+	transport := strategy.transports[strategy.index]
+	score := strategy.findScore(strategy.transports)
 	startIndex := strategy.index
-	strategy.incrementIndex(transports)
+	strategy.incrementIndex(strategy.transports)
 	for startIndex != strategy.index {
 		if score == 0 {
 			return transport
 		} else {
-			strategy.incrementIndex(transports)
+			strategy.incrementIndex(strategy.transports)
 			transport = strategy.minDuration()
 			if transport == nil {
-				transport = transports[strategy.index]
-				score = strategy.findScore(transports)
+				transport = strategy.transports[strategy.index]
+				score = strategy.findScore(strategy.transports)
 				continue
 			} else {
 				return transport
