@@ -17,7 +17,7 @@ import (
 
 // replicantTransport is the replicant implementation of the base.Transport interface.
 type replicantTransport struct {
-	config Config
+	config 		Config
 }
 
 type ReplicantConnectionState struct {
@@ -105,3 +105,4 @@ func NewReplicantServerConnectionState(config Config, polishServer polish.Polish
 
 	return &ReplicantConnectionState{toneburst, polish}
 }
+

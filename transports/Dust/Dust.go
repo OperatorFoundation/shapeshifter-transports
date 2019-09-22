@@ -52,7 +52,7 @@ type dustTransportListener struct {
 
 //begin optimizer code
 type Transport struct {
-	serverPublic string
+	ServerPublic string
 	Address      string
 }
 
