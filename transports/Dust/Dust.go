@@ -57,7 +57,7 @@ type Transport struct {
 }
 
 func (transport Transport) Dial() (net.Conn, error) {
-	dustTransport := NewDustClient(transport.serverPublic)
+	dustTransport := NewDustClient(transport.ServerPublic)
 	conn, err := dustTransport.Dial(transport.Address)
 	if err != nil {
 		return nil, err
