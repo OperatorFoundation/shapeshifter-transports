@@ -19,16 +19,16 @@ type Transport interface {
 	Dial() (net.Conn, error)
 }
 
-type OptimizerTransport struct {
+type Client struct {
 	Transports []Transport
 	Strategy   Strategy
 }
 
-func NewOptimizerClient(Transports []Transport, Strategy Strategy) *OptimizerTransport {
-	return &OptimizerTransport{Transports, Strategy}
+func NewOptimizerClient(Transports []Transport, Strategy Strategy) *Client {
+	return &Client{Transports, Strategy}
 }
 
-func (OptT *OptimizerTransport) Dial() (net.Conn, error) {
+func (OptT *Client) Dial() (net.Conn, error) {
 	firstTryTime := time.Now()
 	transport := OptT.Strategy.Choose()
 	if transport == nil {
