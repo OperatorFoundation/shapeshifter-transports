@@ -11,8 +11,8 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/OperatorFoundation/shapeshifter-transports/transports/replicant/polish"
-	"github.com/OperatorFoundation/shapeshifter-transports/transports/replicant/toneburst"
+	"github.com/OperatorFoundation/shapeshifter-transports/transports/Replicant/polish"
+	"github.com/OperatorFoundation/shapeshifter-transports/transports/Replicant/toneburst"
 )
 
 // replicantTransport is the replicant implementation of the base.Transport interface.
