@@ -1,11 +1,12 @@
 package replicant
 
 import (
-	"github.com/OperatorFoundation/shapeshifter-transports/transports/replicant/polish"
-	"github.com/OperatorFoundation/shapeshifter-transports/transports/replicant/toneburst"
+	"github.com/OperatorFoundation/shapeshifter-transports/transports/Replicant/polish"
+	"github.com/OperatorFoundation/shapeshifter-transports/transports/Replicant/toneburst"
 )
 
 type Config struct {
-	toneburst toneburst.Config
-	polish    polish.Config
+	Toneburst *toneburst.Config
+	Polish    *polish.Config
 }
+

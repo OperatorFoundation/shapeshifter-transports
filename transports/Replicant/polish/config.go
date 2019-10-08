@@ -1,7 +1,7 @@
 package polish
 
 type Config struct {
-	selector string
+	Selector string
 
-	silver *SilverPolishConfig
+	Silver *SilverPolishConfig
 }

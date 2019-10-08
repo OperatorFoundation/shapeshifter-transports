@@ -11,8 +11,8 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/OperatorFoundation/shapeshifter-transports/transports/replicant/polish"
-	"github.com/OperatorFoundation/shapeshifter-transports/transports/replicant/toneburst"
+	"github.com/OperatorFoundation/shapeshifter-transports/transports/Replicant/polish"
+	"github.com/OperatorFoundation/shapeshifter-transports/transports/Replicant/toneburst"
 )
 
 // replicantTransport is the replicant implementation of the base.Transport interface.
@@ -93,14 +93,14 @@ func NewServerConnection(conn net.Conn, config Config) (*ReplicantConnection, er
 }
 
 func NewReplicantClientConnectionState(config Config) *ReplicantConnectionState {
-	toneburst := toneburst.New(config.toneburst)
-	polish := polish.NewClient(config.polish)
+	toneburst := toneburst.New(config.Toneburst)
+	polish := polish.NewClient(config.Polish)
 
 	return &ReplicantConnectionState{toneburst, polish}
 }
 
 func NewReplicantServerConnectionState(config Config, polishServer polish.PolishServer, conn net.Conn) *ReplicantConnectionState {
-	toneburst := toneburst.New(config.toneburst)
+	toneburst := toneburst.New(config.Toneburst)
 	polish := polishServer.NewConnection(conn)
 
 	return &ReplicantConnectionState{toneburst, polish}

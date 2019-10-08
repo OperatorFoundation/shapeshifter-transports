@@ -3,8 +3,8 @@ package toneburst
 import "net"
 
 type WhalesongConfig struct {
-	addSequences []Sequence
-	removeSequences []Sequence
+	AddSequences    []Sequence
+	RemoveSequences []Sequence
 }
 
 type Sequence []byte

@@ -14,21 +14,21 @@ import (
 )
 
 type SilverPolishConfig struct {
-	clientOrServer bool
+	ClientOrServer bool
 
-	clientConfig *SilverPolishClientConfig
-	serverConfig *SilverPolishServerConfig
+	ClientConfig *SilverPolishClientConfig
+	ServerConfig *SilverPolishServerConfig
 }
 
 type SilverPolishClientConfig struct {
-	serverPublicKey []byte
-	chunkSize       int
+	ServerPublicKey []byte
+	ChunkSize       int
 }
 
 type SilverPolishServerConfig struct {
-	serverPublicKey []byte
-	serverPrivateKey []byte
-	chunkSize        int
+	ServerPublicKey  []byte
+	ServerPrivateKey []byte
+	ChunkSize        int
 }
 
 type SilverPolishClient struct {
@@ -102,7 +102,7 @@ func NewSilverServerConfig() *SilverPolishServerConfig {
 	basePayloadSize := 1024
 	payloadSizeRandomness, err := rand.Int(rand.Reader, big.NewInt(512))
 	if err != nil {
-		fmt.Println("Error generating random number for chunkSize")
+		fmt.Println("Error generating random number for ChunkSize")
 		return nil
 	}
 
@@ -114,7 +114,7 @@ func NewSilverServerConfig() *SilverPolishServerConfig {
 }
 
 func NewSilverClientConfig(serverConfig *SilverPolishServerConfig) *SilverPolishClientConfig {
-	config := SilverPolishClientConfig{serverConfig.serverPublicKey, serverConfig.chunkSize}
+	config := SilverPolishClientConfig{serverConfig.ServerPublicKey, serverConfig.ChunkSize}
 	return &config
 }
 
@@ -129,7 +129,7 @@ func NewSilverClient(config SilverPolishClientConfig) *SilverPolishClient {
 	clientPublicKey := elliptic.Marshal(curve, clientX, clientY)
 
 	// Derive the shared key from the client private key and server public key
-	serverX, serverY := elliptic.Unmarshal(curve, config.serverPublicKey)
+	serverX, serverY := elliptic.Unmarshal(curve, config.ServerPublicKey)
 
 	sharedKeyX, sharedKeyY := curve.ScalarMult(serverX, serverY, clientPrivateKey)
 	sharedKeySeed := elliptic.Marshal(curve, sharedKeyX, sharedKeyY)
@@ -144,12 +144,12 @@ func NewSilverClient(config SilverPolishClientConfig) *SilverPolishClient {
 		fmt.Println("Error initializing polish client")
 		return nil
 	}
-	polishClient := SilverPolishClient{config.serverPublicKey, config.chunkSize, clientPublicKey, clientPrivateKey, sharedKey, polishCipher}
+	polishClient := SilverPolishClient{config.ServerPublicKey, config.ChunkSize, clientPublicKey, clientPrivateKey, sharedKey, polishCipher}
 	return &polishClient
 }
 
 func NewSilverServer(config SilverPolishServerConfig) *SilverPolishServer {
-	polishServer := SilverPolishServer{config.serverPublicKey, config.serverPrivateKey, config.chunkSize, make(map[net.Conn]SilverPolishServerConnection)}
+	polishServer := SilverPolishServer{config.ServerPublicKey, config.ServerPrivateKey, config.ChunkSize, make(map[net.Conn]SilverPolishServerConnection)}
 	return &polishServer
 }
 

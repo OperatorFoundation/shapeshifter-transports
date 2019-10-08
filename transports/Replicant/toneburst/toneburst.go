@@ -8,7 +8,10 @@ type ToneBurst interface {
 	Perform(conn net.Conn) error
 }
 
-func New(config Config) interface{ToneBurst} {
+func New(config *Config) ToneBurst {
+	if config == nil {
+		return nil
+	}
 	switch config.Selector {
 	case "whalesong":
 		if config.Whalesong == nil {
