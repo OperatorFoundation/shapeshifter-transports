@@ -83,7 +83,7 @@ var biasedDist bool
 
 // Transport that uses the obfs4 protocol to shapeshift the application network traffic
 type Obfs4Transport struct {
-	dialer *net.Dialer
+	dialer proxy.Dialer
 
 	serverFactory *Obfs4ServerFactory
 	clientArgs    *Obfs4ClientArgs
@@ -150,7 +150,7 @@ func NewObfs4Server(stateDir string) *Obfs4Transport {
 	return &Obfs4Transport{dialer: nil, serverFactory: sf, clientArgs: nil}
 }
 
-func NewObfs4Client(certString string, iatMode int) *Obfs4Transport {
+func NewObfs4Client(certString string, iatMode int, dialer proxy.Dialer) *Obfs4Transport {
 	var nodeID *ntor.NodeID
 	var publicKey *ntor.PublicKey
 
@@ -169,21 +169,12 @@ func NewObfs4Client(certString string, iatMode int) *Obfs4Transport {
 		return nil
 	}
 
-	return &Obfs4Transport{dialer: nil, serverFactory: nil, clientArgs: &Obfs4ClientArgs{nodeID, publicKey, sessionKey, iatMode}}
-}
-
-// Methods that implement the base.Transport interface
-
-// Dialer for the underlying network connection
-// The Dialer can be modified to change how the network connections are made.
-func (transport *Obfs4Transport) NetworkDialer() net.Dialer {
-	return *transport.dialer
+	return &Obfs4Transport{dialer: dialer, serverFactory: nil, clientArgs: &Obfs4ClientArgs{nodeID, publicKey, sessionKey, iatMode}}
 }
 
 // Create outgoing transport connection
 func (transport *Obfs4Transport) Dial(address string) (net.Conn, error) {
-	// FIXME - should use dialer
-	dialFn := proxy.Direct.Dial
+	dialFn := transport.dialer.Dial
 	conn, dialErr := dialFn("tcp", address)
 	if dialErr != nil {
 		return nil, dialErr
@@ -203,10 +194,11 @@ type Transport struct {
 	CertString string
 	IatMode    int
 	Address    string
+	Dialer     proxy.Dialer
 }
 
 func (transport Transport) Dial() (net.Conn, error) {
-	Obfs4Transport := NewObfs4Client(transport.CertString, transport.IatMode)
+	Obfs4Transport := NewObfs4Client(transport.CertString, transport.IatMode, transport.Dialer)
 	conn, err := Obfs4Transport.Dial(transport.Address)
 	if err != nil {
 		return nil, err
