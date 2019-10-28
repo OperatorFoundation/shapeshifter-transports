@@ -110,11 +110,11 @@ type Obfs4ClientArgs struct {
 	iatMode    int
 }
 
-func NewObfs4Server(stateDir string) *Obfs4Transport {
+func NewObfs4Server(stateDir string) (*Obfs4Transport, error) {
 	args := make(pt.Args)
 	st, err := serverStateFromArgs(stateDir, &args)
 	if err != nil {
-		return nil
+		return nil, err
 	}
 
 	var iatSeed *drbg.Seed
@@ -123,7 +123,7 @@ func NewObfs4Server(stateDir string) *Obfs4Transport {
 		var err error
 		iatSeed, err = drbg.SeedFromBytes(iatSeedSrc[:])
 		if err != nil {
-			return nil
+			return nil, err
 		}
 	}
 
@@ -135,22 +135,22 @@ func NewObfs4Server(stateDir string) *Obfs4Transport {
 	// Initialize the replay filter.
 	filter, err := replayfilter.New(replayTTL)
 	if err != nil {
-		return nil
+		return nil, err
 	}
 
 	// Initialize the close thresholds for failed connections.
 	drbg, err := drbg.NewHashDrbg(st.drbgSeed)
 	if err != nil {
-		return nil
+		return nil, err
 	}
 	rng := rand.New(drbg)
 
 	sf := &Obfs4ServerFactory{&ptArgs, st.nodeID, st.identityKey, st.drbgSeed, iatSeed, st.iatMode, filter, rng.Intn(maxCloseDelayBytes), rng.Intn(maxCloseDelay)}
 
-	return &Obfs4Transport{dialer: nil, serverFactory: sf, clientArgs: nil}
+	return &Obfs4Transport{dialer: nil, serverFactory: sf, clientArgs: nil}, nil
 }
 
-func NewObfs4Client(certString string, iatMode int, dialer proxy.Dialer) *Obfs4Transport {
+func NewObfs4Client(certString string, iatMode int, dialer proxy.Dialer) (*Obfs4Transport, error) {
 	var nodeID *ntor.NodeID
 	var publicKey *ntor.PublicKey
 
@@ -158,7 +158,7 @@ func NewObfs4Client(certString string, iatMode int, dialer proxy.Dialer) *Obfs4T
 	// for the Node ID and Public Key.
 	cert, err := serverCertFromString(certString)
 	if err != nil {
-		return nil
+		return nil, err
 	}
 	nodeID, publicKey = cert.unpack()
 
@@ -166,10 +166,10 @@ func NewObfs4Client(certString string, iatMode int, dialer proxy.Dialer) *Obfs4T
 	// rejection sampling from network observers.
 	sessionKey, err := ntor.NewKeypair(true)
 	if err != nil {
-		return nil
+		return nil, err
 	}
 
-	return &Obfs4Transport{dialer: dialer, serverFactory: nil, clientArgs: &Obfs4ClientArgs{nodeID, publicKey, sessionKey, iatMode}}
+	return &Obfs4Transport{dialer: dialer, serverFactory: nil, clientArgs: &Obfs4ClientArgs{nodeID, publicKey, sessionKey, iatMode}}, nil
 }
 
 // Create outgoing transport connection
@@ -189,6 +189,7 @@ func (transport *Obfs4Transport) Dial(address string) (net.Conn, error) {
 
 	return transportConn, nil
 }
+
 //begin code added from optimizer
 type Transport struct {
 	CertString string
@@ -198,13 +199,17 @@ type Transport struct {
 }
 
 func (transport Transport) Dial() (net.Conn, error) {
-	Obfs4Transport := NewObfs4Client(transport.CertString, transport.IatMode, transport.Dialer)
+	Obfs4Transport, err := NewObfs4Client(transport.CertString, transport.IatMode, transport.Dialer)
+	if err != nil {
+		return nil, err
+	}
 	conn, err := Obfs4Transport.Dial(transport.Address)
 	if err != nil {
 		return nil, err
 	}
 	return conn, nil
 }
+
 //end code added from optimizer
 // Create listener for incoming transport connection
 func (transport *Obfs4Transport) Listen(address string) net.Listener {
