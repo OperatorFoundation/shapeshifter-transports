@@ -68,6 +68,8 @@ More information can be found on the [Readme](https://github.com/OperatorFoundat
 
 Shadowsocks is a fast, free, and open-source encrypted proxy project, used to circumvent Internet censorship by utilizing a simple, but effective  encryption and a shared password
 
+More information can be found on the [ReadMe](https://github.com/OperatorFoundation/shapeshifter-transports/blob/master/transports/shadow/README.md)
+
 #### Optimizer
 
 Optimizer is a pluggable transport that finds the optimal pluggable 
