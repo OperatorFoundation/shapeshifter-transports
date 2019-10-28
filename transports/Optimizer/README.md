@@ -23,9 +23,9 @@ Optimizer is one of the transports available in the [Shapeshifter-Transports lib
 1. First you will need to initialize the transports you would like Optimizer to use:
     `dialer := proxy.Direct
 	obfs4Transport := obfs4.Transport{
-		CertString: "UsuF7oN4KNKviZP54JOyTCoCphrdM5gwZK4vT8GnCAcmqLUJEJxyw1dpko9a/ii6He4iZg",
-		IatMode:    0,
-		Address:    "77.81.104.251:443",
+		CertString: "InsertCertStringHere",
+		IatMode:    0 or 1,
+		Address:    "InsertAddressHere",
 		Dialer:     dialer,
 	}`
 	`shadowTransport := shadow.Transport{"orange", "aes-128-ctr", "127.0.0.1:1234"}`

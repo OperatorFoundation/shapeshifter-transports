@@ -22,9 +22,9 @@ obfs4 is one of the transports available in the [Shapeshifter-Transports library
     
 2. Create an instance of an obfs4 server
     `obfs4Transport := obfs4.Transport{
-     		CertString: "UsuF7oN4KNKviZP54JOyTCoCphrdM5gwZK4vT8GnCAcmqLUJEJxyw1dpko9a/ii6He4iZg",
-     		IatMode:    0,
-     		Address:    "77.81.104.251:443",
+     		CertString: "InsertCertStringHere",
+     		IatMode:    0 or 1,
+     		Address:    "InsertAddressHere",
      		Dialer:     dialer,}`
 
 5. Call Dial on obfs4Transport:
