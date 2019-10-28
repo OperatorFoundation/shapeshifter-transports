@@ -63,6 +63,7 @@ The notable differences between ScrambleSuit and obfs4:
 * The link layer encryption uses NaCl secret boxes (Poly1305/XSalsa20).
 * As an added bonus, obfs4proxy also supports acting as an obfs2/3 client and bridge to ease the transition to the new protocol.
 
+More information can be found on the [Readme](https://github.com/OperatorFoundation/shapeshifter-transports/blob/master/transports/obfs4/README.md)
 #### shadow (Shadowsocks)
 
 Shadowsocks is a fast, free, and open-source encrypted proxy project, used to circumvent Internet censorship by utilizing a simple, but effective  encryption and a shared password
