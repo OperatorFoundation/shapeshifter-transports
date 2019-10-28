@@ -28,7 +28,7 @@ Optimizer is one of the transports available in the [Shapeshifter-Transports lib
 		Address:    "InsertAddressHere",
 		Dialer:     dialer,
 	}`
-	`shadowTransport := shadow.Transport{"orange", "aes-128-ctr", "127.0.0.1:1234"}`
+	`shadowTransport := shadow.Transport{"InsertPasswordHere", "InsertCipherNameHere", "InsertAddressHere"}`
 	
 2. Create an array with these transports:
     `transports := []Transport{obfs4Transport, shadowTransport}`
