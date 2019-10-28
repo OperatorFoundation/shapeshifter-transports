@@ -71,7 +71,7 @@ Shadowsocks is a fast, free, and open-source encrypted proxy project, used to ci
 
 Optimizer is a pluggable transport that finds the optimal pluggable 
 transport, pulled from multiple servers from the transports above and assigns you the 
-transport that is most effective for each individual user.
+transport that is most effective for each individual user.  You can find more information on using Optimizer in the [ReadMe](https://github.com/OperatorFoundation/shapeshifter-transports/tree/master/transports/Optimizer)
 
 #### Installation
 
