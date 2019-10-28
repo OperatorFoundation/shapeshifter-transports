@@ -15,6 +15,29 @@ Here is a list of the currently available Optimizer strategies:
 
 ## Using Optimizer
 
+
 ### Go Version:
 
 Optimizer is one of the transports available in the [Shapeshifter-Transports library](https://github.com/OperatorFoundation/Shapeshifter-Transports).
+
+1. First you will need to initialize the transports you would like Optimizer to use:
+    `dialer := proxy.Direct
+	obfs4Transport := obfs4.Transport{
+		CertString: "UsuF7oN4KNKviZP54JOyTCoCphrdM5gwZK4vT8GnCAcmqLUJEJxyw1dpko9a/ii6He4iZg",
+		IatMode:    0,
+		Address:    "77.81.104.251:443",
+		Dialer:     dialer,
+	}`
+	`shadowTransport := shadow.Transport{"orange", "aes-128-ctr", "127.0.0.1:1234"}`
+	
+2. Create an array with these transports:
+    `transports := []Transport{obfs4Transport, shadowTransport}`
+    
+3. Initialize the strategy of your choice using the array of transports you created:
+    `strategy := NewMinimizeDialDuration(transports)`
+    
+4. Create an instance of OptimizerConnectionFactory using your new Strategy instance:
+    `optimizerTransport := NewOptimizerClient(transports, strategy)`
+    
+5. Call Dial on optimizerTransport:
+    `_, err := optimizerTransport.Dial()`
