@@ -1,10 +1,12 @@
 package Optimizer
 
 import (
+	"github.com/OperatorFoundation/shapeshifter-transports/transports/meeklite"
 	"github.com/OperatorFoundation/shapeshifter-transports/transports/obfs4"
 	"github.com/OperatorFoundation/shapeshifter-transports/transports/shadow"
 	"golang.org/x/net/proxy"
 	"net"
+	"net/url"
 	"os"
 	"testing"
 )
@@ -29,6 +31,29 @@ func acceptConnections(listener net.Listener) {
 func TestShadowDial1(t *testing.T) {
 	shadowTransport := shadow.Transport{"orange", "aes-128-ctr", "127.0.0.1:1234"}
 	_, err := shadowTransport.Dial()
+	if err != nil {
+		t.Fail()
+	}
+}
+
+func TestMeekliteDial1(t *testing.T) {
+	unparsedUrl := "https://d2zfqthxsdq309.cloudfront.net/"
+	Url, _ := url.Parse(unparsedUrl)
+	meekliteTransport := meeklite.Transport{Url, "a0.awsstatic.com", "127.0.0.1:1234" }
+	_, err := meekliteTransport.Dial()
+	if err != nil {
+		t.Fail()
+	}
+}
+
+func TestOptimizerMeekliteDial1(t *testing.T) {
+	unparsedUrl := "https://d2zfqthxsdq309.cloudfront.net/"
+	Url, _ := url.Parse(unparsedUrl)
+	meekliteTransport := meeklite.Transport{Url, "a0.awsstatic.com", "127.0.0.1:1234" }
+	transports := []Transport{meekliteTransport}
+	strategy := FirstStrategy{}
+	optimizerTransport := NewOptimizerClient(transports, &strategy)
+	_, err := optimizerTransport.Dial()
 	if err != nil {
 		t.Fail()
 	}
