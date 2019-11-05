@@ -63,21 +63,30 @@ const (
 
 //begin code added from optimizer
 type Transport struct {
-	Address    string
+	Address string
+	Dialer  proxy.Dialer
 }
 
-func New(address string) *Transport {
-	return &Transport{Address: address}
+func New(address string, dialer proxy.Dialer) *Transport {
+	return &Transport{Address: address, Dialer: dialer}
 }
 
 func (transport Transport) Dial() (net.Conn, error) {
-	obfs2TransportInstance := NewObfs2Transport()
-	conn, err := obfs2TransportInstance.Dial(transport.Address)
-	if err != nil {
-		return nil, err
-	} else {
-		return conn, nil
+
+	dialFn := transport.Dialer.Dial
+	conn, dialErr := dialFn("tcp", transport.Address)
+	if dialErr != nil {
+		return nil, dialErr
 	}
+
+	dialConn := conn
+	transportConn, err := newObfs2ClientConn(conn)
+	if err != nil {
+		dialConn.Close()
+		return nil, err
+	}
+
+	return  transportConn, nil
 }
 
 // obfs2Transport is the obfs2 implementation of the base.Transport interface.
