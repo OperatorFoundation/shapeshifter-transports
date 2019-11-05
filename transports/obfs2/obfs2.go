@@ -61,6 +61,25 @@ const (
 	hsLen              = 4 + 4
 )
 
+//begin code added from optimizer
+type Transport struct {
+	Address    string
+}
+
+func New(address string) *Transport {
+	return &Transport{Address: address}
+}
+
+func (transport Transport) Dial() (net.Conn, error) {
+	obfs2TransportInstance := NewObfs2Transport()
+	conn, err := obfs2TransportInstance.Dial(transport.Address)
+	if err != nil {
+		return nil, err
+	} else {
+		return conn, nil
+	}
+}
+
 // obfs2Transport is the obfs2 implementation of the base.Transport interface.
 type obfs2Transport struct {
 	dialer *net.Dialer
