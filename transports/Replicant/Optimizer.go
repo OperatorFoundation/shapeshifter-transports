@@ -2,16 +2,18 @@ package replicant
 
 import (
 	"errors"
+	"golang.org/x/net/proxy"
 	"net"
 )
 
 type Transport struct {
 	Config  Config
 	Address string
+	Dialer  proxy.Dialer
 }
 
 func (transport Transport) Dial() (net.Conn, error) {
-	replicantTransport:= New(transport.Config)
+	replicantTransport:= New(transport.Config, transport.Dialer)
 	conn, err:= replicantTransport.Dial(transport.Address), errors.New("connection failed")
 	if err != nil {
 		return nil, err

@@ -9,6 +9,7 @@ package Dust
 
 import (
 	"fmt"
+	"golang.org/x/net/proxy"
 	"net"
 	"time"
 
@@ -18,13 +19,15 @@ import (
 
 type dustClient struct {
 	serverPubkey *Dust.ServerPublic
+	dialer       proxy.Dialer
 }
 
 type dustServer struct {
 	serverPrivkey *Dust.ServerPrivate
+	dialer        proxy.Dialer
 }
 
-func NewDustClient(serverPublic string) *dustClient {
+func NewDustClient(serverPublic string, dialer proxy.Dialer) *dustClient {
 	unparsed := make(map[string]string)
 	unparsed["p"]=serverPublic
 
@@ -33,16 +36,16 @@ func NewDustClient(serverPublic string) *dustClient {
 		return nil
 	}
 
-	return &dustClient{serverPubkey: spub}
+	return &dustClient{serverPubkey: spub, dialer: dialer}
 }
 
-func NewDustServer(idPath string) *dustServer {
+func NewDustServer(idPath string, dialer proxy.Dialer) *dustServer {
 	spriv, err := Dust.LoadServerPrivateFile(idPath)
 	if err != nil {
 		return nil
 	}
 
-	return &dustServer{serverPrivkey: spriv}
+	return &dustServer{serverPrivkey: spriv, dialer: dialer}
 }
 
 type dustTransportListener struct {
@@ -54,10 +57,11 @@ type dustTransportListener struct {
 type Transport struct {
 	ServerPublic string
 	Address      string
+	Dialer       proxy.Dialer
 }
 
 func (transport Transport) Dial() (net.Conn, error) {
-	dustTransport := NewDustClient(transport.ServerPublic)
+	dustTransport := NewDustClient(transport.ServerPublic, transport.Dialer)
 	conn, err := dustTransport.Dial(transport.Address)
 	if err != nil {
 		return nil, err

@@ -8,6 +8,7 @@ package shadow
 
 import (
 	"fmt"
+	"golang.org/x/net/proxy"
 	"log"
 	"net"
 	"time"
@@ -19,14 +20,14 @@ import (
 
 // shadowTransport is the shadow implementation of the base.Transport interface.
 type shadowTransport struct {
-	dialer *net.Dialer
+	dialer proxy.Dialer
 
 	password   string
 	cipherName string
 }
 
-func NewShadowClient(password string, cipherName string) *shadowTransport {
-	return &shadowTransport{dialer: nil, password: password, cipherName: cipherName}
+func NewShadowClient(password string, cipherName string, dialer proxy.Dialer) *shadowTransport {
+	return &shadowTransport{dialer: dialer, password: password, cipherName: cipherName}
 }
 
 func NewShadowServer(password string, cipherName string) *shadowTransport {
@@ -42,10 +43,11 @@ type Transport struct {
 	Password   string
 	CipherName string
 	Address    string
+	Dialer     proxy.Dialer
 }
 
 func (transport Transport) Dial() (net.Conn, error) {
-	shadowTransport := NewShadowClient(transport.Password, transport.CipherName)
+	shadowTransport := NewShadowClient(transport.Password, transport.CipherName, transport.Dialer)
 	conn, err := shadowTransport.Dial(transport.Address)
 	if err != nil {
 		return nil, err
@@ -61,8 +63,8 @@ func newShadowTransportListener(listener *net.TCPListener, transport *shadowTran
 // Methods that the implement base.Transport interface
 // Dialer for the underlying network connection
 // The Dialer can be modified to change how the network connections are made.
-func (transport *shadowTransport) NetworkDialer() net.Dialer {
-	return *transport.dialer
+func (transport *shadowTransport) NetworkDialer() proxy.Dialer {
+	return transport.dialer
 }
 
 // Create outgoing transport connection
