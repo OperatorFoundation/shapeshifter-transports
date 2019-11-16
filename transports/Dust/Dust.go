@@ -39,13 +39,13 @@ func NewDustClient(serverPublic string, dialer proxy.Dialer) *dustClient {
 	return &dustClient{serverPubkey: spub, dialer: dialer}
 }
 
-func NewDustServer(idPath string, dialer proxy.Dialer) *dustServer {
+func NewDustServer(idPath string) *dustServer {
 	spriv, err := Dust.LoadServerPrivateFile(idPath)
 	if err != nil {
 		return nil
 	}
 
-	return &dustServer{serverPrivkey: spriv, dialer: dialer}
+	return &dustServer{serverPrivkey: spriv}
 }
 
 type dustTransportListener struct {
