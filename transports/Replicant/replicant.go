@@ -9,7 +9,6 @@ package replicant
 import (
 	"bytes"
 	"fmt"
-	"golang.org/x/net/proxy"
 	"net"
 
 	"github.com/OperatorFoundation/shapeshifter-transports/transports/Replicant/polish"
@@ -19,7 +18,6 @@ import (
 // replicantTransport is the replicant implementation of the base.Transport interface.
 type replicantTransport struct {
 	config 		Config
-	dialer      proxy.Dialer
 }
 
 type ReplicantConnectionState struct {
@@ -43,8 +41,8 @@ type replicantTransportListener struct {
 	transport *replicantTransport
 }
 
-func New(config Config, dialer proxy.Dialer) *replicantTransport {
-	return &replicantTransport{config: config, dialer: dialer}
+func New(config Config) *replicantTransport {
+	return &replicantTransport{config: config}
 }
 
 func newReplicantTransportListener(listener *net.TCPListener, transport *replicantTransport) *replicantTransportListener {

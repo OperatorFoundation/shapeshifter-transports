@@ -40,7 +40,6 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"golang.org/x/net/proxy"
 	"io"
 	"io/ioutil"
 	"net"
@@ -75,7 +74,7 @@ var (
 
 // Transport that uses domain fronting to shapeshift the application network traffic
 type meekTransport struct {
-	dialer proxy.Dialer
+	dialer *net.Dialer
 
 	clientArgs *meekClientArgs
 }
@@ -90,21 +89,21 @@ func NewMeekTransport(url string) *meekTransport {
 	return &meekTransport{dialer: nil, clientArgs: clientArgs}
 }
 
-func NewMeekTransportWithFront(url string, front string, dialer proxy.Dialer) *meekTransport {
+func NewMeekTransportWithFront(url string, front string) *meekTransport {
 	clientArgs, err := newClientArgsWithFront(url, front)
 	if err != nil {
 		return nil
 	}
 
-	return &meekTransport{dialer: dialer, clientArgs: clientArgs}
+	return &meekTransport{dialer: nil, clientArgs: clientArgs}
 }
 
 // Methods that implement the base.Transport interface
 
 // Dialer for the underlying network connection
 // The Dialer can be modified to change how the network connections are made.
-func (transport *meekTransport) NetworkDialer() proxy.Dialer {
-	return transport.dialer
+func (transport *meekTransport) NetworkDialer() net.Dialer {
+	return *transport.dialer
 }
 
 // Create outgoing transport connection
@@ -138,11 +137,10 @@ type Transport struct {
 	Url     *gourl.URL
 	Front   string
 	Address string
-	Dialer  proxy.Dialer
 }
 
 func (transport Transport) Dial() (net.Conn, error) {
-	meekTransport := NewMeekTransportWithFront(transport.Url.String(), transport.Front, transport.Dialer)
+	meekTransport := NewMeekTransportWithFront(transport.Url.String(), transport.Front )
 	conn := meekTransport.Dial(transport.Address)
 	return conn, nil
 }
