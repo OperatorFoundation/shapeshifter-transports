@@ -8,6 +8,7 @@ package replicant
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"golang.org/x/net/proxy"
 	"net"
@@ -78,6 +79,11 @@ func NewServerConnection(conn net.Conn, config Config) (*ReplicantConnection, er
 	var buffer bytes.Buffer
 
 	state := NewReplicantClientConnectionState(config)
+	if state == nil {
+		fmt.Println("Received a nil state when trying to create a new server connection.")
+		return  nil, errors.New("Received a nil state when trying to create a new server connection.")
+	}
+	
 	rconn := &ReplicantConnection{state, conn, &buffer}
 
 	if state.toneburst != nil {
