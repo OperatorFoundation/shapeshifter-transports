@@ -80,15 +80,20 @@ func NewServerConnection(conn net.Conn, config Config) (*ReplicantConnection, er
 	state := NewReplicantClientConnectionState(config)
 	rconn := &ReplicantConnection{state, conn, &buffer}
 
-	err := state.toneburst.Perform(conn)
-	if err == nil {
-		return nil, err
+	if state.toneburst != nil {
+		err := state.toneburst.Perform(conn)
+		if err != nil {
+			fmt.Println("Toneburst error: ", err.Error())
+			return nil, err
+		}
 	}
 
-	err = state.polish.Handshake(conn)
-	if err != nil {
-		fmt.Println("Polish handshake failed")
-		return nil, err
+	if state.polish != nil {
+		err := state.polish.Handshake(conn)
+		if err != nil {
+			fmt.Println("Polish handshake failed", err.Error())
+			return nil, err
+		}
 	}
 
 	return rconn, nil

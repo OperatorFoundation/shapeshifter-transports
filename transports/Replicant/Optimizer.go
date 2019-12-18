@@ -6,6 +6,7 @@ import (
 	"net"
 )
 
+// This makes Replicant compliant with Optimizer
 type Transport struct {
 	Config  Config
 	Address string

@@ -16,12 +16,13 @@ func TestReplicantTransport_Dial(t *testing.T) {
 	}
 	replicantTransport := Transport{
 		Config:  replicantConfig,
-		Address: "127.0.0.1:1234",
+		Address: "159.203.158.90:1234",
 		Dialer:  dialer,
 	}
 
 	_, err := replicantTransport.Dial()
 	if err != nil {
+		println(err.Error())
 		t.Fail()
 	}
 }

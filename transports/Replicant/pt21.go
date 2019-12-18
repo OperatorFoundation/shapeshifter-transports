@@ -11,6 +11,7 @@ import (
 func (transport *replicantTransport) Dial(address string) net.Conn {
 	conn, dialErr := net.Dial("tcp", address)
 	if dialErr != nil {
+		fmt.Println("Dial Error: ")
 		return nil
 	}
 
@@ -18,6 +19,7 @@ func (transport *replicantTransport) Dial(address string) net.Conn {
 
 	transportConn, err := NewClientConnection(conn, config)
 	if err != nil {
+		fmt.Println("Connection Error: ")
 		if conn != nil {
 			_ = conn.Close()
 		}
