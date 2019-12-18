@@ -83,7 +83,7 @@ func NewServerConnection(conn net.Conn, config Config) (*ReplicantConnection, er
 		fmt.Println("Received a nil state when trying to create a new server connection.")
 		return  nil, errors.New("Received a nil state when trying to create a new server connection.")
 	}
-	
+
 	rconn := &ReplicantConnection{state, conn, &buffer}
 
 	if state.toneburst != nil {
