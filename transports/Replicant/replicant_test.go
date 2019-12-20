@@ -126,17 +126,22 @@ func TestSilverPolishUnpolish(t *testing.T) {
 	}
 
 	input := []byte{0, 1, 2, 3, 4}
+
 	polished := silverClient.Polish(input)
 	if bytes.Equal(input, polished) {
 		fmt.Println("original input and polished are the same")
 		t.Fail()
 	}
 
+	println("data before polish length:", len(input))
+	println("after polish: ", len(polished))
+
 	unpolished := silverClient.Unpolish(polished)
+	println("unpolished length: ", len(unpolished))
 	if !bytes.Equal(unpolished, input) {
 		fmt.Println("original input and unpolished are not the same")
-		println(input)
-		println(unpolished)
+		fmt.Printf("%v\n", input)
+		fmt.Printf("%v\n", unpolished)
 		t.Fail()
 	}
 }
