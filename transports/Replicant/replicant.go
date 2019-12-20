@@ -68,10 +68,12 @@ func NewClientConnection(conn net.Conn, config Config) (*ReplicantConnection, er
 
 	}
 	//FIXME: Handshake when polish is nil
-	err := state.polish.Handshake(conn)
-	if err != nil {
-		fmt.Println("Polish handshake failed")
-		return nil, err
+	if state.polish != nil {
+		err := state.polish.Handshake(conn)
+		if err != nil {
+			fmt.Println("Polish handshake failed")
+			return nil, err
+		}
 	}
 
 	return rconn, nil
