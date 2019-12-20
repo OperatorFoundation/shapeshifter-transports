@@ -57,6 +57,11 @@ func NewClientConnection(conn net.Conn, config Config) (*ReplicantConnection, er
 	var buffer bytes.Buffer
 
 	state := NewReplicantClientConnectionState(config)
+
+	if state == nil {
+		println("Failed to get NewReplicantClientConnectionState using the provided config.")
+		return  nil, errors.New("Failed to get state using the provided config.")
+	}
 	rconn := &ReplicantConnection{state, conn, &buffer}
 
 	err := state.toneburst.Perform(conn)
@@ -105,6 +110,7 @@ func NewServerConnection(conn net.Conn, config Config) (*ReplicantConnection, er
 	return rconn, nil
 }
 
+//Fixme: should return error
 func NewReplicantClientConnectionState(config Config) *ReplicantConnectionState {
 	toneburst := toneburst.New(config.Toneburst)
 	polish := polish.NewClient(config.Polish)
