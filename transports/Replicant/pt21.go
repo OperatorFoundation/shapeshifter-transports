@@ -11,6 +11,7 @@ import (
 func (transport *replicantTransport) Dial(address string) net.Conn {
 	conn, dialErr := net.Dial("tcp", address)
 	if dialErr != nil {
+		fmt.Println("Dial Error: ")
 		return nil
 	}
 
@@ -18,6 +19,7 @@ func (transport *replicantTransport) Dial(address string) net.Conn {
 
 	transportConn, err := NewClientConnection(conn, config)
 	if err != nil {
+		fmt.Println("Connection Error: ")
 		if conn != nil {
 			_ = conn.Close()
 		}
@@ -68,22 +70,33 @@ func (listener *replicantTransportListener) Close() error {
 	return listener.listener.Close()
 }
 
+// FIXME: Rewrite this so that it is more readable (variable names and flow)
 func (sconn *ReplicantConnection) Read(b []byte) (int, error) {
-	polished := b
 
-	_, err := sconn.conn.Read(polished)
-	if err != nil {
-		return 0, err
+	if sconn.state.polish != nil {
+		polished := b
+
+		_, err := sconn.conn.Read(polished)
+		if err != nil {
+			return 0, err
+		}
+
+		unpolished := sconn.state.polish.Unpolish(polished)
+		sconn.receiveBuffer.Reset()
+		sconn.receiveBuffer.Write(unpolished)
+		sconn.receiveBuffer.Read(b)
+		sconn.receiveBuffer.Reset()
+
+		return len(b), nil
+	} else {
+		_, err := sconn.conn.Read(b)
+		if err != nil {
+			return 0, err
+		}
+
+		return len(b), nil
 	}
 
-	unpolished := sconn.state.polish.Unpolish(polished)
-	sconn.receiveBuffer.Reset()
-	sconn.receiveBuffer.Write(unpolished)
-	sconn.receiveBuffer.Read(b)
-	sconn.receiveBuffer.Reset()
-
-	// FIXME
-	return len(b), nil
 }
 
 func (sconn *ReplicantConnection ) Write(b []byte) (int, error) {

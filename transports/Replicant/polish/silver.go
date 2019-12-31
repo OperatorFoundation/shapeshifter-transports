@@ -5,6 +5,7 @@ import (
 	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/sha256"
+	"encoding/binary"
 	"fmt"
 	"golang.org/x/crypto/chacha20poly1305"
 	"golang.org/x/crypto/hkdf"
@@ -84,18 +85,23 @@ func NewSilverServerConfig() *SilverPolishServerConfig {
 	tempSharedKeyX, tempSharedKeyY := curve.ScalarMult(serverX, serverY, tempClientPrivateKey)
 	tempSharedKeySeed := elliptic.Marshal(curve, tempSharedKeyX, tempSharedKeyY)
 
-	hasher := sha256.New
-	kdf := hkdf.New(hasher, tempSharedKeySeed, nil, nil)
-	tempSharedKey := make([]byte, chacha20poly1305.KeySize)
-	_, err = kdf.Read(tempSharedKey)
-	if err != nil {
-		fmt.Println("Error hashing key seed for temporary shared key while making new config")
-		return nil
-	}
+	// X963 KDF
+	// FIXME
+	encryptionKey := X963KDF(tempSharedKeySeed, serverPublicKey)
 
-	tempCipher, err := chacha20poly1305.New(tempSharedKey)
+	//hasher := sha256.New
+	//kdf := hkdf.New(hasher, tempSharedKeySeed, nil, nil)
+	//tempSharedKey := make([]byte, chacha20poly1305.KeySize)
+	//_, err = kdf.Read(tempSharedKey)
+	//if err != nil {
+	//	fmt.Println("Error hashing key seed for temporary shared key while making new config")
+	//	return nil
+	//}
+
+	tempCipher, err := chacha20poly1305.New(encryptionKey)
 	if err != nil {
 		fmt.Println("Error generating new config")
+		fmt.Println(err)
 		return nil
 	}
 
@@ -134,18 +140,55 @@ func NewSilverClient(config SilverPolishClientConfig) *SilverPolishClient {
 	sharedKeyX, sharedKeyY := curve.ScalarMult(serverX, serverY, clientPrivateKey)
 	sharedKeySeed := elliptic.Marshal(curve, sharedKeyX, sharedKeyY)
 
-	hasher := sha256.New
-	kdf := hkdf.New(hasher, sharedKeySeed, nil, nil)
-	sharedKey := make([]byte, chacha20poly1305.KeySize)
-	kdf.Read(sharedKey)
+	encryptionKey := X963KDF(sharedKeySeed, clientPublicKey)
 
-	polishCipher, err := chacha20poly1305.New(sharedKey[:])
+	// FIXME: Is this a correct replacement?
+	//hasher := sha256.New
+	//kdf := hkdf.New(hasher, sharedKeySeed, nil, nil)
+	//sharedKey := make([]byte, chacha20poly1305.KeySize)
+	//kdf.Read(sharedKey)
+
+	polishCipher, err := chacha20poly1305.New(encryptionKey[:])
 	if err != nil {
 		fmt.Println("Error initializing polish client")
 		return nil
 	}
-	polishClient := SilverPolishClient{config.ServerPublicKey, config.ChunkSize, clientPublicKey, clientPrivateKey, sharedKey, polishCipher}
+	polishClient := SilverPolishClient{config.ServerPublicKey, config.ChunkSize, clientPublicKey, clientPrivateKey, encryptionKey, polishCipher}
 	return &polishClient
+}
+
+func X963KDF(sharedKeySeed []byte, ephemeralPublicKey []byte) []byte {
+
+	//FIXME: Is this a correct X963 KDF
+	length := 32
+	output := make([]byte, 0)
+	outlen := 0
+	counter := uint32(1)
+
+	for outlen < length {
+		h := sha256.New()
+		h.Write(sharedKeySeed) // Key Material: ECDH Key
+
+		counterBuf := make([]byte, 4)
+		binary.BigEndian.PutUint32(counterBuf, counter)
+		h.Write(counterBuf)
+
+		h.Write(ephemeralPublicKey) // Shared Info: Our public key
+
+		output = h.Sum(output)
+		outlen += h.Size()
+		counter += 1
+	}
+
+	// Key
+	//encryptionKey := output[0:16]
+	//iv := output[16:]
+	//
+	//fmt.Println("Created an encryption key and iv for the Silver client:")
+	//fmt.Println(hex.EncodeToString(encryptionKey))
+	//fmt.Println(hex.EncodeToString(iv))
+
+	return output
 }
 
 func NewSilverServer(config SilverPolishServerConfig) *SilverPolishServer {
@@ -169,6 +212,7 @@ func (silver SilverPolishClient) Handshake(conn net.Conn) error {
 	return nil
 }
 
+//FIXME: Output is unused
 func (silver SilverPolishClient) Polish(input []byte) []byte {
 	var output []byte
 
@@ -176,21 +220,26 @@ func (silver SilverPolishClient) Polish(input []byte) []byte {
 	nonce := make([]byte, silver.polishCipher.NonceSize())
 	rand.Read(nonce)
 
-	silver.polishCipher.Seal(output, nonce, input, nil)
-
-	result := append(nonce, output...)
+	sealResult := silver.polishCipher.Seal(output, nonce, input, nil)
+	fmt.Printf("Input: %v\n: ", input)
+	fmt.Printf("Seal result: %v\n", sealResult)
+	fmt.Printf("Output after seal: %v\n", output)
+	result := append(nonce, sealResult...)
 
 	return result
 }
 
+//FIXME: this should return an error
 func (silver SilverPolishClient) Unpolish(input []byte) []byte {
-	var output []byte
-
 	nonceSize := silver.polishCipher.NonceSize()
 	nonce := input[:nonceSize]
 	data := input[nonceSize:]
 
-	silver.polishCipher.Open(output, nonce, data, nil)
+	output, openError := silver.polishCipher.Open([]byte{}, nonce, data, nil)
+	if openError != nil {
+		fmt.Println("Unpolish error: ", openError)
+		return nil
+	}
 
 	return output
 }

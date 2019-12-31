@@ -8,6 +8,7 @@ package replicant
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"golang.org/x/net/proxy"
 	"net"
@@ -58,16 +59,21 @@ func NewClientConnection(conn net.Conn, config Config) (*ReplicantConnection, er
 	state := NewReplicantClientConnectionState(config)
 	rconn := &ReplicantConnection{state, conn, &buffer}
 
-	err := state.toneburst.Perform(conn)
-	if err != nil {
-		fmt.Println("Toneburst failed")
-		return nil, err
-	}
+	if state.toneburst != nil {
+		err := state.toneburst.Perform(conn)
+		if err != nil {
+			fmt.Println("Toneburst failed")
+			return nil, err
+		}
 
-	err = state.polish.Handshake(conn)
-	if err != nil {
-		fmt.Println("Polish handshake failed")
-		return nil, err
+	}
+	//FIXME: Handshake when polish is nil
+	if state.polish != nil {
+		err := state.polish.Handshake(conn)
+		if err != nil {
+			fmt.Println("Polish handshake failed")
+			return nil, err
+		}
 	}
 
 	return rconn, nil
@@ -78,22 +84,33 @@ func NewServerConnection(conn net.Conn, config Config) (*ReplicantConnection, er
 	var buffer bytes.Buffer
 
 	state := NewReplicantClientConnectionState(config)
-	rconn := &ReplicantConnection{state, conn, &buffer}
-
-	err := state.toneburst.Perform(conn)
-	if err == nil {
-		return nil, err
+	if state == nil {
+		fmt.Println("Received a nil state when trying to create a new server connection.")
+		return  nil, errors.New("Received a nil state when trying to create a new server connection.")
 	}
 
-	err = state.polish.Handshake(conn)
-	if err != nil {
-		fmt.Println("Polish handshake failed")
-		return nil, err
+	rconn := &ReplicantConnection{state, conn, &buffer}
+
+	if state.toneburst != nil {
+		err := state.toneburst.Perform(conn)
+		if err != nil {
+			fmt.Println("Toneburst error: ", err.Error())
+			return nil, err
+		}
+	}
+
+	if state.polish != nil {
+		err := state.polish.Handshake(conn)
+		if err != nil {
+			fmt.Println("Polish handshake failed", err.Error())
+			return nil, err
+		}
 	}
 
 	return rconn, nil
 }
 
+//Fixme: should return error
 func NewReplicantClientConnectionState(config Config) *ReplicantConnectionState {
 	toneburst := toneburst.New(config.Toneburst)
 	polish := polish.NewClient(config.Polish)

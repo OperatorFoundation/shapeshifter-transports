@@ -19,6 +19,12 @@ func New(config *Config) ToneBurst {
 		} else {
 			return NewWhalesong(*config.Whalesong)
 		}
+	case "monolith":
+		if config.Monolith == nil {
+			return nil
+		} else {
+			return NewMonolith(*config.Monolith)
+		}
 	default:
 		return nil
 	}
