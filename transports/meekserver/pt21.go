@@ -45,11 +45,11 @@ import (
 )
 
 // Transport that uses domain fronting to shapeshift the application network traffic
-type meekServer struct {
-	disableTLS   bool
-	acmeEmail    string
-	acmeHostname string
-	certManager  *autocert.Manager
+type MeekServer struct {
+	DisableTLS   bool
+	AcmeEmail    string
+	AcmeHostname string
+	CertManager  *autocert.Manager
 }
 
 type meekListener struct {
@@ -99,7 +99,7 @@ func (listener meekListener) Addr() net.Addr {
 	return addrs[0]
 }
 
-//FIXME begin critical importance
+
 func (conn meekServerConn) Read(b []byte) (n int, err error) {
 	if len(conn.session.Or.readBuffer) == 0 {
 		return 0, nil
@@ -143,7 +143,7 @@ func (conn meekServerConn) SetWriteDeadline(t time.Time) error {
 
 // Public initializer method to get a new meek transport
 
-func NewMeekTransportServer(disableTLS bool, acmeEmail string, acmeHostnamesCommas string, stateDir string) *meekServer {
+func NewMeekTransportServer(disableTLS bool, acmeEmail string, acmeHostnamesCommas string, stateDir string) *MeekServer {
 	var certManager *autocert.Manager
 	if disableTLS {
 		if acmeEmail != "" || acmeHostnamesCommas != "" {
@@ -178,13 +178,13 @@ func NewMeekTransportServer(disableTLS bool, acmeEmail string, acmeHostnamesComm
 			}
 		}
 	}
-	return &meekServer{disableTLS, acmeEmail, acmeHostnamesCommas, certManager}
+	return &MeekServer{disableTLS, acmeEmail, acmeHostnamesCommas, certManager}
 }
 
 // Methods that implement the base.Transport interface
 
 // The meek transport does not have a corresponding server, only a client
-func (transport *meekServer) Listen(address string) net.Listener {
+func (transport *MeekServer) Listen(address string) net.Listener {
 	var ln net.Listener
 	var state *State
 	var err error
@@ -205,13 +205,13 @@ func (transport *meekServer) Listen(address string) net.Listener {
 		return nil
 	}
 	go func() {
-		log.Fatal(http.Serve(lnHTTP01, transport.certManager.HTTPHandler(nil)))
+		log.Fatal(http.Serve(lnHTTP01, transport.CertManager.HTTPHandler(nil)))
 	}()
 	var server *http.Server
-	if transport.disableTLS {
+	if transport.DisableTLS {
 		server, state, err = startServer(addr)
 	} else {
-		server, state, err = startServerTLS(addr, transport.certManager.GetCertificate)
+		server, state, err = startServerTLS(addr, transport.CertManager.GetCertificate)
 	}
 	if err != nil {
 
