@@ -4,5 +4,5 @@ type Config struct {
 	Selector string
 
 	Whalesong *WhalesongConfig
-	Monolith *MonolithConfig
+	Monotone *MonotoneConfig
 }

@@ -20,10 +20,10 @@ func New(config *Config) ToneBurst {
 			return NewWhalesong(*config.Whalesong)
 		}
 	case "monolith":
-		if config.Monolith == nil {
+		if config.Monotone == nil {
 			return nil
 		} else {
-			return NewMonolith(*config.Monolith)
+			return NewMonotone(*config.Monotone)
 		}
 	default:
 		return nil

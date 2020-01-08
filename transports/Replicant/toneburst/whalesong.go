@@ -17,6 +17,8 @@ func NewWhalesong(config WhalesongConfig) *Whalesong {
 	return &Whalesong{config: config}
 }
 
+
+//TODO: Implement Perform
 func (whalesong *Whalesong) Perform(conn net.Conn) error {
 	return nil
 }
