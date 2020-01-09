@@ -15,46 +15,40 @@ import (
 	"github.com/OperatorFoundation/shapeshifter-transports/transports/replicant/toneburst"
 )
 
-// replicantTransport is the replicant implementation of the base.Transport interface.
-type replicantTransport struct {
-	config Config
-}
-
-type ReplicantConnectionState struct {
+type ConnectionState struct {
 	toneburst toneburst.ToneBurst
-	polish    polish.PolishConnection
+	polish    polish.Connection
 }
 
-type ReplicantConnection struct {
-	state *ReplicantConnectionState
+type Connection struct {
+	state *ConnectionState
 	conn net.Conn
 	receiveBuffer *bytes.Buffer
 }
 
-type ReplicantServer struct {
+type Server struct {
 	toneburst toneburst.ToneBurst
-	polish    polish.PolishServer
+	polish    polish.Server
 }
 
 type replicantTransportListener struct {
 	listener  *net.TCPListener
-	transport *replicantTransport
+	config ServerConfig
 }
 
-func New(config Config) *replicantTransport {
-	return &replicantTransport{config: config}
+func newReplicantTransportListener(listener *net.TCPListener, config ServerConfig) *replicantTransportListener {
+	return &replicantTransportListener{listener: listener, config: config}
 }
 
-func newReplicantTransportListener(listener *net.TCPListener, transport *replicantTransport) *replicantTransportListener {
-	return &replicantTransportListener{listener: listener, transport: transport}
-}
-
-func NewClientConnection(conn net.Conn, config Config) (*ReplicantConnection, error) {
+func NewClientConnection(conn net.Conn, config ClientConfig) (*Connection, error) {
 	// Initialize a client connection.
 	var buffer bytes.Buffer
 
-	state := NewReplicantClientConnectionState(config)
-	rconn := &ReplicantConnection{state, conn, &buffer}
+	state, clientError := NewReplicantClientConnectionState(config)
+	if clientError != nil {
+		return nil, clientError
+	}
+	rconn := &Connection{state, conn, &buffer}
 
 	err := state.toneburst.Perform(conn)
 	if err != nil {
@@ -71,12 +65,20 @@ func NewClientConnection(conn net.Conn, config Config) (*ReplicantConnection, er
 	return rconn, nil
 }
 
-func NewServerConnection(conn net.Conn, config Config) (*ReplicantConnection, error) {
+func NewServerConnection(conn net.Conn, config ServerConfig) (*Connection, error) {
 	// Initialize a client connection.
 	var buffer bytes.Buffer
 
-	state := NewReplicantClientConnectionState(config)
-	rconn := &ReplicantConnection{state, conn, &buffer}
+	polishServer, serverError := config.Polish.Construct()
+	if serverError != nil {
+		return nil, serverError
+	}
+
+	state, connError := NewReplicantServerConnectionState(config, polishServer, conn)
+	if connError != nil {
+		return nil, connError
+	}
+	rconn := &Connection{state, conn, &buffer}
 
 	err := state.toneburst.Perform(conn)
 	if err == nil {
@@ -92,16 +94,25 @@ func NewServerConnection(conn net.Conn, config Config) (*ReplicantConnection, er
 	return rconn, nil
 }
 
-func NewReplicantClientConnectionState(config Config) *ReplicantConnectionState {
-	toneburst := toneburst.New(config.toneburst)
-	polish := polish.NewClient(config.polish)
+func NewReplicantClientConnectionState(config ClientConfig) (*ConnectionState, error) {
+	tb, toneburstError := config.Toneburst.Construct()
+	if toneburstError != nil {
+		return nil, toneburstError
+	}
+	p, polishError := config.Polish.Construct()
+	if polishError != nil {
+		return nil, polishError
+	}
 
-	return &ReplicantConnectionState{toneburst, polish}
+	return &ConnectionState{tb, p}, nil
 }
 
-func NewReplicantServerConnectionState(config Config, polishServer polish.PolishServer, conn net.Conn) *ReplicantConnectionState {
-	toneburst := toneburst.New(config.toneburst)
-	polish := polishServer.NewConnection(conn)
+func NewReplicantServerConnectionState(config ServerConfig, polishServer polish.Server, conn net.Conn) (*ConnectionState, error) {
+	tb, toneburstError := config.Toneburst.Construct()
+	if toneburstError != nil {
+		return nil, toneburstError
+	}
+	p := polishServer.NewConnection(conn)
 
-	return &ReplicantConnectionState{toneburst, polish}
+	return &ConnectionState{tb, p}, nil
 }

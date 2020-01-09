@@ -1,7 +1,9 @@
 package polish
 
-type Config struct {
-	selector string
+type ServerConfig interface {
+	Construct() (Server, error)
+}
 
-	silver *SilverPolishConfig
+type ClientConfig interface {
+	Construct() (Connection, error)
 }

@@ -8,13 +8,11 @@ import (
 )
 
 // Create outgoing transport connection
-func (transport *replicantTransport) Dial(address string) net.Conn {
+func (config ClientConfig) Dial(address string) net.Conn {
 	conn, dialErr := net.Dial("tcp", address)
 	if dialErr != nil {
 		return nil
 	}
-
-	config := Config{}
 
 	transportConn, err := NewClientConnection(conn, config)
 	if err != nil {
@@ -28,7 +26,7 @@ func (transport *replicantTransport) Dial(address string) net.Conn {
 }
 
 // Create listener for incoming transport connection
-func (transport *replicantTransport) Listen(address string) net.Listener {
+func (config ServerConfig) Listen(address string) net.Listener {
 	addr, resolveErr := pt.ResolveAddr(address)
 	if resolveErr != nil {
 		fmt.Println(resolveErr.Error())
@@ -41,7 +39,7 @@ func (transport *replicantTransport) Listen(address string) net.Listener {
 		return nil
 	}
 
-	return newReplicantTransportListener(ln, transport)
+	return newReplicantTransportListener(ln, config)
 }
 
 func (listener *replicantTransportListener) Addr() net.Addr {
@@ -57,7 +55,8 @@ func (listener *replicantTransportListener) Accept() (net.Conn, error) {
 		return nil, err
 	}
 
-	config := Config{}
+	// FIXME - we need a real server config, not this empty one
+	config := ServerConfig{}
 
 	return NewServerConnection(conn, config)
 }
@@ -68,7 +67,7 @@ func (listener *replicantTransportListener) Close() error {
 	return listener.listener.Close()
 }
 
-func (sconn *ReplicantConnection) Read(b []byte) (int, error) {
+func (sconn *Connection) Read(b []byte) (int, error) {
 	polished := b
 
 	_, err := sconn.conn.Read(polished)
@@ -79,43 +78,45 @@ func (sconn *ReplicantConnection) Read(b []byte) (int, error) {
 	unpolished := sconn.state.polish.Unpolish(polished)
 	sconn.receiveBuffer.Reset()
 	sconn.receiveBuffer.Write(unpolished)
-	sconn.receiveBuffer.Read(b)
+	_, readError := sconn.receiveBuffer.Read(b)
+	if readError != nil {
+		return 0, readError
+	}
 	sconn.receiveBuffer.Reset()
 
-	// FIXME
 	return len(b), nil
 }
 
-func (sconn *ReplicantConnection ) Write(b []byte) (int, error) {
+func (sconn *Connection) Write(b []byte) (int, error) {
 	unpolished := b
 	polished := sconn.state.polish.Polish(unpolished)
 
 	return sconn.conn.Write(polished)
 }
 
-func (sconn *ReplicantConnection ) Close() error {
+func (sconn *Connection) Close() error {
 	return sconn.conn.Close()
 }
 
-func (sconn *ReplicantConnection ) LocalAddr() net.Addr {
+func (sconn *Connection) LocalAddr() net.Addr {
 	return sconn.conn.LocalAddr()
 }
 
-func (sconn *ReplicantConnection ) RemoteAddr() net.Addr {
+func (sconn *Connection) RemoteAddr() net.Addr {
 	return sconn.conn.RemoteAddr()
 }
 
-func (sconn *ReplicantConnection ) SetDeadline(t time.Time) error {
+func (sconn *Connection) SetDeadline(t time.Time) error {
 	return sconn.conn.SetDeadline(t)
 }
 
-func (sconn *ReplicantConnection ) SetReadDeadline(t time.Time) error {
+func (sconn *Connection) SetReadDeadline(t time.Time) error {
 	return sconn.conn.SetReadDeadline(t)
 }
 
-func (sconn *ReplicantConnection ) SetWriteDeadline(t time.Time) error {
+func (sconn *Connection) SetWriteDeadline(t time.Time) error {
 	return sconn.conn.SetWriteDeadline(t)
 }
 
 var _ net.Listener = (*replicantTransportListener)(nil)
-var _ net.Conn = (*ReplicantConnection )(nil)
+var _ net.Conn = (*Connection)(nil)
