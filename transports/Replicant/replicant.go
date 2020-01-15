@@ -17,47 +17,40 @@ import (
 	"github.com/OperatorFoundation/shapeshifter-transports/transports/Replicant/toneburst"
 )
 
-// replicantTransport is the replicant implementation of the base.Transport interface.
-type replicantTransport struct {
-	config 		Config
-	dialer      proxy.Dialer
-}
-
-type ReplicantConnectionState struct {
+type ConnectionState struct {
 	toneburst toneburst.ToneBurst
-	polish    polish.PolishConnection
+	polish    polish.Connection
 }
 
-type ReplicantConnection struct {
-	state *ReplicantConnectionState
+type Connection struct {
+	state *ConnectionState
 	conn net.Conn
 	receiveBuffer *bytes.Buffer
 }
 
-type ReplicantServer struct {
+type Server struct {
 	toneburst toneburst.ToneBurst
-	polish    polish.PolishServer
+	polish    polish.Server
 }
 
 type replicantTransportListener struct {
 	listener  *net.TCPListener
-	transport *replicantTransport
+	config ServerConfig
 }
 
-func New(config Config, dialer proxy.Dialer) *replicantTransport {
-	return &replicantTransport{config: config, dialer: dialer}
+func newReplicantTransportListener(listener *net.TCPListener, config ServerConfig) *replicantTransportListener {
+	return &replicantTransportListener{listener: listener, config: config}
 }
 
-func newReplicantTransportListener(listener *net.TCPListener, transport *replicantTransport) *replicantTransportListener {
-	return &replicantTransportListener{listener: listener, transport: transport}
-}
-
-func NewClientConnection(conn net.Conn, config Config) (*ReplicantConnection, error) {
+func NewClientConnection(conn net.Conn, config ClientConfig) (*Connection, error) {
 	// Initialize a client connection.
 	var buffer bytes.Buffer
 
-	state := NewReplicantClientConnectionState(config)
-	rconn := &ReplicantConnection{state, conn, &buffer}
+	state, clientError := NewReplicantClientConnectionState(config)
+	if clientError != nil {
+		return nil, clientError
+	}
+	rconn := &Connection{state, conn, &buffer}
 
 	if state.toneburst != nil {
 		err := state.toneburst.Perform(conn)
@@ -79,17 +72,20 @@ func NewClientConnection(conn net.Conn, config Config) (*ReplicantConnection, er
 	return rconn, nil
 }
 
-func NewServerConnection(conn net.Conn, config Config) (*ReplicantConnection, error) {
+func NewServerConnection(conn net.Conn, config ServerConfig) (*Connection, error) {
 	// Initialize a client connection.
 	var buffer bytes.Buffer
 
-	state := NewReplicantClientConnectionState(config)
-	if state == nil {
-		fmt.Println("Received a nil state when trying to create a new server connection.")
-		return  nil, errors.New("Received a nil state when trying to create a new server connection.")
+	polishServer, serverError := config.Polish.Construct()
+	if serverError != nil {
+		return nil, serverError
 	}
 
-	rconn := &ReplicantConnection{state, conn, &buffer}
+	state, connError := NewReplicantServerConnectionState(config, polishServer, conn)
+	if connError != nil {
+		return nil, connError
+	}
+	rconn := &Connection{state, conn, &buffer}
 
 	if state.toneburst != nil {
 		err := state.toneburst.Perform(conn)
@@ -110,18 +106,25 @@ func NewServerConnection(conn net.Conn, config Config) (*ReplicantConnection, er
 	return rconn, nil
 }
 
-//Fixme: should return error
-func NewReplicantClientConnectionState(config Config) *ReplicantConnectionState {
-	toneburst := toneburst.New(config.Toneburst)
-	polish := polish.NewClient(config.Polish)
+func NewReplicantClientConnectionState(config ClientConfig) (*ConnectionState, error) {
+	tb, toneburstError := config.Toneburst.Construct()
+	if toneburstError != nil {
+		return nil, toneburstError
+	}
+	p, polishError := config.Polish.Construct()
+	if polishError != nil {
+		return nil, polishError
+	}
 
-	return &ReplicantConnectionState{toneburst, polish}
+	return &ConnectionState{tb, p}, nil
 }
 
-func NewReplicantServerConnectionState(config Config, polishServer polish.PolishServer, conn net.Conn) *ReplicantConnectionState {
-	toneburst := toneburst.New(config.Toneburst)
-	polish := polishServer.NewConnection(conn)
+func NewReplicantServerConnectionState(config ServerConfig, polishServer polish.Server, conn net.Conn) (*ConnectionState, error) {
+	tb, toneburstError := config.Toneburst.Construct()
+	if toneburstError != nil {
+		return nil, toneburstError
+	}
+	p := polishServer.NewConnection(conn)
 
-	return &ReplicantConnectionState{toneburst, polish}
+	return &ConnectionState{tb, p}, nil
 }
-

@@ -1,8 +1,5 @@
 package toneburst
 
-type Config struct {
-	Selector string
-
-	Whalesong *WhalesongConfig
-	Monotone *MonotoneConfig
+type Config interface {
+	Construct() (ToneBurst, error)
 }

@@ -6,6 +6,7 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"golang.org/x/crypto/chacha20poly1305"
 	"golang.org/x/crypto/hkdf"
@@ -13,13 +14,6 @@ import (
 	"math/big"
 	"net"
 )
-
-type SilverPolishConfig struct {
-	ClientOrServer bool
-
-	ClientConfig *SilverPolishClientConfig
-	ServerConfig *SilverPolishServerConfig
-}
 
 type SilverPolishClientConfig struct {
 	ServerPublicKey []byte
@@ -30,6 +24,14 @@ type SilverPolishServerConfig struct {
 	ServerPublicKey  []byte
 	ServerPrivateKey []byte
 	ChunkSize        int
+}
+
+func (config SilverPolishServerConfig) Construct() (Server, error) {
+	return NewSilverServer(config)
+}
+
+func (config SilverPolishClientConfig) Construct() (Connection, error) {
+	return NewSilverClient(config)
 }
 
 type SilverPolishClient struct {
@@ -67,19 +69,17 @@ type CurvePoint struct {
 	Y *big.Int
 }
 
-func NewSilverServerConfig() *SilverPolishServerConfig {
+func NewSilverServerConfig() (*SilverPolishServerConfig, error) {
 	curve := elliptic.P256()
 	serverPrivateKey, serverX, serverY, err := elliptic.GenerateKey(curve, rand.Reader)
 	if err != nil {
-		fmt.Println("Error generating server private key")
-		return nil
+		return nil, errors.New("error generating server private key")
 	}
 	serverPublicKey := elliptic.Marshal(curve, serverX, serverY)
 
 	tempClientPrivateKey, _, _, err := elliptic.GenerateKey(curve, rand.Reader)
 	if err != nil {
-		fmt.Println("Error generating temporary client private key")
-		return nil
+		return nil, errors.New("error generating temporary client private key")
 	}
 
 	tempSharedKeyX, tempSharedKeyY := curve.ScalarMult(serverX, serverY, tempClientPrivateKey)
@@ -100,37 +100,33 @@ func NewSilverServerConfig() *SilverPolishServerConfig {
 
 	tempCipher, err := chacha20poly1305.New(encryptionKey)
 	if err != nil {
-		fmt.Println("Error generating new config")
-		fmt.Println(err)
-		return nil
+		return nil, errors.New("error generating new config")
 	}
 
 	basePayloadSize := 1024
 	payloadSizeRandomness, err := rand.Int(rand.Reader, big.NewInt(512))
 	if err != nil {
-		fmt.Println("Error generating random number for ChunkSize")
-		return nil
+		return nil, errors.New("error generating random number for ChunkSize")
 	}
 
 	payloadSize := basePayloadSize + int(payloadSizeRandomness.Int64())
 	chunkSize := tempCipher.NonceSize() + tempCipher.Overhead() + payloadSize
 
 	config := SilverPolishServerConfig{serverPublicKey, serverPrivateKey, chunkSize}
-	return &config
+	return &config, nil
 }
 
-func NewSilverClientConfig(serverConfig *SilverPolishServerConfig) *SilverPolishClientConfig {
+func NewSilverClientConfig(serverConfig *SilverPolishServerConfig) (*SilverPolishClientConfig, error) {
 	config := SilverPolishClientConfig{serverConfig.ServerPublicKey, serverConfig.ChunkSize}
-	return &config
+	return &config, nil
 }
 
-func NewSilverClient(config SilverPolishClientConfig) *SilverPolishClient {
+func NewSilverClient(config SilverPolishClientConfig) (Connection, error) {
 	// Generate a new random private key
 	curve := elliptic.P256()
 	clientPrivateKey, clientX, clientY, err := elliptic.GenerateKey(curve, rand.Reader)
 	if err != nil {
-		fmt.Println("Error generating client private key")
-		return nil
+		return nil, errors.New("error generating client private key")
 	}
 	clientPublicKey := elliptic.Marshal(curve, clientX, clientY)
 
@@ -150,8 +146,7 @@ func NewSilverClient(config SilverPolishClientConfig) *SilverPolishClient {
 
 	polishCipher, err := chacha20poly1305.New(encryptionKey[:])
 	if err != nil {
-		fmt.Println("Error initializing polish client")
-		return nil
+		return nil, errors.New("error initializing polish client")
 	}
 	polishClient := SilverPolishClient{config.ServerPublicKey, config.ChunkSize, clientPublicKey, clientPrivateKey, encryptionKey, polishCipher}
 	return &polishClient
@@ -191,12 +186,12 @@ func X963KDF(sharedKeySeed []byte, ephemeralPublicKey []byte) []byte {
 	return output
 }
 
-func NewSilverServer(config SilverPolishServerConfig) *SilverPolishServer {
+func NewSilverServer(config SilverPolishServerConfig) (SilverPolishServer, error) {
 	polishServer := SilverPolishServer{config.ServerPublicKey, config.ServerPrivateKey, config.ChunkSize, make(map[net.Conn]SilverPolishServerConnection)}
-	return &polishServer
+	return polishServer, nil
 }
 
-func (config SilverPolishServer) NewConnection(conn net.Conn) PolishConnection {
+func (config SilverPolishServer) NewConnection(conn net.Conn) Connection {
 	polishServerConnection := SilverPolishServerConnection{config.serverPublicKey, config.serverPrivateKey, config.chunkSize, nil, nil, nil}
 	config.connections[conn] = polishServerConnection
 
@@ -206,8 +201,15 @@ func (config SilverPolishServer) NewConnection(conn net.Conn) PolishConnection {
 func (silver SilverPolishClient) Handshake(conn net.Conn) error {
 	clientPublicKey := silver.clientPublicKey
 	publicKeyBlock := make([]byte, silver.chunkSize)
-	rand.Read(publicKeyBlock)
+	_, readError := rand.Read(publicKeyBlock)
+	if readError != nil {
+		return nil
+	}
 	copy(publicKeyBlock, clientPublicKey[:])
+	_, writeError := conn.Write(publicKeyBlock)
+	if writeError != nil {
+		return errors.New("write error")
+	}
 
 	return nil
 }
@@ -218,7 +220,10 @@ func (silver SilverPolishClient) Polish(input []byte) []byte {
 
 	// Generate random nonce
 	nonce := make([]byte, silver.polishCipher.NonceSize())
-	rand.Read(nonce)
+	_, readError := rand.Read(nonce)
+	if readError != nil {
+		return nil
+	}
 
 	sealResult := silver.polishCipher.Seal(output, nonce, input, nil)
 	fmt.Printf("Input: %v\n: ", input)
@@ -235,9 +240,8 @@ func (silver SilverPolishClient) Unpolish(input []byte) []byte {
 	nonce := input[:nonceSize]
 	data := input[nonceSize:]
 
-	output, openError := silver.polishCipher.Open([]byte{}, nonce, data, nil)
+	_, openError := silver.polishCipher.Open(output, nonce, data, nil)
 	if openError != nil {
-		fmt.Println("Unpolish error: ", openError)
 		return nil
 	}
 
@@ -265,7 +269,10 @@ func (silver SilverPolishServerConnection) Handshake(conn net.Conn) error {
 	hasher := sha256.New
 	kdf := hkdf.New(hasher, sharedKeySeed, nil, nil)
 	sharedKey := make([]byte, chacha20poly1305.KeySize)
-	kdf.Read(sharedKey)
+	_, readError := kdf.Read(sharedKey)
+	if readError != nil {
+		return nil
+	}
 
 	silver.polishCipher, err = chacha20poly1305.New(sharedKey)
 	if err != nil {
@@ -281,7 +288,10 @@ func (silver SilverPolishServerConnection) Polish(input []byte) []byte {
 
 	// Generate random nonce
 	nonce := make([]byte, silver.polishCipher.NonceSize())
-	rand.Read(nonce)
+	_, readError := rand.Read(nonce)
+	if readError != nil {
+		return nil
+	}
 
 	silver.polishCipher.Seal(output, nonce, input, nil)
 
@@ -297,7 +307,10 @@ func (silver SilverPolishServerConnection) Unpolish(input []byte) []byte {
 	nonce := input[:nonceSize]
 	data := input[nonceSize:]
 
-	silver.polishCipher.Open(output, nonce, data, nil)
+	_, openError := silver.polishCipher.Open(output, nonce, data, nil)
+	if openError != nil {
+		return nil
+	}
 
 	return output
 }

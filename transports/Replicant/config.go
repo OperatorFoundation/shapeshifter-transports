@@ -5,8 +5,12 @@ import (
 	"github.com/OperatorFoundation/shapeshifter-transports/transports/Replicant/toneburst"
 )
 
-type Config struct {
-	Toneburst *toneburst.Config
-	Polish    *polish.Config
+type ClientConfig struct {
+	Toneburst toneburst.Config
+	Polish    polish.ClientConfig
 }
 
+type ServerConfig struct {
+	Toneburst toneburst.Config
+	Polish    polish.ServerConfig
+}
