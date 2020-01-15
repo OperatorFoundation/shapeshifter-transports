@@ -5,8 +5,8 @@ import (
 	"encoding/base64"
 	"encoding/gob"
 	"github.com/OperatorFoundation/monolith-go/monolith"
-	"github.com/OperatorFoundation/shapeshifter-transports/transports/replicant/polish"
-	"github.com/OperatorFoundation/shapeshifter-transports/transports/replicant/toneburst"
+	"github.com/OperatorFoundation/shapeshifter-transports/transports/Replicant/polish"
+	"github.com/OperatorFoundation/shapeshifter-transports/transports/Replicant/toneburst"
 )
 
 func InitializeGobRegistry() {

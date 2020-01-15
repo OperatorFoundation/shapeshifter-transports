@@ -149,7 +149,7 @@ func NewSilverClient(config SilverPolishClientConfig) (Connection, error) {
 		return nil, errors.New("error initializing polish client")
 	}
 	polishClient := SilverPolishClient{config.ServerPublicKey, config.ChunkSize, clientPublicKey, clientPrivateKey, encryptionKey, polishCipher}
-	return &polishClient
+	return &polishClient, nil
 }
 
 func X963KDF(sharedKeySeed []byte, ephemeralPublicKey []byte) []byte {
@@ -236,6 +236,8 @@ func (silver SilverPolishClient) Polish(input []byte) []byte {
 
 //FIXME: this should return an error
 func (silver SilverPolishClient) Unpolish(input []byte) []byte {
+	var output []byte
+
 	nonceSize := silver.polishCipher.NonceSize()
 	nonce := input[:nonceSize]
 	data := input[nonceSize:]

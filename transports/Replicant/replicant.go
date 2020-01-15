@@ -8,9 +8,7 @@ package replicant
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
-	"golang.org/x/net/proxy"
 	"net"
 
 	"github.com/OperatorFoundation/shapeshifter-transports/transports/Replicant/polish"
