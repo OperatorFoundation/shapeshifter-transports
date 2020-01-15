@@ -70,31 +70,31 @@ func (listener *replicantTransportListener) Close() error {
 }
 
 // FIXME: Rewrite this so that it is more readable (variable names and flow)
-func (sconn *ReplicantConnection) Read(b []byte) (int, error) {
-	if sconn.state.polish != nil {
-		polished := b
-
-		_, err := sconn.conn.Read(polished)
-		if err != nil {
-			return 0, err
-		}
-
-		unpolished := sconn.state.polish.Unpolish(polished)
-		sconn.receiveBuffer.Reset()
-		sconn.receiveBuffer.Write(unpolished)
-		sconn.receiveBuffer.Read(b)
-		sconn.receiveBuffer.Reset()
-
-		return len(b), nil
-	} else {
-		_, err := sconn.conn.Read(b)
-		if err != nil {
-			return 0, err
-		}
-
-		return len(b), nil
-	}
-}
+//func (sconn *ReplicantConnection) Read(b []byte) (int, error) {
+//	if sconn.state.polish != nil {
+//		polished := b
+//
+//		_, err := sconn.conn.Read(polished)
+//		if err != nil {
+//			return 0, err
+//		}
+//
+//		unpolished := sconn.state.polish.Unpolish(polished)
+//		sconn.receiveBuffer.Reset()
+//		sconn.receiveBuffer.Write(unpolished)
+//		sconn.receiveBuffer.Read(b)
+//		sconn.receiveBuffer.Reset()
+//
+//		return len(b), nil
+//	} else {
+//		_, err := sconn.conn.Read(b)
+//		if err != nil {
+//			return 0, err
+//		}
+//
+//		return len(b), nil
+//	}
+//}
 
 func (sconn *Connection) Read(b []byte) (int, error) {
 	polished := b
@@ -106,7 +106,7 @@ func (sconn *Connection) Read(b []byte) (int, error) {
 		if err != nil {
 			return 0, err
 		}
-
+	}
 	unpolished := sconn.state.polish.Unpolish(polished)
 	sconn.receiveBuffer.Reset()
 	sconn.receiveBuffer.Write(unpolished)
