@@ -71,10 +71,14 @@ func NewClientConnection(conn net.Conn, config ClientConfig) (*Connection, error
 func NewServerConnection(conn net.Conn, config ServerConfig) (*Connection, error) {
 	// Initialize a client connection.
 	var buffer bytes.Buffer
+	var polishServer polish.Server
+	var serverError error
 
-	polishServer, serverError := config.Polish.Construct()
-	if serverError != nil {
-		return nil, serverError
+	if config.Polish != nil {
+		polishServer, serverError = config.Polish.Construct()
+		if serverError != nil {
+			return nil, serverError
+		}
 	}
 
 	state, connError := NewReplicantServerConnectionState(config, polishServer, conn)
@@ -127,11 +131,20 @@ func NewReplicantClientConnectionState(config ClientConfig) (*ConnectionState, e
 }
 
 func NewReplicantServerConnectionState(config ServerConfig, polishServer polish.Server, conn net.Conn) (*ConnectionState, error) {
-	tb, toneburstError := config.Toneburst.Construct()
-	if toneburstError != nil {
-		return nil, toneburstError
+	var tb toneburst.ToneBurst
+	var toneburstError error
+	var p polish.Connection
+
+	if config.Toneburst != nil {
+		tb, toneburstError = config.Toneburst.Construct()
+		if toneburstError != nil {
+			return nil, toneburstError
+		}
 	}
-	p := polishServer.NewConnection(conn)
+
+	if polishServer != nil {
+		p = polishServer.NewConnection(conn)
+	}
 
 	return &ConnectionState{tb, p}, nil
 }
