@@ -86,17 +86,7 @@ func NewSilverServerConfig() (*SilverPolishServerConfig, error) {
 	tempSharedKeySeed := elliptic.Marshal(curve, tempSharedKeyX, tempSharedKeyY)
 
 	// X963 KDF
-	// FIXME
 	encryptionKey := X963KDF(tempSharedKeySeed, serverPublicKey)
-
-	//hasher := sha256.New
-	//kdf := hkdf.New(hasher, tempSharedKeySeed, nil, nil)
-	//tempSharedKey := make([]byte, chacha20poly1305.KeySize)
-	//_, err = kdf.Read(tempSharedKey)
-	//if err != nil {
-	//	fmt.Println("Error hashing key seed for temporary shared key while making new config")
-	//	return nil
-	//}
 
 	tempCipher, err := chacha20poly1305.New(encryptionKey)
 	if err != nil {
@@ -137,12 +127,6 @@ func NewSilverClient(config SilverPolishClientConfig) (Connection, error) {
 	sharedKeySeed := elliptic.Marshal(curve, sharedKeyX, sharedKeyY)
 
 	encryptionKey := X963KDF(sharedKeySeed, clientPublicKey)
-
-	// FIXME: Is this a correct replacement?
-	//hasher := sha256.New
-	//kdf := hkdf.New(hasher, sharedKeySeed, nil, nil)
-	//sharedKey := make([]byte, chacha20poly1305.KeySize)
-	//kdf.Read(sharedKey)
 
 	polishCipher, err := chacha20poly1305.New(encryptionKey[:])
 	if err != nil {
@@ -214,15 +198,14 @@ func (silver SilverPolishClient) Handshake(conn net.Conn) error {
 	return nil
 }
 
-//FIXME: Output is unused
-func (silver SilverPolishClient) Polish(input []byte) []byte {
+func (silver SilverPolishClient) Polish(input []byte) ([]byte, error) {
 	var output []byte
 
 	// Generate random nonce
 	nonce := make([]byte, silver.polishCipher.NonceSize())
 	_, readError := rand.Read(nonce)
 	if readError != nil {
-		return nil
+		return nil, readError
 	}
 
 	sealResult := silver.polishCipher.Seal(output, nonce, input, nil)
@@ -231,23 +214,25 @@ func (silver SilverPolishClient) Polish(input []byte) []byte {
 	fmt.Printf("Output after seal: %v\n", output)
 	result := append(nonce, sealResult...)
 
-	return result
+	return result, nil
 }
 
-//FIXME: this should return an error
-func (silver SilverPolishClient) Unpolish(input []byte) []byte {
-	var output []byte
+func (silver SilverPolishClient) Unpolish(input []byte) ([]byte, error) {
+	output := make([]byte, 0)
 
 	nonceSize := silver.polishCipher.NonceSize()
 	nonce := input[:nonceSize]
 	data := input[nonceSize:]
 
-	_, openError := silver.polishCipher.Open(output, nonce, data, nil)
+	result, openError := silver.polishCipher.Open(output, nonce, data, nil)
+
+	println("silver open result: ", result)
 	if openError != nil {
-		return nil
+		println("Received an error while unpolishing: ", openError)
+		return nil, openError
 	}
 
-	return output
+	return result, nil
 }
 
 func (silver SilverPolishServerConnection) Handshake(conn net.Conn) error {
@@ -285,24 +270,24 @@ func (silver SilverPolishServerConnection) Handshake(conn net.Conn) error {
 	return nil
 }
 
-func (silver SilverPolishServerConnection) Polish(input []byte) []byte {
+func (silver SilverPolishServerConnection) Polish(input []byte) ([]byte, error) {
 	var output []byte
 
 	// Generate random nonce
 	nonce := make([]byte, silver.polishCipher.NonceSize())
 	_, readError := rand.Read(nonce)
 	if readError != nil {
-		return nil
+		return nil, readError
 	}
 
 	silver.polishCipher.Seal(output, nonce, input, nil)
 
 	result := append(nonce, output...)
 
-	return result
+	return result, nil
 }
 
-func (silver SilverPolishServerConnection) Unpolish(input []byte) []byte {
+func (silver SilverPolishServerConnection) Unpolish(input []byte) ([]byte, error) {
 	var output []byte
 
 	nonceSize := silver.polishCipher.NonceSize()
@@ -311,8 +296,8 @@ func (silver SilverPolishServerConnection) Unpolish(input []byte) []byte {
 
 	_, openError := silver.polishCipher.Open(output, nonce, data, nil)
 	if openError != nil {
-		return nil
+		return nil, openError
 	}
 
-	return output
+	return output, nil
 }

@@ -10,10 +10,11 @@ import (
 
 func TestReplicantTransport_Dial(t *testing.T) {
 	dialer := proxy.Direct
-	replicantConfig := Config{
+	replicantConfig := ClientConfig{
 		Toneburst: nil,
 		Polish:    nil,
 	}
+
 	replicantTransport := Transport{
 		Config:  replicantConfig,
 		Address: "159.203.158.90:1234",
@@ -31,29 +32,56 @@ func TestReplicantTransport_Dial(t *testing.T) {
 
 // Silver
 func TestNewSilverConfigs(t *testing.T) {
-	silverServerConfig := polish.NewSilverServerConfig()
+	silverServerConfig, serverConfigError := polish.NewSilverServerConfig()
+
+	if serverConfigError != nil {
+		println("Silver server config error: ", serverConfigError.Error())
+		t.Fail()
+	}
 	if silverServerConfig == nil {
 		t.Fail()
 	}
 
-	silverClientConfig  := polish.NewSilverClientConfig(silverServerConfig)
+	silverClientConfig, clientConfigError  := polish.NewSilverClientConfig(silverServerConfig)
+
+	if clientConfigError != nil {
+		println("Silver client config error: ", clientConfigError)
+		t.Fail()
+	}
+
 	if silverClientConfig == nil {
 		t.Fail()
 	}
 }
 
 func TestNewSilverClient(t *testing.T) {
-	silverServerConfig := polish.NewSilverServerConfig()
+	silverServerConfig, serverConfigError := polish.NewSilverServerConfig()
+	if serverConfigError != nil{
+		println("Silver server config error: ", serverConfigError.Error())
+		t.Fail()
+	}
+
 	if silverServerConfig == nil {
 		t.Fail()
 	}
 
-	silverClientConfig  := polish.NewSilverClientConfig(silverServerConfig)
+	silverClientConfig, clientConfigError  := polish.NewSilverClientConfig(silverServerConfig)
+
+	if clientConfigError != nil {
+		println("Silver client config error: ", clientConfigError)
+		t.Fail()
+	}
+
 	if silverClientConfig == nil {
 		t.Fail()
 	}
 
-	silverClient := polish.NewSilverClient(*silverClientConfig)
+	silverClient, clientError := polish.NewSilverClient(*silverClientConfig)
+
+	if clientError != nil {
+		println("Silver client error: ", clientError)
+		t.Fail()
+	}
 
 	if silverClient == nil {
 		t.Fail()
@@ -61,25 +89,40 @@ func TestNewSilverClient(t *testing.T) {
 }
 
 func TestNewSilverServer(t *testing.T) {
-	silverServerConfig := polish.NewSilverServerConfig()
+	silverServerConfig, serverConfigError := polish.NewSilverServerConfig()
+
+	if serverConfigError != nil{
+		println("Silver server config error: ", serverConfigError.Error())
+		t.Fail()
+	}
+
 	if silverServerConfig == nil {
 		t.Fail()
 	}
 
-	silverServer := polish.NewSilverServer(*silverServerConfig)
-	if silverServer == nil {
+	_, serverError := polish.NewSilverServer(*silverServerConfig)
+
+	if serverError != nil {
+		println("Silver server error: ", serverError)
 		t.Fail()
 	}
 }
 
 func TestNewSilverServerConnection(t *testing.T) {
-	silverServerConfig := polish.NewSilverServerConfig()
+	silverServerConfig, serverConfigError := polish.NewSilverServerConfig()
 	if silverServerConfig == nil {
 		t.Fail()
 	}
 
-	silverServer := polish.NewSilverServer(*silverServerConfig)
-	if silverServer == nil {
+	if serverConfigError != nil{
+		println("Silver server config error: ", serverConfigError.Error())
+		t.Fail()
+	}
+
+	_, serverError := polish.NewSilverServer(*silverServerConfig)
+
+	if serverError != nil {
+		println("Silver server error: ", serverError)
 		t.Fail()
 	}
 	// FIXME needs a connection
@@ -88,17 +131,32 @@ func TestNewSilverServerConnection(t *testing.T) {
 
 func TestSilverClientHandshake(t *testing.T) {
 
-	silverServerConfig := polish.NewSilverServerConfig()
+	silverServerConfig, serverConfigError := polish.NewSilverServerConfig()
 	if silverServerConfig == nil {
 		t.Fail()
 	}
 
-	silverClientConfig  := polish.NewSilverClientConfig(silverServerConfig)
+	if serverConfigError != nil{
+		println("Silver server config error: ", serverConfigError.Error())
+		t.Fail()
+	}
+
+	silverClientConfig, clientConfigError  := polish.NewSilverClientConfig(silverServerConfig)
 	if silverClientConfig == nil {
 		t.Fail()
 	}
 
-	silverClient := polish.NewSilverClient(*silverClientConfig)
+	if clientConfigError != nil {
+		println("Silver client config error: ", clientConfigError)
+		t.Fail()
+	}
+
+	silverClient, clientError := polish.NewSilverClient(*silverClientConfig)
+
+	if clientError != nil {
+		println("Silver client error: ", clientError)
+		t.Fail()
+	}
 
 	if silverClient == nil {
 		t.Fail()
@@ -110,24 +168,46 @@ func TestSilverClientHandshake(t *testing.T) {
 
 func TestSilverPolishUnpolish(t *testing.T) {
 
-	silverServerConfig := polish.NewSilverServerConfig()
+	silverServerConfig, serverConfigError := polish.NewSilverServerConfig()
+
+	if serverConfigError != nil{
+		println("Silver server config error: ", serverConfigError.Error())
+		t.Fail()
+	}
+
 	if silverServerConfig == nil {
 		t.Fail()
 	}
 
-	silverClientConfig  := polish.NewSilverClientConfig(silverServerConfig)
+	silverClientConfig, clientConfigError  := polish.NewSilverClientConfig(silverServerConfig)
 	if silverClientConfig == nil {
 		t.Fail()
 	}
 
-	silverClient := polish.NewSilverClient(*silverClientConfig)
+	if clientConfigError != nil {
+		println("Silver client config error: ", clientConfigError)
+		t.Fail()
+	}
+
+	silverClient, clientError := polish.NewSilverClient(*silverClientConfig)
+
+	if clientError != nil {
+		println("Silver client error: ", clientError)
+		t.Fail()
+	}
+
 	if silverClient == nil {
 		t.Fail()
 	}
 
 	input := []byte{0, 1, 2, 3, 4}
 
-	polished := silverClient.Polish(input)
+	polished, polishError := silverClient.Polish(input)
+	if polishError != nil {
+		println("Received polish error: ", polishError)
+		t.Fail()
+	}
+
 	if bytes.Equal(input, polished) {
 		fmt.Println("original input and polished are the same")
 		t.Fail()
@@ -136,7 +216,12 @@ func TestSilverPolishUnpolish(t *testing.T) {
 	println("data before polish length:", len(input))
 	println("after polish: ", len(polished))
 
-	unpolished := silverClient.Unpolish(polished)
+	unpolished, unpolishError := silverClient.Unpolish(polished)
+	if unpolishError != nil {
+		println("Received an unpolish error: ", unpolishError)
+		t.Fail()
+	}
+
 	println("unpolished length: ", len(unpolished))
 	if !bytes.Equal(unpolished, input) {
 		fmt.Println("original input and unpolished are not the same")

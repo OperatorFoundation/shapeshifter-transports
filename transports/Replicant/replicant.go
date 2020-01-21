@@ -53,7 +53,6 @@ func NewClientConnection(conn net.Conn, config ClientConfig) (*Connection, error
 	if state.toneburst != nil {
 		err := state.toneburst.Perform(conn)
 		if err != nil {
-			fmt.Println("Toneburst failed")
 			return nil, err
 		}
 
@@ -62,7 +61,6 @@ func NewClientConnection(conn net.Conn, config ClientConfig) (*Connection, error
 	if state.polish != nil {
 		err := state.polish.Handshake(conn)
 		if err != nil {
-			fmt.Println("Polish handshake failed")
 			return nil, err
 		}
 	}

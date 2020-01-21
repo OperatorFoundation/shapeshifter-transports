@@ -6,8 +6,8 @@ import (
 
 type Connection interface {
 	Handshake(conn net.Conn) error
-	Polish(input []byte) []byte
-	Unpolish(input []byte) []byte
+	Polish(input []byte) ([]byte, error)
+	Unpolish(input []byte) ([]byte, error)
 }
 
 type Server interface {
