@@ -121,7 +121,7 @@ func NewReplicantClientConnectionState(config ClientConfig) (*ConnectionState, e
 			return nil, polishError
 		}
 	}
-	
+
 
 	return &ConnectionState{tb, p}, nil
 }
