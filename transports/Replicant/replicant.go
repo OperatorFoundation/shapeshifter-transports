@@ -103,14 +103,25 @@ func NewServerConnection(conn net.Conn, config ServerConfig) (*Connection, error
 }
 
 func NewReplicantClientConnectionState(config ClientConfig) (*ConnectionState, error) {
-	tb, toneburstError := config.Toneburst.Construct()
-	if toneburstError != nil {
-		return nil, toneburstError
+	var tb toneburst.ToneBurst
+	var toneburstError error
+	var p polish.Connection
+	var polishError error
+
+	if config.Toneburst != nil {
+		tb, toneburstError = config.Toneburst.Construct()
+		if toneburstError != nil {
+			return nil, toneburstError
+		}
 	}
-	p, polishError := config.Polish.Construct()
-	if polishError != nil {
-		return nil, polishError
+
+	if config.Polish != nil {
+		p, polishError = config.Polish.Construct()
+		if polishError != nil {
+			return nil, polishError
+		}
 	}
+	
 
 	return &ConnectionState{tb, p}, nil
 }
