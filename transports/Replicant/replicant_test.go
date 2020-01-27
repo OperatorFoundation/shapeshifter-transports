@@ -4,166 +4,278 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/OperatorFoundation/shapeshifter-transports/transports/Replicant/polish"
-	"golang.org/x/net/proxy"
+	"net"
 	"testing"
 )
 
-func TestReplicantTransport_Dial(t *testing.T) {
-	dialer := proxy.Direct
-	replicantConfig := ClientConfig{
-		Toneburst: nil,
-		Polish:    nil,
-	}
-
-	replicantTransport := Transport{
-		Config:  replicantConfig,
-		Address: "159.203.158.90:1234",
-		Dialer:  dialer,
-	}
-
-	_, err := replicantTransport.Dial()
-	if err != nil {
-		println(err.Error())
-		t.Fail()
-	}
-}
-
 // Polish Tests
 
-// Silver
-func TestNewSilverConfigs(t *testing.T) {
-	silverServerConfig, serverConfigError := polish.NewSilverServerConfig()
+func TestConn(t *testing.T) {
+	message := "Hi there!\n"
 
-	if serverConfigError != nil {
-		println("Silver server config error: ", serverConfigError.Error())
-		t.Fail()
-	}
-	if silverServerConfig == nil {
+	polishServerConfig, polishServerError := polish.NewSilverServerConfig()
+	if polishServerError != nil {
+		println("Polish server error: ", polishServerError)
 		t.Fail()
 	}
 
-	silverClientConfig, clientConfigError  := polish.NewSilverClientConfig(silverServerConfig)
+	go func() {
 
-	if clientConfigError != nil {
-		println("Silver client config error: ", clientConfigError)
-		t.Fail()
+		// Run the client
+		polishClientConfig, polishClientError := polish.NewSilverClientConfig(polishServerConfig)
+		if polishClientError != nil {
+			println("Polish  client error: ", polishClientError)
+			t.Fail()
+			return
+		}
+
+		clientConfig := ClientConfig{
+			Toneburst: nil,
+			Polish:    polishClientConfig,
+		}
+
+		client := clientConfig.Dial("127.0.0.1:7777")
+		if client == nil {
+			println("Dial error: Conn is nil.")
+			t.Fail()
+			return
+		}
+
+		println("Successful client connection to a replicant server with Silver polish!")
+		readBuffer := make([]byte, 1024)
+		go client.Read(readBuffer)
+		writeBytes := []byte{0x0A, 0x11, 0xB0, 0xB1}
+		writeCount, writeError := client.Write(writeBytes)
+		if writeError != nil {
+			println("Write error from client: ", writeError)
+		}
+
+		println("Write byte count = ", writeCount)
+
+		//conn, err := net.Dial("tcp", ":3000")
+		//if err != nil {
+		//	t.Fatal(err)
+		//}
+		defer client.Close()
+
+
+		if _, err := fmt.Fprintf(client, message); err != nil {
+			println("error", err)
+			t.Fatal(err)
+		}
+	}()
+
+	// Run the server
+
+	serverConfig := ServerConfig{
+		Toneburst: nil,
+		Polish:    polishServerConfig,
 	}
 
-	if silverClientConfig == nil {
+	listener := serverConfig.Listen("127.0.0.1:7777")
+	//listener, err := net.Listen("tcp", ":3000")
+	//if err != nil {
+	//	t.Fatal(err)
+	//}
+	defer listener.Close()
+	for {
+		conn, err := listener.Accept()
+		if err != nil {
+			println("Listener accept func error: ", err)
+			return
+		}
+		defer conn.Close()
+
+		//buf, err := ioutil.ReadAll(conn)
+		//if err != nil {
+		//	println("read all buffer error: ", err)
+		//	t.Fatal(err)
+		//	return
+		//}
+
+		println("received an incoming connection")
+		// Make a buffer to hold incoming data.
+		buf := make([]byte, 1024)
+		// Read the incoming connection into the buffer.
+		reqLen, err := conn.Read(buf)
+		if err != nil {
+			fmt.Println("Error reading:", err.Error())
+		}
+
+		println("regLen: ", reqLen)
+		println("readBuffer: ", buf)
+		// Send a response back to person contacting us.
+		conn.Write([]byte("Message received."))
+
+
+		fmt.Println(string(buf[:]))
+		if msg := string(buf[:]); msg != message {
+			t.Fatalf("Unexpected message:\nGot:\t\t%s\nExpected:\t%s\n", msg, message)
+		}
+		return // Done
+	}
+
+}
+
+func TestPolishOnlyConnection(t *testing.T) {
+	polishServerConfig, polishServerError := polish.NewSilverServerConfig()
+	if polishServerError != nil {
 		t.Fail()
+		return
+	}
+
+	go runServerWithSilver(polishServerConfig)
+	runClientWithSilver(polishServerConfig)
+}
+
+func TestPolishOnlyClientSend(t *testing.T) {
+	polishServerConfig, polishServerError := polish.NewSilverServerConfig()
+	if polishServerError != nil {
+		t.Fail()
+		return
+	}
+
+	go runServerWithSilver(polishServerConfig)
+	clientWriteSilver(polishServerConfig)
+}
+
+func runServerWithSilver(polishServerConfig *polish.SilverPolishServerConfig) {
+
+	serverConfig := ServerConfig{
+		Toneburst: nil,
+		Polish:    polishServerConfig,
+	}
+
+	listener := serverConfig.Listen("127.0.0.1:7777")
+	_, serverConnError := listener.Accept()
+	if serverConnError != nil {
+		return
 	}
 }
 
-func TestNewSilverClient(t *testing.T) {
-	silverServerConfig, serverConfigError := polish.NewSilverServerConfig()
-	if serverConfigError != nil{
-		println("Silver server config error: ", serverConfigError.Error())
+func TestServerWithSilverDialogue(t *testing.T) {
+	// Run the server
+	polishServerConfig, polishServerError := polish.NewSilverServerConfig()
+	if polishServerError != nil {
 		t.Fail()
+		return
+	}
+	serverConfig := ServerConfig{
+		Toneburst: nil,
+		Polish:    polishServerConfig,
 	}
 
-	if silverServerConfig == nil {
-		t.Fail()
-	}
+	listener := serverConfig.Listen("127.0.0.1:7777")
 
-	silverClientConfig, clientConfigError  := polish.NewSilverClientConfig(silverServerConfig)
+	go serverStuff(listener)
+	clientStuff(polishServerConfig)
+}
 
-	if clientConfigError != nil {
-		println("Silver client config error: ", clientConfigError)
-		t.Fail()
-	}
+func serverStuff(listener net.Listener) {
+	for {
+		// Listen for an incoming connection.
+		server, serverError := listener.Accept()
+		if serverError != nil {
+			println("server error: ", serverError)
+			return
+		}
 
-	if silverClientConfig == nil {
-		t.Fail()
-	}
-
-	silverClient, clientError := polish.NewSilverClient(*silverClientConfig)
-
-	if clientError != nil {
-		println("Silver client error: ", clientError)
-		t.Fail()
-	}
-
-	if silverClient == nil {
-		t.Fail()
+		go handleRequest(server)
 	}
 }
 
-func TestNewSilverServer(t *testing.T) {
-	silverServerConfig, serverConfigError := polish.NewSilverServerConfig()
-
-	if serverConfigError != nil{
-		println("Silver server config error: ", serverConfigError.Error())
-		t.Fail()
+func clientStuff(polishServerConfig *polish.SilverPolishServerConfig) {
+	// Run the client
+	polishClientConfig, polishClientError := polish.NewSilverClientConfig(polishServerConfig)
+	if polishClientError != nil {
+		return
 	}
 
-	if silverServerConfig == nil {
-		t.Fail()
+	clientConfig := ClientConfig{
+		Toneburst: nil,
+		Polish:    polishClientConfig,
 	}
 
-	_, serverError := polish.NewSilverServer(*silverServerConfig)
+	client := clientConfig.Dial("127.0.0.1:7777")
+	if client == nil {
+		return
+	} else {
+		println("Successful client connection to a replicant server with Silver polish!")
+		readBuffer := make([]byte, 1024)
+		go client.Read(readBuffer)
+		writeBytes := []byte{0x0A, 0x11, 0xB0, 0xB1}
+		writeCount, writeError := client.Write(writeBytes)
+		if writeError != nil {
+			println("Write error from client: ", writeError)
+		}
 
-	if serverError != nil {
-		println("Silver server error: ", serverError)
-		t.Fail()
+		println("Write byte count = ", writeCount)
 	}
 }
 
-func TestNewSilverServerConnection(t *testing.T) {
-	silverServerConfig, serverConfigError := polish.NewSilverServerConfig()
-	if silverServerConfig == nil {
-		t.Fail()
+func handleRequest(conn net.Conn) {
+	println("received an incoming connection")
+	// Make a buffer to hold incoming data.
+	buf := make([]byte, 1024)
+	// Read the incoming connection into the buffer.
+	reqLen, err := conn.Read(buf)
+	if err != nil {
+		fmt.Println("Error reading:", err.Error())
 	}
 
-	if serverConfigError != nil{
-		println("Silver server config error: ", serverConfigError.Error())
-		t.Fail()
-	}
-
-	_, serverError := polish.NewSilverServer(*silverServerConfig)
-
-	if serverError != nil {
-		println("Silver server error: ", serverError)
-		t.Fail()
-	}
-	// FIXME needs a connection
-	//polishConnection := silverServer.NewConnection()
+	println("regLen: ", reqLen)
+	println("readBuffer: ", buf)
+	// Send a response back to person contacting us.
+	conn.Write([]byte("Message received."))
 }
 
-func TestSilverClientHandshake(t *testing.T) {
-
-	silverServerConfig, serverConfigError := polish.NewSilverServerConfig()
-	if silverServerConfig == nil {
-		t.Fail()
+func runClientWithSilver(polishServerConfig *polish.SilverPolishServerConfig) {
+	polishClientConfig, polishClientError := polish.NewSilverClientConfig(polishServerConfig)
+	if polishClientError != nil {
+		return
 	}
 
-	if serverConfigError != nil{
-		println("Silver server config error: ", serverConfigError.Error())
-		t.Fail()
+	clientConfig := ClientConfig{
+		Toneburst: nil,
+		Polish:    polishClientConfig,
 	}
 
-	silverClientConfig, clientConfigError  := polish.NewSilverClientConfig(silverServerConfig)
-	if silverClientConfig == nil {
-		t.Fail()
+	client := clientConfig.Dial("127.0.0.1:7777")
+	if client == nil {
+		return
+	} else {
+		println("Successful client connection to a replicant server with Silver polish!")
+		readBuffer := make([]byte, 1024)
+		client.Read(readBuffer)
+	}
+}
+
+func clientWriteSilver(polishServerConfig *polish.SilverPolishServerConfig) {
+	polishClientConfig, polishClientError := polish.NewSilverClientConfig(polishServerConfig)
+	if polishClientError != nil {
+		return
 	}
 
-	if clientConfigError != nil {
-		println("Silver client config error: ", clientConfigError)
-		t.Fail()
+	clientConfig := ClientConfig{
+		Toneburst: nil,
+		Polish:    polishClientConfig,
 	}
 
-	silverClient, clientError := polish.NewSilverClient(*silverClientConfig)
+	client := clientConfig.Dial("127.0.0.1:7777")
+	if client == nil {
+		return
+	} else {
+		println("Successful client connection to a replicant server with Silver polish!")
+		readBuffer := make([]byte, 1024)
+		go client.Read(readBuffer)
+		writeBytes := []byte{0x0A, 0x11, 0xB0, 0xB1}
+		writeCount, writeError := client.Write(writeBytes)
+		if writeError != nil {
+			println("Write error from client: ", writeError)
+		}
 
-	if clientError != nil {
-		println("Silver client error: ", clientError)
-		t.Fail()
+		println("Write byte count = ", writeCount)
 	}
-
-	if silverClient == nil {
-		t.Fail()
-	}
-
-	//FIXME needs a connection
-	//silverClient.Handshake()
 }
 
 func TestSilverPolishUnpolish(t *testing.T) {

@@ -11,13 +11,13 @@ import (
 func (config ClientConfig) Dial(address string) net.Conn {
 	conn, dialErr := net.Dial("tcp", address)
 	if dialErr != nil {
-		fmt.Println("Dial Error: ")
+		fmt.Println("Dial Error: ", dialErr)
 		return nil
 	}
 
 	transportConn, err := NewClientConnection(conn, config)
 	if err != nil {
-		fmt.Println("Connection Error: ")
+		fmt.Println("Connection Error: ", err)
 		if conn != nil {
 			_ = conn.Close()
 		}
@@ -58,7 +58,8 @@ func (listener *replicantTransportListener) Accept() (net.Conn, error) {
 	}
 
 	// FIXME - we need a real server config, not this empty one
-	config := ServerConfig{}
+	//config := ServerConfig{}
+	config := listener.config
 
 	return NewServerConnection(conn, config)
 }

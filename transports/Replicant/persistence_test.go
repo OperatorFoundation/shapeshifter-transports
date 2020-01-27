@@ -1,8 +1,10 @@
 package replicant
 
 import (
+	"encoding/json"
 	"github.com/OperatorFoundation/shapeshifter-transports/transports/Replicant/polish"
 	"github.com/OperatorFoundation/shapeshifter-transports/transports/Replicant/toneburst"
+	"io/ioutil"
 	"testing"
 )
 
@@ -122,4 +124,74 @@ func TestDecodeServerConfig(t *testing.T) {
 		t.Fail()
 		return
 	}
+}
+
+type ReplicantJSONConfig struct {
+	Config string `json:"config"`
+}
+
+
+func TestSaveServerConfigPolish(t *testing.T) {
+
+	polishServerConfig, polishServerError := polish.NewSilverServerConfig()
+	if polishServerError != nil {
+		t.Fail()
+		return
+	}
+
+	config := ServerConfig{
+		Toneburst: nil,
+		Polish:    polishServerConfig,
+	}
+
+	serverConfigString, marshalError := config.Encode()
+	if marshalError != nil {
+		t.Fail()
+		return
+	}
+
+	// Create a struct
+	rServerJSON := ReplicantJSONConfig{Config: serverConfigString}
+
+	// Save it to a json file
+	jsonString, jsonError := json.Marshal(rServerJSON)
+	if jsonError != nil {
+		t.Fail()
+		return
+	}
+
+	ioutil.WriteFile("/Users/mafalda/Documents/Operator/replicant_server.json", []byte(jsonString), 0644)
+}
+
+func TestSaveClientConfigPolish(t *testing.T) {
+	polishServerConfig, polishServerError := polish.NewSilverServerConfig()
+	if polishServerError != nil {
+		t.Fail()
+		return
+	}
+	polishClientConfig, polishClientError := polish.NewSilverClientConfig(polishServerConfig)
+	if polishClientError != nil {
+		t.Fail()
+		return
+	}
+
+	config := ClientConfig{
+		Toneburst: nil,
+		Polish:    polishClientConfig,
+	}
+
+	clientConfigString, marshalError := config.Encode()
+	if marshalError != nil {
+		t.Fail()
+		return
+	}
+
+	rClientJSON := ReplicantJSONConfig{clientConfigString}
+	jsonString, jsonError := json.Marshal(rClientJSON)
+	if jsonError != nil {
+		t.Fail()
+		return
+	}
+
+	ioutil.WriteFile("/Users/mafalda/Documents/Operator/replicant_client.json", []byte(jsonString), 0644)
 }

@@ -15,6 +15,11 @@ import (
 	"net"
 )
 
+// Public key size in bytes.
+// See "Marshal" in elliptic.go
+// Marshal implements section 4.3.6 of ANSI X9.62
+var silverPublicKeySize = 1+2*((elliptic.P256().Params().BitSize + 7) >> 3)
+
 type SilverPolishClientConfig struct {
 	ServerPublicKey []byte
 	ChunkSize       int
@@ -118,6 +123,8 @@ func NewSilverClient(config SilverPolishClientConfig) (Connection, error) {
 	if err != nil {
 		return nil, errors.New("error generating client private key")
 	}
+
+	// Marshall uses section 4.3.6 of ANSI X9.62
 	clientPublicKey := elliptic.Marshal(curve, clientX, clientY)
 
 	// Derive the shared key from the client private key and server public key
@@ -211,7 +218,7 @@ func (silver SilverPolishClient) Polish(input []byte) ([]byte, error) {
 	sealResult := silver.polishCipher.Seal(output, nonce, input, nil)
 	fmt.Printf("Input: %v\n: ", input)
 	fmt.Printf("Seal result: %v\n", sealResult)
-	fmt.Printf("Output after seal: %v\n", output)
+	fmt.Printf("Output after seal: %v\n", sealResult)
 	result := append(nonce, sealResult...)
 
 	return result, nil
@@ -245,10 +252,14 @@ func (silver SilverPolishServerConnection) Handshake(conn net.Conn) error {
 		return err
 	}
 
-	clientPublicKey := &[chacha20poly1305.KeySize]byte{}
-	copy(clientPublicKey[:], clientPublicKeyBlock[:chacha20poly1305.KeySize])
+	clientPublicKey := make([]byte, silverPublicKeySize)
+	copy(clientPublicKey[:], clientPublicKeyBlock[:silverPublicKeySize])
 
+	// Marshall uses section 4.3.6 of ANSI X9.62
 	clientX, clientY := elliptic.Unmarshal(curve, clientPublicKey[:])
+	if clientX == nil || clientY == nil {
+		return errors.New("received a nil response while decoding the client public key")
+	}
 
 	sharedKeyX, sharedKeyY := curve.ScalarMult(clientX, clientY, silver.serverPrivateKey)
 	sharedKeySeed := elliptic.Marshal(curve, sharedKeyX, sharedKeyY)
@@ -258,13 +269,13 @@ func (silver SilverPolishServerConnection) Handshake(conn net.Conn) error {
 	sharedKey := make([]byte, chacha20poly1305.KeySize)
 	_, readError := kdf.Read(sharedKey)
 	if readError != nil {
-		return nil
+		return readError
 	}
 
 	silver.polishCipher, err = chacha20poly1305.New(sharedKey)
 	if err != nil {
-		fmt.Println("Error initializing polish client")
-		return nil
+		fmt.Println("Error initializing polish client", err)
+		return err
 	}
 
 	return nil
