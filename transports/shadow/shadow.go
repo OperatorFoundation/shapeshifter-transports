@@ -26,6 +26,11 @@ type shadowTransport struct {
 	cipherName string
 }
 
+type Config struct {
+	Password   string
+	CipherName string
+}
+
 func NewShadowClient(password string, cipherName string, dialer proxy.Dialer) *shadowTransport {
 	return &shadowTransport{dialer: dialer, password: password, cipherName: cipherName}
 }
@@ -38,6 +43,7 @@ type shadowTransportListener struct {
 	listener  *net.TCPListener
 	transport *shadowTransport
 }
+
 //begin code added from optimizer
 type Transport struct {
 	Password   string
@@ -55,6 +61,7 @@ func (transport Transport) Dial() (net.Conn, error) {
 		return conn, nil
 	}
 }
+
 //end code added from optimizer
 func newShadowTransportListener(listener *net.TCPListener, transport *shadowTransport) *shadowTransportListener {
 	return &shadowTransportListener{listener: listener, transport: transport}
