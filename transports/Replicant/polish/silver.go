@@ -216,7 +216,7 @@ func (silver SilverPolishClient) Polish(input []byte) ([]byte, error) {
 	}
 
 	sealResult := silver.polishCipher.Seal(output, nonce, input, nil)
-	fmt.Printf("Input: %v\n: ", input)
+	fmt.Printf("Input: %v:\n", input)
 	fmt.Printf("Seal result: %v\n", sealResult)
 	fmt.Printf("Output after seal: %v\n", sealResult)
 	result := append(nonce, sealResult...)

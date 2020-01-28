@@ -12,6 +12,10 @@ type MonotoneConfig struct {
 	SpeakFirst      bool
 }
 
+func (config MonotoneConfig) Construct() (ToneBurst, error) {
+	return NewMonotone(config), nil
+}
+
 type Monotone struct {
 	config MonotoneConfig
 }
@@ -93,7 +97,7 @@ func readAll(conn net.Conn, removeSequenceDescription monolith.Description, rece
 			return nil, readError
 		}
 
-		println("Attempting to read data from connection. Received data length: ", len(receivedData))
+		//println("Attempting to read data from connection. Received data length: ", len(receivedData))
 		receiveDataBuffer = append(receiveDataBuffer, receivedData...)
 		remainingData, validated = removeSequenceDescription.Validate(receivedData)
 	}
