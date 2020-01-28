@@ -141,6 +141,10 @@ type Transport struct {
 	Dialer  proxy.Dialer
 }
 
+type Config struct {
+	Url *gourl.URL
+	Front string
+}
 func (transport Transport) Dial() (net.Conn, error) {
 	meekTransport := NewMeekTransportWithFront(transport.Url.String(), transport.Front, transport.Dialer)
 	conn := meekTransport.Dial(transport.Address)

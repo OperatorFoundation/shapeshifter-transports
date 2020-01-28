@@ -198,6 +198,11 @@ type Transport struct {
 	Dialer     proxy.Dialer
 }
 
+type Config struct {
+	CertString string
+	IatMode int
+}
+
 func (transport Transport) Dial() (net.Conn, error) {
 	Obfs4Transport, err := NewObfs4Client(transport.CertString, transport.IatMode, transport.Dialer)
 	if err != nil {

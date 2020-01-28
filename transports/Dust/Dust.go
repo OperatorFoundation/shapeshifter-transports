@@ -60,6 +60,9 @@ type Transport struct {
 	Dialer       proxy.Dialer
 }
 
+type Config struct {
+	ServerPublic string
+}
 func (transport Transport) Dial() (net.Conn, error) {
 	dustTransport := NewDustClient(transport.ServerPublic, transport.Dialer)
 	conn, err := dustTransport.Dial(transport.Address)
