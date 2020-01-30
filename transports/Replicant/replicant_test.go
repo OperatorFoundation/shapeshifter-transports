@@ -6,11 +6,92 @@ import (
 	"github.com/OperatorFoundation/monolith-go/monolith"
 	"github.com/OperatorFoundation/shapeshifter-transports/transports/Replicant/polish"
 	"github.com/OperatorFoundation/shapeshifter-transports/transports/Replicant/toneburst"
-	"net"
+	"math/rand"
 	"testing"
+	"time"
 )
 
 func TestMonotoneOnly(t *testing.T) {
+	monotoneConfig := createMonotoneConfigRandomEnumeratedItems()
+	//monotoneConfig := createMonotoneConfig()
+
+	serverConfig := ServerConfig{
+		Toneburst: monotoneConfig,
+		Polish:    nil,
+	}
+
+	clientConfig := ClientConfig{
+		Toneburst: monotoneConfig,
+		Polish:    nil,
+	}
+
+	go func() {
+		listener := serverConfig.Listen("127.0.0.1:7777")
+		println("Created listener")
+		defer listener.Close()
+
+		for {
+
+			lConn, lConnError := listener.Accept()
+			if lConnError != nil {
+				println("Listener connection error: ", lConnError)
+				t.Fail()
+				return
+			}
+
+			println("received an incoming connection")
+			lBuffer := make([]byte, 1024)
+			lReadLength, lReadError := lConn.Read(lBuffer)
+			if lReadError != nil {
+				println("Listener read error: ", lReadError)
+				t.Fail()
+				return
+			}
+			println("Listener read length: ", lReadLength)
+			// Send a response back to person contacting us.
+			lWriteLength, lWriteError := lConn.Write([]byte("Message received."))
+			if lWriteError != nil {
+				println("Listener write error: ", lWriteError)
+				t.Fail()
+				return
+			}
+			println("Wrote a response to the client. Length: ", lWriteLength)
+		}
+	}()
+
+	cConn := clientConfig.Dial("127.0.0.1:7777")
+	if cConn == nil {
+		println("Dial error: client connection is nil.")
+		t.Fail()
+		return
+	}
+	println("Created client connection.")
+
+	writeBytes := []byte{0x0A, 0x11, 0xB0, 0xB1}
+	cWriteLength, cWriteError := cConn.Write(writeBytes)
+	if cWriteError != nil {
+		println("Client write error: ", cWriteError)
+		t.Fail()
+		return
+	}
+	println("Wrote bytes to the server, count: ", cWriteLength)
+
+	readBuffer := make([]byte, 1024)
+	cReadLength, cReadError := cConn.Read(readBuffer)
+	if cReadError != nil {
+		println("Client read error: ", cReadError)
+		t.Fail()
+		return
+	}
+	println("Client read byte count: ", cReadLength)
+	fmt.Printf("Client read buffer: %v:\n", readBuffer)
+
+	defer cConn.Close()
+
+	return
+}
+
+func createMonotoneConfig() toneburst.MonotoneConfig {
 	parts := make([]monolith.Monolith, 0)
 	part := monolith.BytesPart{Items:[]monolith.Monolith{monolith.FixedByteType{Byte:0x0A}}}
 	parts = append(parts, part)
@@ -31,79 +112,44 @@ func TestMonotoneOnly(t *testing.T) {
 		SpeakFirst:      false,
 	}
 
-	serverConfig := ServerConfig{
-		Toneburst: monotoneConfig,
-		Polish:    nil,
+	return monotoneConfig
+}
+
+func createMonotoneConfigRandomEnumeratedItems() toneburst.MonotoneConfig {
+	rand.Seed(time.Now().UnixNano())
+	set := []byte{0x11, 0x12, 0x13, 0x14}
+	parts := make([]monolith.Monolith, 0)
+	part := monolith.BytesPart{
+		Items: []monolith.Monolith{
+			monolith.RandomEnumeratedByteType{set},
+			monolith.RandomEnumeratedByteType{set},
+		},
+	}
+	parts = append(parts, part)
+	part = monolith.BytesPart{
+		Items: []monolith.Monolith{
+			monolith.RandomEnumeratedByteType{set},
+			monolith.RandomEnumeratedByteType{set},
+		},
+	}
+	parts = append(parts, part)
+	desc := monolith.Description{parts}
+	args := make([]interface{}, 0)
+	monolithInstance := monolith.Instance{
+		Desc: desc,
+		Args: args,
 	}
 
-	clientConfig := ClientConfig{
-		Toneburst: monotoneConfig,
-		Polish:    nil,
+	addSequences := []monolith.Instance{monolithInstance}
+	removeSequences := []monolith.Description{desc}
+
+	monotoneConfig := toneburst.MonotoneConfig{
+		AddSequences:    addSequences,
+		RemoveSequences: removeSequences,
+		SpeakFirst:      false,
 	}
 
-	go func() {
-		listener := serverConfig.Listen("127.0.0.1:7777")
-		defer listener.Close()
-
-		for {
-			lConn, lConnError := listener.Accept()
-			if lConnError != nil {
-				println("Listener connection error: ", lConnError)
-				t.Fail()
-				return
-			}
-
-			println("received an incoming connection")
-			lBuffer := make([]byte, 1024)
-			lReadLength, lReadError := lConn.Read(lBuffer)
-			if lReadError != nil {
-				println("Listener read error: ", lReadError)
-				t.Fail()
-				return
-			}
-			println("Listener read leangth: ", lReadLength)
-			// Send a response back to person contacting us.
-			lWriteLength, lWriteError := lConn.Write([]byte("Message received."))
-			if lWriteError != nil {
-				println("Listener write error: ", lWriteError)
-				t.Fail()
-				return
-			}
-			println("Wrote a response to the client. Length: ", lWriteLength)
-		}
-	}()
-
-	cConn := clientConfig.Dial("127.0.0.1:7777")
-	if cConn == nil {
-		println("Dial error: client connection is nil.")
-		t.Fail()
-		return
-	}
-
-	writeBytes := []byte{0x0A, 0x11, 0xB0, 0xB1}
-	cWriteLength, cWriteError := cConn.Write(writeBytes)
-	if cWriteError != nil {
-		println("Client write error: ", cWriteError)
-		t.Fail()
-		return
-	}
-
-	println("Wrote bytes to the server, count: ", cWriteLength)
-
-	readBuffer := make([]byte, 1024)
-	cReadLength, cReadError := cConn.Read(readBuffer)
-	if cReadError != nil {
-		println("Client read error: ", cReadError)
-		t.Fail()
-		return
-	}
-
-	println("Client read byte count: ", cReadLength)
-	fmt.Printf("Client read buffer: %v:\n", readBuffer)
-
-	defer cConn.Close()
-
-	return
+	return monotoneConfig
 }
 
 // Polish Tests
@@ -114,13 +160,13 @@ func TestConn(t *testing.T) {
 		t.Fail()
 	}
 
+	serverConfig := ServerConfig{
+		Toneburst: nil,
+		Polish:    polishServerConfig,
+	}
+
 	go func() {
 		// Run the server
-		serverConfig := ServerConfig{
-			Toneburst: nil,
-			Polish:    polishServerConfig,
-		}
-
 		listener := serverConfig.Listen("127.0.0.1:7777")
 		defer listener.Close()
 		for {
@@ -220,60 +266,97 @@ func runServerWithSilver(polishServerConfig *polish.SilverPolishServerConfig) {
 	}
 }
 
-func serverStuff(listener net.Listener) {
-	for {
-		// Listen for an incoming connection.
-		server, serverError := listener.Accept()
-		if serverError != nil {
-			println("server error: ", serverError)
-			return
-		}
-
-		go func() {
-			println("received an incoming connection")
-			// Make a buffer to hold incoming data.
-			buf := make([]byte, 1024)
-			// Read the incoming connection into the buffer.
-			reqLen, err := server.Read(buf)
-			if err != nil {
-				fmt.Println("Error reading:", err.Error())
-			}
-
-			println("regLen: ", reqLen)
-			println("readBuffer: ", buf)
-			// Send a response back to person contacting us.
-			server.Write([]byte("Message received."))
-		}()
+//Both
+func TestWithSilverMonotone(t *testing.T) {
+	polishServerConfig, polishServerError := polish.NewSilverServerConfig()
+	if polishServerError != nil {
+		println("Polish server error: ", polishServerError)
+		t.Fail()
 	}
-}
 
-func clientStuff(polishServerConfig *polish.SilverPolishServerConfig) {
-	// Run the client
-	polishClientConfig, polishClientError := polish.NewSilverClientConfig(polishServerConfig)
-	if polishClientError != nil {
+	polishClientConfig, polishClientConfigError := polish.NewSilverClientConfig(polishServerConfig)
+	if polishClientConfigError != nil {
+		println("Error creating silver client config: ", polishClientConfigError)
+		t.Fail()
 		return
+	}
+
+	monotoneConfig := createMonotoneConfigRandomEnumeratedItems()
+	//monotoneConfig := createMonotoneConfig()
+
+	serverConfig := ServerConfig{
+		Toneburst: monotoneConfig,
+		Polish:    polishServerConfig,
 	}
 
 	clientConfig := ClientConfig{
-		Toneburst: nil,
+		Toneburst: monotoneConfig,
 		Polish:    polishClientConfig,
 	}
 
-	client := clientConfig.Dial("127.0.0.1:7777")
-	if client == nil {
-		return
-	} else {
-		println("Successful client connection to a replicant server with Silver polish!")
-		readBuffer := make([]byte, 1024)
-		go client.Read(readBuffer)
-		writeBytes := []byte{0x0A, 0x11, 0xB0, 0xB1}
-		writeCount, writeError := client.Write(writeBytes)
-		if writeError != nil {
-			println("Write error from client: ", writeError)
-		}
+	go func() {
+		listener := serverConfig.Listen("127.0.0.1:7777")
+		println("Created listener")
+		defer listener.Close()
 
-		println("Write byte count = ", writeCount)
+		for {
+			lConn, lConnError := listener.Accept()
+			if lConnError != nil {
+				println("Listener connection error: ", lConnError)
+				t.Fail()
+				return
+			}
+
+			println("received an incoming connection")
+			lBuffer := make([]byte, 1024)
+			lReadLength, lReadError := lConn.Read(lBuffer)
+			if lReadError != nil {
+				println("Listener read error: ", lReadError)
+				t.Fail()
+				return
+			}
+			println("Listener read length: ", lReadLength)
+			// Send a response back to person contacting us.
+			lWriteLength, lWriteError := lConn.Write([]byte("Message received."))
+			if lWriteError != nil {
+				println("Listener write error: ", lWriteError)
+				t.Fail()
+				return
+			}
+			println("Wrote a response to the client. Length: ", lWriteLength)
+		}
+	}()
+
+	cConn := clientConfig.Dial("127.0.0.1:7777")
+	if cConn == nil {
+		println("Dial error: client connection is nil.")
+		t.Fail()
+		return
 	}
+	println("Created client connection.")
+
+	writeBytes := []byte{0x0A, 0x11, 0xB0, 0xB1}
+	cWriteLength, cWriteError := cConn.Write(writeBytes)
+	if cWriteError != nil {
+		println("Client write error: ", cWriteError)
+		t.Fail()
+		return
+	}
+	println("Wrote bytes to the server, count: ", cWriteLength)
+
+	readBuffer := make([]byte, 1024)
+	cReadLength, cReadError := cConn.Read(readBuffer)
+	if cReadError != nil {
+		println("Client read error: ", cReadError)
+		t.Fail()
+		return
+	}
+	println("Client read byte count: ", cReadLength)
+	fmt.Printf("Client read buffer: %v:\n", readBuffer)
+
+	defer cConn.Close()
+
+	return
 }
 
 func runClientWithSilver(polishServerConfig *polish.SilverPolishServerConfig) {
