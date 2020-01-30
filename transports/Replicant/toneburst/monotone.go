@@ -7,8 +7,8 @@ import (
 )
 
 type MonotoneConfig struct {
-	AddSequences    []monolith.Instance
-	RemoveSequences []monolith.Description
+	AddSequences    *monolith.Instance
+	RemoveSequences *monolith.Description
 	SpeakFirst      bool
 }
 
@@ -27,18 +27,27 @@ func NewMonotone(config MonotoneConfig) *Monotone {
 //TODO: Implement Perform
 func (monotone *Monotone) Perform(conn net.Conn) error {
 
+	var addMessages []monolith.Message
+	var removeParts []monolith.Monolith
+
+	if monotone.config.AddSequences != nil {
+		addMessages = monotone.config.AddSequences.Messages()
+	}
+
+	if monotone.config.RemoveSequences != nil {
+		removeParts = monotone.config.RemoveSequences.Parts
+	}
+
 	if monotone.config.SpeakFirst {
-		if len(monotone.config.AddSequences) == 0 {
+		if addMessages == nil || len(addMessages) < 1 {
 			println("Invalid configuration, cannot speak first when there is nothing to add.")
 			return errors.New("invalid configuration, cannot speak first when there is nothing to add")
 		}
 
 		//Get the first sequence in the list of add sequences
-		addInstance := monotone.config.AddSequences[0]
-		addBytes := addInstance.Bytes()
-
-		// Remove this sequence from the list
-		monotone.config.AddSequences = monotone.config.AddSequences[1:]
+		firstMessage := addMessages[0]
+		addMessages = addMessages[1:]
+		addBytes := firstMessage.Bytes()
 
 		writeError := writeAll(conn, addBytes)
 		if writeError != nil {
@@ -46,72 +55,63 @@ func (monotone *Monotone) Perform(conn net.Conn) error {
 		}
 	}
 
-	receiveDataBuffer := make([]byte, 0)
 	for {
-		if len(monotone.config.RemoveSequences) == 0 {
+		if (removeParts == nil || len(removeParts) < 1) && (addMessages == nil || len(addMessages) < 1) {
 			return nil
 		}
 
-		removeSequenceDescription := monotone.config.RemoveSequences[0]
-		monotone.config.RemoveSequences = monotone.config.RemoveSequences[:1]
+		if removeParts != nil && len(removeParts) > 0 {
+			removePart := removeParts[0]
+			removeParts = removeParts[1:]
 
-		dataBuffer, readAllError := readAll(conn, removeSequenceDescription, receiveDataBuffer)
-		if readAllError != nil {
-			println("Error reading data: ", readAllError)
-			return readAllError
+			validated, readAllError := readAll(conn, removePart)
+			if readAllError != nil {
+				println("Error reading data: ", readAllError.Error())
+				return readAllError
+			}
+
+			if !validated {
+				return errors.New("failed to validate toneburst data, invalid remove sequence")
+			}
 		}
-		receiveDataBuffer = dataBuffer
 
-		if len(monotone.config.AddSequences) == 0 {
-			return nil
-		}
+		if addMessages != nil && len(addMessages) > 0 {
+			//Get the first sequence in the list of add sequences
+			firstMessage := addMessages[0]
+			addMessages = addMessages[1:]
+			addBytes := firstMessage.Bytes()
 
-		//Get the first sequence in the list of add sequences
-		addInstance := monotone.config.AddSequences[0]
-
-		// Remove this sequence from the list
-		monotone.config.AddSequences = monotone.config.AddSequences[1:]
-
-		writeError := writeAll(conn, addInstance.Bytes())
-		if writeError != nil {
-			return writeError
+			writeError := writeAll(conn, addBytes)
+			if writeError != nil {
+				return writeError
+			}
 		}
 	}
 }
 
-func readAll(conn net.Conn, removeSequenceDescription monolith.Description, receiveDataBuffer []byte) ([]byte, error) {
-	receivedData := make([]byte, 0)
+func readAll(conn net.Conn, part monolith.Monolith) (bool, error) {
+	receivedData := make([]byte, part.Count())
 	_, readError := conn.Read(receivedData)
 	if readError != nil {
 		println("Received an error while trying to receive data: ", readError.Error())
-		return nil, readError
+		return false, readError
 	}
 
-	receiveDataBuffer = append(receiveDataBuffer, receivedData...)
-
-	remainingData, validated := removeSequenceDescription.Validate(receivedData)
-	for validated == monolith.Incomplete {
-		_, readError = conn.Read(receivedData)
-		if readError != nil {
-			println("Received an error while trying to receive data: ", readError.Error())
-			return nil, readError
-		}
-
-		//println("Attempting to read data from connection. Received data length: ", len(receivedData))
-		receiveDataBuffer = append(receiveDataBuffer, receivedData...)
-		remainingData, validated = removeSequenceDescription.Validate(receivedData)
-	}
+	_, validated := part.Validate(receivedData)
 
 	switch validated {
 
 	case monolith.Valid:
-		return remainingData, nil
+		return true, nil
 	case monolith.Invalid:
 		println("Failed to validate the received data.")
-		return nil, errors.New("failed to validate the received data")
+		return false, errors.New("failed to validate the received data")
+	case monolith.Incomplete:
+		println("Failed to validate the received data, data was incomplete.")
+		return false, errors.New("failed to validate the received data, data was incomplete")
 	default:
 		println("Validate returned an unknown value.")
-		return nil, errors.New("validate returned an unknown value")
+		return false, errors.New("validate returned an unknown value")
 	}
 }
 

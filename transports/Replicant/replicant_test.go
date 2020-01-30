@@ -12,29 +12,32 @@ import (
 )
 
 func TestMonotoneOnly(t *testing.T) {
-	monotoneConfig := createMonotoneConfigRandomEnumeratedItems()
+	monotoneClientConfig := createMonotoneClientConfigRandomEnumeratedItems()
+	monotoneServerConfig := createMonotoneServerConfigRandomEnumeratedItems()
 	//monotoneConfig := createMonotoneConfig()
 
 	serverConfig := ServerConfig{
-		Toneburst: monotoneConfig,
+		Toneburst: monotoneServerConfig,
 		Polish:    nil,
 	}
 
 	clientConfig := ClientConfig{
-		Toneburst: monotoneConfig,
+		Toneburst: monotoneClientConfig,
 		Polish:    nil,
 	}
 
+	serverStarted := make(chan bool)
+
 	go func() {
 		listener := serverConfig.Listen("127.0.0.1:7777")
-		println("Created listener")
 		defer listener.Close()
+		println("Created listener")
+		serverStarted <- true
 
 		for {
-
 			lConn, lConnError := listener.Accept()
 			if lConnError != nil {
-				println("Listener connection error: ", lConnError)
+				println("Listener connection error: ", lConnError.Error())
 				t.Fail()
 				return
 			}
@@ -47,6 +50,7 @@ func TestMonotoneOnly(t *testing.T) {
 				t.Fail()
 				return
 			}
+
 			println("Listener read length: ", lReadLength)
 			// Send a response back to person contacting us.
 			lWriteLength, lWriteError := lConn.Write([]byte("Message received."))
@@ -58,6 +62,12 @@ func TestMonotoneOnly(t *testing.T) {
 			println("Wrote a response to the client. Length: ", lWriteLength)
 		}
 	}()
+
+	serverFinishedStarting := <- serverStarted
+	if !serverFinishedStarting {
+		t.Fail()
+		return
+	}
 
 	cConn := clientConfig.Dial("127.0.0.1:7777")
 	if cConn == nil {
@@ -93,7 +103,7 @@ func TestMonotoneOnly(t *testing.T) {
 
 func createMonotoneConfig() toneburst.MonotoneConfig {
 	parts := make([]monolith.Monolith, 0)
-	part := monolith.BytesPart{Items:[]monolith.Monolith{monolith.FixedByteType{Byte:0x0A}}}
+	part := monolith.BytesPart{Items:[]monolith.ByteType{monolith.FixedByteType{Byte:0x0A}}}
 	parts = append(parts, part)
 
 	description := monolith.Description{Parts:parts}
@@ -103,31 +113,31 @@ func createMonotoneConfig() toneburst.MonotoneConfig {
 		Args: args,
 	}
 
-	addSequences := []monolith.Instance{monolithInstance}
-	removeSequences := []monolith.Description{description}
+	addSequences := monolithInstance
+	removeSequences := description
 
 	monotoneConfig := toneburst.MonotoneConfig{
-		AddSequences:    addSequences,
-		RemoveSequences: removeSequences,
+		AddSequences:    &addSequences,
+		RemoveSequences: &removeSequences,
 		SpeakFirst:      false,
 	}
 
 	return monotoneConfig
 }
 
-func createMonotoneConfigRandomEnumeratedItems() toneburst.MonotoneConfig {
+func createMonotoneClientConfigRandomEnumeratedItems() toneburst.MonotoneConfig {
 	rand.Seed(time.Now().UnixNano())
 	set := []byte{0x11, 0x12, 0x13, 0x14}
 	parts := make([]monolith.Monolith, 0)
 	part := monolith.BytesPart{
-		Items: []monolith.Monolith{
+		Items: []monolith.ByteType{
 			monolith.RandomEnumeratedByteType{set},
 			monolith.RandomEnumeratedByteType{set},
 		},
 	}
 	parts = append(parts, part)
 	part = monolith.BytesPart{
-		Items: []monolith.Monolith{
+		Items: []monolith.ByteType{
 			monolith.RandomEnumeratedByteType{set},
 			monolith.RandomEnumeratedByteType{set},
 		},
@@ -140,12 +150,49 @@ func createMonotoneConfigRandomEnumeratedItems() toneburst.MonotoneConfig {
 		Args: args,
 	}
 
-	addSequences := []monolith.Instance{monolithInstance}
-	removeSequences := []monolith.Description{desc}
+	addSequences := monolithInstance
+	removeSequences := desc
 
 	monotoneConfig := toneburst.MonotoneConfig{
-		AddSequences:    addSequences,
-		RemoveSequences: removeSequences,
+		AddSequences:    &addSequences,
+		RemoveSequences: &removeSequences,
+		SpeakFirst:      true,
+	}
+
+	return monotoneConfig
+}
+
+func createMonotoneServerConfigRandomEnumeratedItems() toneburst.MonotoneConfig {
+	rand.Seed(time.Now().UnixNano())
+	set := []byte{0x11, 0x12, 0x13, 0x14}
+	parts := make([]monolith.Monolith, 0)
+	part := monolith.BytesPart{
+		Items: []monolith.ByteType{
+			monolith.RandomEnumeratedByteType{set},
+			monolith.RandomEnumeratedByteType{set},
+		},
+	}
+	parts = append(parts, part)
+	part = monolith.BytesPart{
+		Items: []monolith.ByteType{
+			monolith.RandomEnumeratedByteType{set},
+			monolith.RandomEnumeratedByteType{set},
+		},
+	}
+	parts = append(parts, part)
+	desc := monolith.Description{parts}
+	args := make([]interface{}, 0)
+	monolithInstance := monolith.Instance{
+		Desc: desc,
+		Args: args,
+	}
+
+	addSequences := monolithInstance
+	removeSequences := desc
+
+	monotoneConfig := toneburst.MonotoneConfig{
+		AddSequences:    &addSequences,
+		RemoveSequences: &removeSequences,
 		SpeakFirst:      false,
 	}
 
@@ -165,8 +212,8 @@ func TestConn(t *testing.T) {
 		Polish:    polishServerConfig,
 	}
 
+	// Run the server concurrently
 	go func() {
-		// Run the server
 		listener := serverConfig.Listen("127.0.0.1:7777")
 		defer listener.Close()
 		for {
@@ -281,16 +328,17 @@ func TestWithSilverMonotone(t *testing.T) {
 		return
 	}
 
-	monotoneConfig := createMonotoneConfigRandomEnumeratedItems()
+	monotoneClientConfig := createMonotoneClientConfigRandomEnumeratedItems()
+	monotoneServerConfig := createMonotoneServerConfigRandomEnumeratedItems()
 	//monotoneConfig := createMonotoneConfig()
 
 	serverConfig := ServerConfig{
-		Toneburst: monotoneConfig,
+		Toneburst: monotoneServerConfig,
 		Polish:    polishServerConfig,
 	}
 
 	clientConfig := ClientConfig{
-		Toneburst: monotoneConfig,
+		Toneburst: monotoneClientConfig,
 		Polish:    polishClientConfig,
 	}
 
@@ -302,7 +350,7 @@ func TestWithSilverMonotone(t *testing.T) {
 		for {
 			lConn, lConnError := listener.Accept()
 			if lConnError != nil {
-				println("Listener connection error: ", lConnError)
+				println("Listener connection error: ", lConnError.Error())
 				t.Fail()
 				return
 			}

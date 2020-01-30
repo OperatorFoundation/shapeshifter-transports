@@ -186,7 +186,7 @@ func (config SilverPolishServer) NewConnection(conn net.Conn) Connection {
 	polishServerConnection := SilverPolishServerConnection{config.serverPublicKey, config.serverPrivateKey, config.chunkSize, nil, nil, nil}
 	config.connections[conn] = polishServerConnection
 
-	return polishServerConnection
+	return &polishServerConnection
 }
 
 func (silver SilverPolishClient) Handshake(conn net.Conn) error {
@@ -235,14 +235,14 @@ func (silver SilverPolishClient) Unpolish(input []byte) ([]byte, error) {
 
 	println("silver open result: ", result)
 	if openError != nil {
-		println("Received an error while unpolishing: ", openError)
+		println("Received an error while unpolishing: ", openError.Error())
 		return nil, openError
 	}
 
 	return result, nil
 }
 
-func (silver SilverPolishServerConnection) Handshake(conn net.Conn) error {
+func (silver *SilverPolishServerConnection) Handshake(conn net.Conn) error {
 	curve := elliptic.P256()
 
 	clientPublicKeyBlock := make([]byte, silver.chunkSize)
@@ -281,7 +281,7 @@ func (silver SilverPolishServerConnection) Handshake(conn net.Conn) error {
 	return nil
 }
 
-func (silver SilverPolishServerConnection) Polish(input []byte) ([]byte, error) {
+func (silver *SilverPolishServerConnection) Polish(input []byte) ([]byte, error) {
 	var output []byte
 
 	// Generate random nonce
@@ -298,17 +298,21 @@ func (silver SilverPolishServerConnection) Polish(input []byte) ([]byte, error) 
 	return result, nil
 }
 
-func (silver SilverPolishServerConnection) Unpolish(input []byte) ([]byte, error) {
-	var output []byte
+func (silver *SilverPolishServerConnection) Unpolish(input []byte) ([]byte, error) {
+	if silver.polishCipher != nil {
+		var output []byte
+		nonceSize := silver.polishCipher.NonceSize()
+		nonce := input[:nonceSize]
+		data := input[nonceSize:]
 
-	nonceSize := silver.polishCipher.NonceSize()
-	nonce := input[:nonceSize]
-	data := input[nonceSize:]
+		_, openError := silver.polishCipher.Open(output, nonce, data, nil)
+		if openError != nil {
+			return nil, openError
+		}
 
-	_, openError := silver.polishCipher.Open(output, nonce, data, nil)
-	if openError != nil {
-		return nil, openError
+		return output, nil
+	} else {
+		println("unable to unpoloish input, silver.polishCipher is nil")
+		return nil, errors.New("unable to unpoloish input, silver.polishCipher is nil")
 	}
-
-	return output, nil
 }
