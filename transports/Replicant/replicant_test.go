@@ -6,10 +6,43 @@ import (
 	"github.com/OperatorFoundation/monolith-go/monolith"
 	"github.com/OperatorFoundation/shapeshifter-transports/transports/Replicant/polish"
 	"github.com/OperatorFoundation/shapeshifter-transports/transports/Replicant/toneburst"
+	"io/ioutil"
 	"math/rand"
 	"testing"
 	"time"
 )
+
+
+func TestMarshalConfigs(t *testing.T) {
+	clientConfig, serverConfig := createSilverMonotoneConfigsOneFixedAddByte()
+
+	clientConfigJsonString, clientConfigJsonError := clientConfig.Marshal()
+	if clientConfigJsonError != nil {
+		println("Client config json error: ", clientConfigJsonError.Error())
+		t.Fail()
+		return
+	}
+
+	serverConfigJsonString, serverConfigJsonError := serverConfig.Marshal()
+	if serverConfigJsonError != nil {
+		println("Server config json error: ", serverConfigJsonError.Error())
+		t.Fail()
+		return
+	}
+
+	serverConfigWriteError := ioutil.WriteFile("ReplicantServerConfig.json", []byte(serverConfigJsonString), 0644)
+	if serverConfigWriteError != nil {
+		println("Server config write error: ", serverConfigWriteError.Error())
+		t.Fail()
+		return
+	}
+	clientConfigWriteError := ioutil.WriteFile("ReplicantClientConfig.json", []byte(clientConfigJsonString), 0644)
+	if clientConfigWriteError != nil {
+		println("Client config write error: ", clientConfigWriteError.Error())
+		t.Fail()
+		return
+	}
+}
 
 func TestEmptyConfigs(t *testing.T) {
 	clientConfig := ClientConfig{
@@ -453,6 +486,71 @@ func createSilverConfigs()(*ClientConfig, *ServerConfig) {
 
 	serverConfig := ServerConfig{
 		Toneburst: nil,
+		Polish:    polishServerConfig,
+	}
+
+	return &clientConfig, &serverConfig
+}
+
+func createSilverMonotoneConfigsOneFixedAddByte() (*ClientConfig, *ServerConfig) {
+	parts := make([]monolith.Monolith, 0)
+	part := monolith.BytesPart{
+		Items: []monolith.ByteType{
+			monolith.FixedByteType{Byte:0x13},
+		},
+	}
+	parts = append(parts, part)
+	desc := monolith.Description{Parts:parts}
+	args := make([]interface{}, 0)
+	monolithInstance := monolith.Instance{
+		Desc: desc,
+		Args: args,
+	}
+
+	addSequences := monolithInstance
+
+	monotoneConfig := toneburst.MonotoneConfig{
+		AddSequences:    &addSequences,
+		RemoveSequences: nil,
+		SpeakFirst:      true,
+	}
+
+	polishServerConfig, polishServerError := polish.NewSilverServerConfig()
+	if polishServerError != nil {
+		println("Polish server error: ", polishServerError)
+		return nil, nil
+	}
+
+	polishClientConfig, polishClientConfigError := polish.NewSilverClientConfig(polishServerConfig)
+	if polishClientConfigError != nil {
+		println("Error creating silver client config: ", polishClientConfigError)
+		return nil, nil
+	}
+
+	clientConfig := ClientConfig{
+		Toneburst: monotoneConfig,
+		Polish:    polishClientConfig,
+	}
+
+	serverParts := make([]monolith.Monolith, 0)
+	serverPart := monolith.BytesPart{
+		Items: []monolith.ByteType{
+			monolith.FixedByteType{Byte:0x13},
+		},
+	}
+	serverParts = append(serverParts, serverPart)
+
+	serverDesc := monolith.Description{Parts:serverParts}
+	serverRemoveSequences := serverDesc
+
+	monotoneServerConfig := toneburst.MonotoneConfig{
+		AddSequences:    nil,
+		RemoveSequences: &serverRemoveSequences,
+		SpeakFirst:      false,
+	}
+
+	serverConfig := ServerConfig{
+		Toneburst: monotoneServerConfig,
 		Polish:    polishServerConfig,
 	}
 

@@ -12,6 +12,7 @@ import (
 func InitializeGobRegistry() {
 	monolith.InitializeGobRegistry()
 
+	gob.Register(toneburst.MonotoneConfig{})
 	gob.Register(toneburst.WhalesongConfig{})
 	gob.Register(polish.SilverPolishClientConfig{})
 	gob.Register(polish.SilverPolishServerConfig{})
