@@ -11,21 +11,51 @@ import (
 	"time"
 )
 
-func TestMonotoneOnly(t *testing.T) {
-	monotoneClientConfig := createMonotoneClientConfigRandomEnumeratedItems()
-	monotoneServerConfig := createMonotoneServerConfigRandomEnumeratedItems()
-	//monotoneConfig := createMonotoneConfig()
+func TestEmptyConfigs(t *testing.T) {
+	clientConfig := ClientConfig{
+		Toneburst: nil,
+		Polish:    nil,
+	}
 
 	serverConfig := ServerConfig{
-		Toneburst: monotoneServerConfig,
+		Toneburst: nil,
 		Polish:    nil,
 	}
 
-	clientConfig := ClientConfig{
-		Toneburst: monotoneClientConfig,
-		Polish:    nil,
-	}
+	replicantConnection(clientConfig, serverConfig, t)
+}
 
+func TestEmptyMonotone(t *testing.T) {
+	clientConfig := createMonotoneClientConfigEmpty()
+	serverConfig := createMonotoneServerConfigEmpty()
+	replicantConnection(clientConfig, serverConfig, t)
+}
+
+func TestNilsMonotone(t *testing.T) {
+	clientConfig := createMonotoneClientConfigNils()
+	serverConfig := createMonotoneServerConfigNils()
+	replicantConnection(clientConfig, serverConfig, t)
+}
+
+func TestOneFixedByteMonotone(t *testing.T) {
+	clientConfig := createMonotoneClientConfigOneFixedAddByte()
+	serverConfig := createMonotoneServerConfigOneFixedRemoveByte()
+	replicantConnection(clientConfig, serverConfig, t)
+}
+
+func TestOneAddOneRemove(t *testing.T) {
+	clientConfig := createMonotoneClientConfigOneAddOneRemove()
+	serverConfig := createMonotoneServerConfigOneAddOneRemove()
+	replicantConnection(clientConfig, serverConfig, t)
+}
+
+func TestMonotoneRandomEnumerated(t *testing.T) {
+	clientConfig := createMonotoneClientConfigRandomEnumeratedItems()
+	serverConfig := createMonotoneServerConfigRandomEnumeratedItems()
+	replicantConnection(clientConfig, serverConfig, t)
+}
+
+func replicantConnection(clientConfig ClientConfig, serverConfig ServerConfig, t *testing.T) {
 	serverStarted := make(chan bool)
 
 	go func() {
@@ -101,20 +131,47 @@ func TestMonotoneOnly(t *testing.T) {
 	return
 }
 
-func createMonotoneConfig() toneburst.MonotoneConfig {
-	parts := make([]monolith.Monolith, 0)
-	part := monolith.BytesPart{Items:[]monolith.ByteType{monolith.FixedByteType{Byte:0x0A}}}
-	parts = append(parts, part)
+func createMonotoneClientConfigNils() ClientConfig {
+	monotoneConfig := toneburst.MonotoneConfig{
+		AddSequences:    nil,
+		RemoveSequences: nil,
+		SpeakFirst:      false,
+	}
 
-	description := monolith.Description{Parts:parts}
+	clientConfig := ClientConfig{
+		Toneburst: monotoneConfig,
+		Polish:    nil,
+	}
+
+	return clientConfig
+}
+
+func createMonotoneServerConfigNils() ServerConfig {
+	monotoneConfig := toneburst.MonotoneConfig{
+		AddSequences:    nil,
+		RemoveSequences: nil,
+		SpeakFirst:      false,
+	}
+
+	serverConfig := ServerConfig{
+		Toneburst: monotoneConfig,
+		Polish:    nil,
+	}
+
+	return serverConfig
+}
+
+func createMonotoneClientConfigEmpty() ClientConfig {
+	parts := make([]monolith.Monolith, 0)
+	desc := monolith.Description{parts}
 	args := make([]interface{}, 0)
 	monolithInstance := monolith.Instance{
-		Desc: description,
+		Desc: desc,
 		Args: args,
 	}
 
 	addSequences := monolithInstance
-	removeSequences := description
+	removeSequences := desc
 
 	monotoneConfig := toneburst.MonotoneConfig{
 		AddSequences:    &addSequences,
@@ -122,10 +179,178 @@ func createMonotoneConfig() toneburst.MonotoneConfig {
 		SpeakFirst:      false,
 	}
 
-	return monotoneConfig
+	clientConfig := ClientConfig{
+		Toneburst: monotoneConfig,
+		Polish:    nil,
+	}
+
+	return clientConfig
 }
 
-func createMonotoneClientConfigRandomEnumeratedItems() toneburst.MonotoneConfig {
+func createMonotoneServerConfigEmpty() ServerConfig {
+	parts := make([]monolith.Monolith, 0)
+	desc := monolith.Description{parts}
+	args := make([]interface{}, 0)
+	monolithInstance := monolith.Instance{
+		Desc: desc,
+		Args: args,
+	}
+
+	addSequences := monolithInstance
+	removeSequences := desc
+
+	monotoneConfig := toneburst.MonotoneConfig{
+		AddSequences:    &addSequences,
+		RemoveSequences: &removeSequences,
+		SpeakFirst:      false,
+	}
+
+	serverConfig := ServerConfig{
+		Toneburst: monotoneConfig,
+		Polish:    nil,
+	}
+
+	return serverConfig
+}
+
+func createMonotoneClientConfigOneFixedAddByte() ClientConfig {
+	parts := make([]monolith.Monolith, 0)
+	part := monolith.BytesPart{
+		Items: []monolith.ByteType{
+			monolith.FixedByteType{Byte:0x13},
+		},
+	}
+	parts = append(parts, part)
+	desc := monolith.Description{Parts:parts}
+	args := make([]interface{}, 0)
+	monolithInstance := monolith.Instance{
+		Desc: desc,
+		Args: args,
+	}
+
+	addSequences := monolithInstance
+
+	monotoneConfig := toneburst.MonotoneConfig{
+		AddSequences:    &addSequences,
+		RemoveSequences: nil,
+		SpeakFirst:      true,
+	}
+
+	clientConfig := ClientConfig{
+		Toneburst: monotoneConfig,
+		Polish:    nil,
+	}
+
+	return clientConfig
+}
+
+func createMonotoneServerConfigOneFixedRemoveByte() ServerConfig {
+	parts := make([]monolith.Monolith, 0)
+	part := monolith.BytesPart{
+		Items: []monolith.ByteType{
+			monolith.FixedByteType{Byte:0x13},
+		},
+	}
+	parts = append(parts, part)
+
+	desc := monolith.Description{Parts:parts}
+	removeSequences := desc
+
+	monotoneConfig := toneburst.MonotoneConfig{
+		AddSequences:    nil,
+		RemoveSequences: &removeSequences,
+		SpeakFirst:      false,
+	}
+
+	serverConfig := ServerConfig{
+		Toneburst: monotoneConfig,
+		Polish:    nil,
+	}
+
+	return serverConfig
+}
+
+func createMonotoneClientConfigOneAddOneRemove() ClientConfig {
+	parts := make([]monolith.Monolith, 0)
+	part := monolith.BytesPart{
+		Items: []monolith.ByteType{
+			monolith.FixedByteType{Byte:0x13},
+		},
+	}
+	parts = append(parts, part)
+	desc := monolith.Description{Parts:parts}
+	args := make([]interface{}, 0)
+	monolithInstance := monolith.Instance{
+		Desc: desc,
+		Args: args,
+	}
+
+	addSequences := monolithInstance
+
+	removeParts := make([]monolith.Monolith, 0)
+	removePart := monolith.BytesPart{
+		Items: []monolith.ByteType{
+			monolith.FixedByteType{Byte:0x14},
+		},
+	}
+	removeParts = append(removeParts, removePart)
+	removeDesc := monolith.Description{Parts:removeParts}
+
+	monotoneConfig := toneburst.MonotoneConfig{
+		AddSequences:    &addSequences,
+		RemoveSequences: &removeDesc,
+		SpeakFirst:      true,
+	}
+
+	clientConfig := ClientConfig{
+		Toneburst: monotoneConfig,
+		Polish:    nil,
+	}
+
+	return clientConfig
+}
+
+func createMonotoneServerConfigOneAddOneRemove() ServerConfig {
+	removeParts := make([]monolith.Monolith, 0)
+	removePart := monolith.BytesPart{
+		Items: []monolith.ByteType{
+			monolith.FixedByteType{Byte:0x13},
+		},
+	}
+	removeParts = append(removeParts, removePart)
+
+	desc := monolith.Description{Parts: removeParts}
+	removeSequences := desc
+
+	addParts := make([]monolith.Monolith, 0)
+	addPart := monolith.BytesPart{
+		Items: []monolith.ByteType{
+			monolith.FixedByteType{Byte:0x14},
+		},
+	}
+	addParts = append(addParts, addPart)
+	addDesc := monolith.Description{Parts:addParts}
+	args := make([]interface{}, 0)
+	monolithInstance := monolith.Instance{
+		Desc: addDesc,
+		Args: args,
+	}
+
+	monotoneConfig := toneburst.MonotoneConfig{
+		AddSequences:    &monolithInstance,
+		RemoveSequences: &removeSequences,
+		SpeakFirst:      false,
+	}
+
+	serverConfig := ServerConfig{
+		Toneburst: monotoneConfig,
+		Polish:    nil,
+	}
+
+	return serverConfig
+}
+
+func createMonotoneClientConfigRandomEnumeratedItems() ClientConfig {
 	rand.Seed(time.Now().UnixNano())
 	set := []byte{0x11, 0x12, 0x13, 0x14}
 	parts := make([]monolith.Monolith, 0)
@@ -159,10 +384,15 @@ func createMonotoneClientConfigRandomEnumeratedItems() toneburst.MonotoneConfig 
 		SpeakFirst:      true,
 	}
 
-	return monotoneConfig
+	clientConfig := ClientConfig{
+		Toneburst: monotoneConfig,
+		Polish:    nil,
+	}
+
+	return clientConfig
 }
 
-func createMonotoneServerConfigRandomEnumeratedItems() toneburst.MonotoneConfig {
+func createMonotoneServerConfigRandomEnumeratedItems() ServerConfig {
 	rand.Seed(time.Now().UnixNano())
 	set := []byte{0x11, 0x12, 0x13, 0x14}
 	parts := make([]monolith.Monolith, 0)
@@ -196,15 +426,29 @@ func createMonotoneServerConfigRandomEnumeratedItems() toneburst.MonotoneConfig 
 		SpeakFirst:      false,
 	}
 
-	return monotoneConfig
+	serverConfig := ServerConfig{
+		Toneburst: monotoneConfig,
+		Polish:    nil,
+	}
+
+	return serverConfig
 }
 
-// Polish Tests
-func TestConn(t *testing.T) {
+func createSilverConfigs()(*ClientConfig, *ServerConfig) {
 	polishServerConfig, polishServerError := polish.NewSilverServerConfig()
 	if polishServerError != nil {
 		println("Polish server error: ", polishServerError)
-		t.Fail()
+		return nil, nil
+	}
+	polishClientConfig, polishClientError := polish.NewSilverClientConfig(polishServerConfig)
+	if polishClientError != nil {
+		println("Polish  client error: ", polishClientError)
+		return nil, nil
+	}
+
+	clientConfig := ClientConfig{
+		Toneburst: nil,
+		Polish:    polishClientConfig,
 	}
 
 	serverConfig := ServerConfig{
@@ -212,6 +456,114 @@ func TestConn(t *testing.T) {
 		Polish:    polishServerConfig,
 	}
 
+	return &clientConfig, &serverConfig
+}
+
+func createSilverMonotoneClientConfigRandomEnumeratedItems() *ClientConfig {
+	rand.Seed(time.Now().UnixNano())
+	set := []byte{0x11, 0x12, 0x13, 0x14}
+	parts := make([]monolith.Monolith, 0)
+	part := monolith.BytesPart{
+		Items: []monolith.ByteType{
+			monolith.RandomEnumeratedByteType{set},
+			monolith.RandomEnumeratedByteType{set},
+		},
+	}
+	parts = append(parts, part)
+	part = monolith.BytesPart{
+		Items: []monolith.ByteType{
+			monolith.RandomEnumeratedByteType{set},
+			monolith.RandomEnumeratedByteType{set},
+		},
+	}
+	parts = append(parts, part)
+	desc := monolith.Description{parts}
+	args := make([]interface{}, 0)
+	monolithInstance := monolith.Instance{
+		Desc: desc,
+		Args: args,
+	}
+
+	addSequences := monolithInstance
+	removeSequences := desc
+
+	monotoneConfig := toneburst.MonotoneConfig{
+		AddSequences:    &addSequences,
+		RemoveSequences: &removeSequences,
+		SpeakFirst:      true,
+	}
+
+	polishServerConfig, polishServerError := polish.NewSilverServerConfig()
+	if polishServerError != nil {
+		println("Polish server error: ", polishServerError)
+		return nil
+	}
+
+	polishClientConfig, polishClientConfigError := polish.NewSilverClientConfig(polishServerConfig)
+	if polishClientConfigError != nil {
+		println("Error creating silver client config: ", polishClientConfigError)
+		return nil
+	}
+
+	clientConfig := ClientConfig{
+		Toneburst: monotoneConfig,
+		Polish:    polishClientConfig,
+	}
+
+	return &clientConfig
+}
+
+func createSilverMonotoneServerConfigRandomEnumeratedItems() *ServerConfig {
+	rand.Seed(time.Now().UnixNano())
+	set := []byte{0x11, 0x12, 0x13, 0x14}
+	parts := make([]monolith.Monolith, 0)
+	part := monolith.BytesPart{
+		Items: []monolith.ByteType{
+			monolith.RandomEnumeratedByteType{set},
+			monolith.RandomEnumeratedByteType{set},
+		},
+	}
+	parts = append(parts, part)
+	part = monolith.BytesPart{
+		Items: []monolith.ByteType{
+			monolith.RandomEnumeratedByteType{set},
+			monolith.RandomEnumeratedByteType{set},
+		},
+	}
+	parts = append(parts, part)
+	desc := monolith.Description{parts}
+	args := make([]interface{}, 0)
+	monolithInstance := monolith.Instance{
+		Desc: desc,
+		Args: args,
+	}
+
+	addSequences := monolithInstance
+	removeSequences := desc
+
+	monotoneConfig := toneburst.MonotoneConfig{
+		AddSequences:    &addSequences,
+		RemoveSequences: &removeSequences,
+		SpeakFirst:      false,
+	}
+
+	polishServerConfig, polishServerError := polish.NewSilverServerConfig()
+	if polishServerError != nil {
+		println("Polish server error: ", polishServerError)
+		return nil
+	}
+
+	serverConfig := ServerConfig{
+		Toneburst: monotoneConfig,
+		Polish:    polishServerConfig,
+	}
+
+	return &serverConfig
+}
+
+// Polish Tests
+func TestConn(t *testing.T) {
+	clientConfig, serverConfig := createSilverConfigs()
 	// Run the server concurrently
 	go func() {
 		listener := serverConfig.Listen("127.0.0.1:7777")
@@ -242,18 +594,6 @@ func TestConn(t *testing.T) {
 	}()
 
 	// Run the client
-	polishClientConfig, polishClientError := polish.NewSilverClientConfig(polishServerConfig)
-	if polishClientError != nil {
-		println("Polish  client error: ", polishClientError)
-		t.Fail()
-		return
-	}
-
-	clientConfig := ClientConfig{
-		Toneburst: nil,
-		Polish:    polishClientConfig,
-	}
-
 	client := clientConfig.Dial("127.0.0.1:7777")
 	if client == nil {
 		println("Dial error: Conn is nil.")
@@ -315,32 +655,10 @@ func runServerWithSilver(polishServerConfig *polish.SilverPolishServerConfig) {
 
 //Both
 func TestWithSilverMonotone(t *testing.T) {
-	polishServerConfig, polishServerError := polish.NewSilverServerConfig()
-	if polishServerError != nil {
-		println("Polish server error: ", polishServerError)
-		t.Fail()
-	}
 
-	polishClientConfig, polishClientConfigError := polish.NewSilverClientConfig(polishServerConfig)
-	if polishClientConfigError != nil {
-		println("Error creating silver client config: ", polishClientConfigError)
-		t.Fail()
-		return
-	}
-
-	monotoneClientConfig := createMonotoneClientConfigRandomEnumeratedItems()
-	monotoneServerConfig := createMonotoneServerConfigRandomEnumeratedItems()
+	clientConfig := createSilverMonotoneClientConfigRandomEnumeratedItems()
+	serverConfig := createSilverMonotoneServerConfigRandomEnumeratedItems()
 	//monotoneConfig := createMonotoneConfig()
-
-	serverConfig := ServerConfig{
-		Toneburst: monotoneServerConfig,
-		Polish:    polishServerConfig,
-	}
-
-	clientConfig := ClientConfig{
-		Toneburst: monotoneClientConfig,
-		Polish:    polishClientConfig,
-	}
 
 	go func() {
 		listener := serverConfig.Listen("127.0.0.1:7777")
