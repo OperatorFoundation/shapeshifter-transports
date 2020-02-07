@@ -8,6 +8,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"github.com/opentracing/opentracing-go/log"
 	"golang.org/x/crypto/chacha20poly1305"
 	"golang.org/x/crypto/hkdf"
 	"io"
@@ -194,12 +195,12 @@ func (silver SilverPolishClient) Handshake(conn net.Conn) error {
 	publicKeyBlock := make([]byte, silver.chunkSize)
 	_, readError := rand.Read(publicKeyBlock)
 	if readError != nil {
-		return nil
+		return readError
 	}
 	copy(publicKeyBlock, clientPublicKey[:])
 	_, writeError := conn.Write(publicKeyBlock)
 	if writeError != nil {
-		return errors.New("write error")
+		return writeError
 	}
 
 	return nil
@@ -216,9 +217,9 @@ func (silver SilverPolishClient) Polish(input []byte) ([]byte, error) {
 	}
 
 	sealResult := silver.polishCipher.Seal(output, nonce, input, nil)
-	fmt.Printf("Input: %v:\n", input)
-	fmt.Printf("Seal result: %v\n", sealResult)
-	fmt.Printf("Output after seal: %v\n", sealResult)
+	//fmt.Printf("Input: %v:\n", input)
+	//fmt.Printf("Seal result: %v\n", sealResult)
+	//fmt.Printf("Output after seal: %v\n", sealResult)
 	result := append(nonce, sealResult...)
 
 	return result, nil
@@ -248,7 +249,8 @@ func (silver *SilverPolishServerConnection) Handshake(conn net.Conn) error {
 	clientPublicKeyBlock := make([]byte, silver.chunkSize)
 	_, err := io.ReadFull(conn, clientPublicKeyBlock)
 	if err != nil {
-		fmt.Println("Error initializing polish shared key")
+		fmt.Println("Error initializing polish shared key: ", err)
+		log.Error(err)
 		return err
 	}
 
@@ -258,7 +260,9 @@ func (silver *SilverPolishServerConnection) Handshake(conn net.Conn) error {
 	// Marshall uses section 4.3.6 of ANSI X9.62
 	clientX, clientY := elliptic.Unmarshal(curve, clientPublicKey[:])
 	if clientX == nil || clientY == nil {
-		return errors.New("received a nil response while decoding the client public key")
+		unmarshallError := errors.New("silver server unmarshal error: received a nil response while decoding the client public key")
+		log.Error(unmarshallError)
+		return unmarshallError
 	}
 
 	sharedKeyX, sharedKeyY := curve.ScalarMult(clientX, clientY, silver.serverPrivateKey)
@@ -269,12 +273,14 @@ func (silver *SilverPolishServerConnection) Handshake(conn net.Conn) error {
 	sharedKey := make([]byte, chacha20poly1305.KeySize)
 	_, readError := kdf.Read(sharedKey)
 	if readError != nil {
+		log.Error(readError)
 		return readError
 	}
 
 	silver.polishCipher, err = chacha20poly1305.New(sharedKey)
 	if err != nil {
 		fmt.Println("Error initializing polish client", err)
+		log.Error(err)
 		return err
 	}
 
@@ -288,6 +294,7 @@ func (silver *SilverPolishServerConnection) Polish(input []byte) ([]byte, error)
 	nonce := make([]byte, silver.polishCipher.NonceSize())
 	_, readError := rand.Read(nonce)
 	if readError != nil {
+		log.Error(readError)
 		return nil, readError
 	}
 
@@ -307,12 +314,15 @@ func (silver *SilverPolishServerConnection) Unpolish(input []byte) ([]byte, erro
 
 		_, openError := silver.polishCipher.Open(output, nonce, data, nil)
 		if openError != nil {
+			log.Error(openError)
 			return nil, openError
 		}
 
 		return output, nil
 	} else {
-		println("unable to unpoloish input, silver.polishCipher is nil")
-		return nil, errors.New("unable to unpoloish input, silver.polishCipher is nil")
+		println("unable to unpolish input, silver.polishCipher is nil")
+		nilCipherError := errors.New("unable to unpolish input, silver.polishCipher is nil")
+		log.Error(nilCipherError)
+		return nil, nilCipherError
 	}
 }

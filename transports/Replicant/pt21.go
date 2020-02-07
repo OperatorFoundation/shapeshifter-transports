@@ -84,7 +84,7 @@ func (sconn *Connection) Read(b []byte) (int, error) {
 		unpolished, unpolishError := sconn.state.polish.Unpolish(polished)
 		if unpolishError != nil {
 			println("Received an unpolish error: ", unpolishError.Error())
-			return 0, nil
+			return 0, unpolishError
 		}
 
 		// Empty the buffer and write the decrypted data to it

@@ -924,7 +924,7 @@ func TestSilverClientPolishUnpolish(t *testing.T) {
 
 	unpolished, unpolishError := silverClient.Unpolish(polished)
 	if unpolishError != nil {
-		println("Received an unpolish error: ", unpolishError)
+		println("Received an unpolish error: ", unpolishError.Error())
 		t.Fail()
 	}
 
