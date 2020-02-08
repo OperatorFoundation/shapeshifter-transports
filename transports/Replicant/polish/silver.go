@@ -312,6 +312,12 @@ func (silver *SilverPolishServerConnection) Unpolish(input []byte) ([]byte, erro
 		nonce := input[:nonceSize]
 		data := input[nonceSize:]
 
+		log.String("Silver server", "open")
+		_, unpolishErr := fmt.Printf("Input: %v:\n", input)
+		log.String("Input", unpolishErr.Error())
+		log.String("","Nonce size")
+		log.String("Nonce size", string(nonceSize))
+
 		_, openError := silver.polishCipher.Open(output, nonce, data, nil)
 		if openError != nil {
 			log.Error(openError)
