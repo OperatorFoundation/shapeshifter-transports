@@ -250,6 +250,7 @@ func (silver *SilverPolishServerConnection) Handshake(conn net.Conn) error {
 	_, err := io.ReadFull(conn, clientPublicKeyBlock)
 	if err != nil {
 		fmt.Println("Error initializing polish shared key: ", err)
+		log.Error(errors.New("handshake error initializing polish shared key"))
 		log.Error(err)
 		return err
 	}
@@ -313,8 +314,6 @@ func (silver *SilverPolishServerConnection) Unpolish(input []byte) ([]byte, erro
 		data := input[nonceSize:]
 
 		log.String("Silver server", "open")
-		_, unpolishErr := fmt.Printf("Input: %v:\n", input)
-		log.String("Input", unpolishErr.Error())
 		log.String("","Nonce size")
 		log.String("Nonce size", string(nonceSize))
 
