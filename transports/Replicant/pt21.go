@@ -84,6 +84,7 @@ func (sconn *Connection) Read(b []byte) (int, error) {
 		unpolished, unpolishError := sconn.state.polish.Unpolish(polished)
 		if unpolishError != nil {
 			println("Received an unpolish error: ", unpolishError.Error())
+			println("Polished input: ", polished)
 			return 0, unpolishError
 		}
 
@@ -114,6 +115,7 @@ func (sconn *Connection) Write(b []byte) (int, error) {
 			return 0, polishError
 		}
 
+		println("Polished data to write: ", polished)
 		return sconn.conn.Write(polished)
 	} else {
 		return sconn.conn.Write(b)
