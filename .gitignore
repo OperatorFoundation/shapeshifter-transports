@@ -7,3 +7,4 @@ obfs4proxy/obfs4proxy
 .idea/shapeshifter-transports.iml
 .idea/vcs.xml
 .idea/workspace.xml
+transports/.DS_Store

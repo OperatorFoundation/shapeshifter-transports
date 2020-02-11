@@ -72,7 +72,7 @@ func (listener *replicantTransportListener) Close() error {
 
 func (sconn *Connection) Read(b []byte) (int, error) {
 	if sconn.state.polish != nil {
-		polished := b
+		polished := make([]byte, sconn.state.polish.GetChunkSize())
 
 		// Read encrypted data from the connection and put it into our polished slice
 		_, err := sconn.conn.Read(polished)
@@ -110,15 +110,40 @@ func (sconn *Connection) Read(b []byte) (int, error) {
 func (sconn *Connection) Write(b []byte) (int, error) {
 
 	if sconn.state.polish != nil {
+		// Polish data
 		unpolished := b
 		polished, polishError := sconn.state.polish.Polish(unpolished)
 		if polishError != nil {
 			return 0, polishError
 		}
 
-		println("Polished data to write: ", polished)
-		fmt.Printf("Polished output:  %v", polished)
-		return sconn.conn.Write(polished)
+		numberOfBytesToWrite := len(polished)
+		totalBytesWritten := 0
+		println("Polished data to write count: ", numberOfBytesToWrite)
+		fmt.Printf("Polished output:  %v\n", polished)
+
+		// Write all of the bytes
+		for numberOfBytesToWrite > totalBytesWritten {
+
+			//Write the bytes in polish slice
+			bytesWritten, writeError := sconn.conn.Write(polished)
+			if writeError != nil {
+				return bytesWritten, writeError
+			}
+
+			// Keep track of how many bytes we've written so far
+			totalBytesWritten = totalBytesWritten + bytesWritten
+
+			//If the bytes written are less than the bytes we need to write
+			if numberOfBytesToWrite > totalBytesWritten {
+
+				//Slice off what has already been written
+				polished = polished[:bytesWritten]
+			}
+		}
+
+		// Return the count of the pre-polished bytes
+		return len(b), nil
 	} else {
 		return sconn.conn.Write(b)
 	}

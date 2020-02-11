@@ -36,8 +36,16 @@ func (config SilverPolishServerConfig) Construct() (Server, error) {
 	return NewSilverServer(config)
 }
 
+func (config SilverPolishServerConfig) GetChunkSize() int {
+	return config.ChunkSize
+}
+
 func (config SilverPolishClientConfig) Construct() (Connection, error) {
 	return NewSilverClient(config)
+}
+
+func (config SilverPolishClientConfig) GetChunkSize() int {
+return config.ChunkSize
 }
 
 type SilverPolishClient struct {
@@ -209,38 +217,116 @@ func (silver SilverPolishClient) Handshake(conn net.Conn) error {
 func (silver SilverPolishClient) Polish(input []byte) ([]byte, error) {
 	var output []byte
 
+	inputSize := len(input)
+	nonceSize := silver.polishCipher.NonceSize()
+	overheadSize := silver.polishCipher.Overhead()
+	payloadSize := silver.chunkSize - (nonceSize + overheadSize)
+	maximumInputSize := payloadSize - 2
+	payload := make([]byte, payloadSize)
+
 	// Generate random nonce
-	nonce := make([]byte, silver.polishCipher.NonceSize())
+	nonce := make([]byte, nonceSize)
 	_, readError := rand.Read(nonce)
 	if readError != nil {
 		return nil, readError
 	}
 
-	sealResult := silver.polishCipher.Seal(output, nonce, input, nil)
-	//fmt.Printf("Input: %v:\n", input)
-	//fmt.Printf("Seal result: %v\n", sealResult)
-	//fmt.Printf("Output after seal: %v\n", sealResult)
-	result := append(nonce, sealResult...)
+	// Payload size - 2 because the first two bytes indicate the length of the input data
+	// These 2 bytes are not part of the data itself they describe its length
+	// Payload = length(2 bytes) + input data + padding
+	if inputSize <= maximumInputSize {
 
-	return result, nil
+		inputLengthUInt16 := uint16(inputSize)
+		// Convert it to two bytes and add it to the beginning of our payload
+		binary.LittleEndian.PutUint16(payload, inputLengthUInt16)
+
+		//Put input into out payload slice starting at the 3rd byte
+		copy(payload[2:], input)
+
+		// Encrypt the payload
+		sealResult := silver.polishCipher.Seal(output, nonce, payload, nil)
+		//fmt.Printf("Input: %v:\n", input)
+		//fmt.Printf("Seal result: %v\n", sealResult)
+		//fmt.Printf("Output after seal: %v\n", sealResult)
+		result := append(nonce, sealResult...)
+
+		return result, nil
+	} else {
+		//Input is larger than chunk size
+		result := make([]byte, 0)
+
+		for len(input) > 0 {
+
+			// Make sure that we don't try to make a slice that is bigger than input
+			chunk := make([]byte, 0)
+			if len(input) < maximumInputSize {
+				chunk = input[:]
+				input = make([]byte, 0)
+			} else {
+				chunk = input[:maximumInputSize]
+				input = input[maximumInputSize:]
+			}
+
+			// polish this chunk of input
+			polished, polishError := silver.Polish(chunk)
+			if polishError != nil {
+				return nil, polishError
+			}
+
+			result = append(result, polished...)
+		}
+
+		return result, nil
+	}
 }
 
 func (silver SilverPolishClient) Unpolish(input []byte) ([]byte, error) {
-	output := make([]byte, 0)
-
+	inputSize := len(input)
 	nonceSize := silver.polishCipher.NonceSize()
+
+	output := make([]byte, 0)
 	nonce := input[:nonceSize]
 	data := input[nonceSize:]
 
-	result, openError := silver.polishCipher.Open(output, nonce, data, nil)
+	if inputSize < silver.chunkSize {
+		return nil, errors.New("silver client - unable to unpolish data, received fewer bytes than chunk size")
+	} else if inputSize == silver.chunkSize {
+		unpolished, openError := silver.polishCipher.Open(output, nonce, data, nil)
+		println("silver open result: ", unpolished)
+		if openError != nil {
+			println("Received an error while unpolishing: ", openError.Error())
+			return nil, openError
+		}
 
-	println("silver open result: ", result)
-	if openError != nil {
-		println("Received an error while unpolishing: ", openError.Error())
-		return nil, openError
+		dataSize := int(binary.LittleEndian.Uint16(unpolished))
+		data = unpolished[2:dataSize]
+		return data, nil
+	} else {
+		//More than one chunk
+		result := make([]byte, 0)
+		for len(input) > 0 {
+
+			if len(input) < silver.chunkSize {
+				return nil, errors.New("received input to unpolish that is less than chunk size")
+			}
+
+			chunk := input[:silver.chunkSize]
+			input = input[silver.chunkSize:]
+
+			unpolished, unpolishError := silver.Unpolish(chunk)
+			if unpolishError != nil {
+				return nil, unpolishError
+			}
+
+			result = append(result, unpolished...)
+		}
+
+		return result, nil
 	}
+}
 
-	return result, nil
+func (silver SilverPolishClient) GetChunkSize() int {
+	return silver.chunkSize
 }
 
 func (silver *SilverPolishServerConnection) Handshake(conn net.Conn) error {
@@ -330,4 +416,8 @@ func (silver *SilverPolishServerConnection) Unpolish(input []byte) ([]byte, erro
 		log.Error(nilCipherError)
 		return nil, nilCipherError
 	}
+}
+
+func (silver *SilverPolishServerConnection) GetChunkSize() int {
+	return silver.chunkSize
 }

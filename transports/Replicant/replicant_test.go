@@ -93,6 +93,11 @@ func TestMonotoneRandomEnumerated(t *testing.T) {
 	replicantConnection(clientConfig, serverConfig, t)
 }
 
+func TestSilver(t *testing.T) {
+	clientConfig, serverConfig := createSilverConfigs()
+	replicantConnection(*clientConfig, *serverConfig, t)
+}
+
 func replicantConnection(clientConfig ClientConfig, serverConfig ServerConfig, t *testing.T) {
 	serverStarted := make(chan bool)
 
@@ -111,7 +116,9 @@ func replicantConnection(clientConfig ClientConfig, serverConfig ServerConfig, t
 			}
 
 			println("received an incoming connection")
-			lBuffer := make([]byte, 1024)
+			serverChunkSize := serverConfig.Polish.GetChunkSize()
+			println("Server chunk size = ", serverChunkSize)
+			lBuffer := make([]byte, 4)
 			lReadLength, lReadError := lConn.Read(lBuffer)
 			if lReadError != nil {
 				println("Listener read error: ", lReadError)
@@ -154,7 +161,9 @@ func replicantConnection(clientConfig ClientConfig, serverConfig ServerConfig, t
 	}
 	println("Wrote bytes to the server, count: ", cWriteLength)
 
-	readBuffer := make([]byte, 1024)
+	clientChunkSize := clientConfig.Polish.GetChunkSize()
+	println("Client chunk size = ", clientChunkSize)
+	readBuffer := make([]byte, 17)
 	cReadLength, cReadError := cConn.Read(readBuffer)
 	if cReadError != nil {
 		println("Client read error: ", cReadError)
@@ -164,15 +173,15 @@ func replicantConnection(clientConfig ClientConfig, serverConfig ServerConfig, t
 	println("Client read byte count: ", cReadLength)
 	fmt.Printf("Client read buffer: %v:\n", readBuffer)
 
-	// Send another message
-	writeBytes2 := []byte{0x13, 0x14, 0x15}
-	cWriteLength2, cWriteError2 := cConn.Write(writeBytes2)
-	if cWriteError2 != nil {
-		println("Client write error: ", cWriteError2)
-		t.Fail()
-		return
-	}
-	println("Wrote bytes to the server, count: ", cWriteLength2)
+	//// Send another message
+	//writeBytes2 := []byte{0x13, 0x14, 0x15}
+	//cWriteLength2, cWriteError2 := cConn.Write(writeBytes2)
+	//if cWriteError2 != nil {
+	//	println("Client write error: ", cWriteError2)
+	//	t.Fail()
+	//	return
+	//}
+	//println("Wrote bytes to the server, count: ", cWriteLength2)
 
 	defer cConn.Close()
 
