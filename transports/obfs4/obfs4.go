@@ -199,8 +199,8 @@ type Transport struct {
 }
 
 type Config struct {
-	CertString string
-	IatMode int
+	CertString string `json:"cert"`
+	IatMode int `json:"iat-mode"`
 }
 
 func (transport Transport) Dial() (net.Conn, error) {
