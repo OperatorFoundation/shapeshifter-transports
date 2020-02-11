@@ -76,6 +76,11 @@ func TestOneFixedByteMonotone(t *testing.T) {
 	replicantConnection(clientConfig, serverConfig, t)
 }
 
+func TestOneFixedByteSilverMonotone(t *testing.T) {
+	clientConfig, serverConfig := createSilverMonotoneConfigsOneFixedAddByte()
+	replicantConnection(*clientConfig, *serverConfig, t)
+}
+
 func TestOneAddOneRemove(t *testing.T) {
 	clientConfig := createMonotoneClientConfigOneAddOneRemove()
 	serverConfig := createMonotoneServerConfigOneAddOneRemove()
@@ -207,7 +212,7 @@ func createMonotoneServerConfigNils() ServerConfig {
 func createMonotoneClientConfigEmpty() ClientConfig {
 	parts := make([]monolith.Monolith, 0)
 	desc := monolith.Description{parts}
-	args := make([]interface{}, 0)
+	args := monolith.NewEmptyArgs()
 	monolithInstance := monolith.Instance{
 		Desc: desc,
 		Args: args,
@@ -233,7 +238,7 @@ func createMonotoneClientConfigEmpty() ClientConfig {
 func createMonotoneServerConfigEmpty() ServerConfig {
 	parts := make([]monolith.Monolith, 0)
 	desc := monolith.Description{parts}
-	args := make([]interface{}, 0)
+	args := monolith.NewEmptyArgs()
 	monolithInstance := monolith.Instance{
 		Desc: desc,
 		Args: args,
@@ -265,7 +270,7 @@ func createMonotoneClientConfigOneFixedAddByte() ClientConfig {
 	}
 	parts = append(parts, part)
 	desc := monolith.Description{Parts:parts}
-	args := make([]interface{}, 0)
+	args := monolith.NewEmptyArgs()
 	monolithInstance := monolith.Instance{
 		Desc: desc,
 		Args: args,
@@ -322,7 +327,7 @@ func createMonotoneClientConfigOneAddOneRemove() ClientConfig {
 	}
 	parts = append(parts, part)
 	desc := monolith.Description{Parts:parts}
-	args := make([]interface{}, 0)
+	args := monolith.NewEmptyArgs()
 	monolithInstance := monolith.Instance{
 		Desc: desc,
 		Args: args,
@@ -373,7 +378,7 @@ func createMonotoneServerConfigOneAddOneRemove() ServerConfig {
 	}
 	addParts = append(addParts, addPart)
 	addDesc := monolith.Description{Parts:addParts}
-	args := make([]interface{}, 0)
+	args := monolith.NewEmptyArgs()
 	monolithInstance := monolith.Instance{
 		Desc: addDesc,
 		Args: args,
@@ -412,7 +417,7 @@ func createMonotoneClientConfigRandomEnumeratedItems() ClientConfig {
 	}
 	parts = append(parts, part)
 	desc := monolith.Description{parts}
-	args := make([]interface{}, 0)
+	args := monolith.NewEmptyArgs()
 	monolithInstance := monolith.Instance{
 		Desc: desc,
 		Args: args,
@@ -454,7 +459,7 @@ func createMonotoneServerConfigRandomEnumeratedItems() ServerConfig {
 	}
 	parts = append(parts, part)
 	desc := monolith.Description{parts}
-	args := make([]interface{}, 0)
+	args := monolith.NewEmptyArgs()
 	monolithInstance := monolith.Instance{
 		Desc: desc,
 		Args: args,
@@ -511,7 +516,7 @@ func createSilverMonotoneConfigsOneFixedAddByte() (*ClientConfig, *ServerConfig)
 	}
 	parts = append(parts, part)
 	desc := monolith.Description{Parts:parts}
-	args := make([]interface{}, 0)
+	args := monolith.NewEmptyArgs()
 	monolithInstance := monolith.Instance{
 		Desc: desc,
 		Args: args,
@@ -586,7 +591,7 @@ func createSilverMonotoneClientConfigRandomEnumeratedItems() *ClientConfig {
 	}
 	parts = append(parts, part)
 	desc := monolith.Description{parts}
-	args := make([]interface{}, 0)
+	args := monolith.NewEmptyArgs()
 	monolithInstance := monolith.Instance{
 		Desc: desc,
 		Args: args,
@@ -640,7 +645,7 @@ func createSilverMonotoneServerConfigRandomEnumeratedItems() *ServerConfig {
 	}
 	parts = append(parts, part)
 	desc := monolith.Description{parts}
-	args := make([]interface{}, 0)
+	args := monolith.NewEmptyArgs()
 	monolithInstance := monolith.Instance{
 		Desc: desc,
 		Args: args,

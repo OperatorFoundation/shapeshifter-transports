@@ -81,6 +81,9 @@ func (cert *obfs4ServerCert) unpack() (*ntor.NodeID, *ntor.PublicKey) {
 func serverCertFromString(encoded string) (*obfs4ServerCert, error) {
 	decoded, err := base64.StdEncoding.DecodeString(encoded + certSuffix)
 	if err != nil {
+		println("encoded: ", encoded)
+		println("certSuffix: ", certSuffix)
+		println("together: ", encoded + certSuffix)
 		return nil, fmt.Errorf("failed to decode cert: %s", err)
 	}
 

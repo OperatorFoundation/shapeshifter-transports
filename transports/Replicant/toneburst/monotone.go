@@ -18,10 +18,19 @@ func (config MonotoneConfig) Construct() (ToneBurst, error) {
 
 type Monotone struct {
 	config MonotoneConfig
+	buffer *monolith.Buffer
+	context *monolith.Context
 }
 
 func NewMonotone(config MonotoneConfig) *Monotone {
-	return &Monotone{config: config}
+	buffer := monolith.NewEmptyBuffer()
+	context := monolith.NewEmptyContext()
+
+	return &Monotone{
+		config:  config,
+		buffer:  buffer,
+		context: context,
+	}
 }
 
 //TODO: Implement Perform
@@ -64,7 +73,7 @@ func (monotone *Monotone) Perform(conn net.Conn) error {
 			removePart := removeParts[0]
 			removeParts = removeParts[1:]
 
-			validated, readAllError := readAll(conn, removePart)
+			validated, readAllError := monotone.readAll(conn, removePart)
 			if readAllError != nil {
 				println("Error reading data: ", readAllError.Error())
 				return readAllError
@@ -89,7 +98,7 @@ func (monotone *Monotone) Perform(conn net.Conn) error {
 	}
 }
 
-func readAll(conn net.Conn, part monolith.Monolith) (bool, error) {
+func (monotone Monotone) readAll(conn net.Conn, part monolith.Monolith) (bool, error) {
 	receivedData := make([]byte, part.Count())
 	_, readError := conn.Read(receivedData)
 	if readError != nil {
@@ -97,7 +106,7 @@ func readAll(conn net.Conn, part monolith.Monolith) (bool, error) {
 		return false, readError
 	}
 
-	_, validated := part.Validate(receivedData)
+	validated := part.Validate(monotone.buffer, monotone.context)
 
 	switch validated {
 
