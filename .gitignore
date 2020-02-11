@@ -8,3 +8,5 @@ obfs4proxy/obfs4proxy
 .idea/vcs.xml
 .idea/workspace.xml
 transports/.DS_Store
+transports/Replicant/ReplicantServerConfig.json
+transports/Replicant/ReplicantClientConfig.json
