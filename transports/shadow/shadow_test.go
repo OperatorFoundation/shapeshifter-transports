@@ -1,7 +1,6 @@
 package shadow
 
 import (
-	"golang.org/x/net/proxy"
 	"testing"
 )
 
@@ -9,27 +8,34 @@ const data = "test"
 
 func TestShadow(t *testing.T) {
 	//create a server
-	shadowServer := NewShadowServer("password", "aes-128-ctr")
-	//create client
-	shadowClient := NewShadowClient("password", "aes-128-ctr", proxy.Direct)
+	config := NewConfig("password", "aes-128-ctr")
+
 	//call listen on the server
-	serverListener := shadowServer.Listen("127.0.0.1:1234")
+	serverListener, listenError := config.Listen("127.0.0.1:1234")
+	if listenError != nil {
+		t.Fail()
+		return
+	}
+
 	//Create Server connection and format it for concurrency
 	go func() {
 		//create server buffer
 		serverBuffer := make([]byte, 4)
+
 		//create serverConn
 		serverConn, acceptErr := serverListener.Accept()
 		if acceptErr != nil {
 			t.Fail()
 			return
 		}
+
 		//read on server side
 		_, serverReadErr := serverConn.Read(serverBuffer)
 		if serverReadErr != nil {
 			t.Fail()
 			return
 		}
+
 		//write data from serverConn for client to read
 		_, serverWriteErr := serverConn.Write([]byte(data))
 		if serverWriteErr != nil {
@@ -41,7 +47,7 @@ func TestShadow(t *testing.T) {
 	//create client buffer
 	clientBuffer := make([]byte, 4)
 	//call dial on client and check error
-	clientConn, dialErr := shadowClient.Dial("127.0.0.1:1234")
+	clientConn, dialErr := config.Dial("127.0.0.1:1234")
 	if dialErr != nil {
 		t.Fail()
 		return
