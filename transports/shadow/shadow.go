@@ -27,8 +27,8 @@ type shadowTransport struct {
 }
 
 type Config struct {
-	Password   string 'json:"password"'
-	CipherName string 'json:"cipherName"'
+	Password   string `json:"password"`
+	CipherName string `json:"cipherName"`
 }
 
 func NewShadowClient(password string, cipherName string, dialer proxy.Dialer) *shadowTransport {
