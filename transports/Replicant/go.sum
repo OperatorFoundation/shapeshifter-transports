@@ -1,0 +1,15 @@
+github.com/OperatorFoundation/shapeshifter-ipc v0.0.0-20170814234159-11746ba927e0 h1:zDYt6FDJwDSX4woVFVK2EMt7fkxU5L5qDNLUjQwA+BQ=
+github.com/OperatorFoundation/shapeshifter-ipc v0.0.0-20170814234159-11746ba927e0/go.mod h1:kB00Ak8Dgn1uZlZHLc/WsUta58Jc+n/ZhCetcPkh42Q=
+github.com/OperatorFoundation/shapeshifter-transports/transports/shadow v0.0.0-20200211223228-5b0aa21018a5 h1:iXiYR9Ug5gMnxcQSL5587w9SbB8t2IdQhKoEoL/nkq4=
+github.com/OperatorFoundation/shapeshifter-transports/transports/shadow v0.0.0-20200211223228-5b0aa21018a5/go.mod h1:uPjHLlMqpdCQRfzTkU5sGejydtf2FNkPanasoFszoc0=
+github.com/aead/chacha20 v0.0.0-20180709150244-8b13a72661da h1:KjTM2ks9d14ZYCvmHS9iAKVt9AyzRSqNU1qabPih5BY=
+github.com/aead/chacha20 v0.0.0-20180709150244-8b13a72661da/go.mod h1:eHEWzANqSiWQsof+nXEI9bUVUyV6F53Fp89EuCh2EAA=
+github.com/shadowsocks/shadowsocks-go v0.0.0-20190614083952-6a03846ca9c0 h1:Nbtl4TAZuR2Ma+eiGRLVjh185gT8w+aiC5ks6jb4eiQ=
+github.com/shadowsocks/shadowsocks-go v0.0.0-20190614083952-6a03846ca9c0/go.mod h1:mttDPaeLm87u74HMrP+n2tugXvIKWcwff/cqSX0lehY=
+golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2 h1:VklqNMn3ovrHsnt90PveolxSbWFaJdECFbxSq0Mqo2M=
+golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2/go.mod h1:djNgcEr1/C05ACkg1iLfiJU5Ep61QUkGW8qpdssI0+w=
+golang.org/x/net v0.0.0-20200202094626-16171245cfb2 h1:CCH4IOTTfewWjGOlSp+zGcjutRKlBEZQ6wTn8ozI/nI=
+golang.org/x/net v0.0.0-20200202094626-16171245cfb2/go.mod h1:z5CRVTTTmAJ677TzLLGU+0bjPO0LkuOLi4/5GtJWs/s=
+golang.org/x/sys v0.0.0-20190215142949-d0b11bdaac8a h1:1BGLXjeY4akVXGgbC9HugT3Jv3hCI0z56oJR5vAMgBU=
+golang.org/x/sys v0.0.0-20190215142949-d0b11bdaac8a/go.mod h1:STP8DvDyc/dI5b8T5hshtkjS+E42TnysNCUPdjciGhY=
+golang.org/x/text v0.3.0/go.mod h1:NqM8EUOU14njkJ3fqMW+pc6Ldnwhi/IjpwHt7yyuwOQ=

@@ -1,0 +1,11 @@
+github.com/OperatorFoundation/obfs4 v0.0.0-20161108041644-17f2cb99c264 h1:8UbFvUSYrlcEU9W92tohq74kYvtXJo11WLI16TMi904=
+github.com/OperatorFoundation/obfs4 v0.0.0-20161108041644-17f2cb99c264/go.mod h1:oxwvRzQ4FDp7ysA1En4F/pyOh2Jfef4YTo1YhHUsBOA=
+github.com/OperatorFoundation/shapeshifter-ipc v0.0.0-20170814234159-11746ba927e0 h1:zDYt6FDJwDSX4woVFVK2EMt7fkxU5L5qDNLUjQwA+BQ=
+github.com/OperatorFoundation/shapeshifter-ipc v0.0.0-20170814234159-11746ba927e0/go.mod h1:kB00Ak8Dgn1uZlZHLc/WsUta58Jc+n/ZhCetcPkh42Q=
+github.com/OperatorFoundation/shapeshifter-transports v0.0.0-20200211223228-5b0aa21018a5 h1:UrCgBKvfj+Rim1jAUkRqQt1neJgLVHtKt0228tEmFKY=
+github.com/OperatorFoundation/shapeshifter-transports v0.0.0-20200211223228-5b0aa21018a5/go.mod h1:u3jvRgYV13oHabVAdXekh3yk9PHfpCKvB8uolQEs4jA=
+golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2/go.mod h1:djNgcEr1/C05ACkg1iLfiJU5Ep61QUkGW8qpdssI0+w=
+golang.org/x/net v0.0.0-20200202094626-16171245cfb2 h1:CCH4IOTTfewWjGOlSp+zGcjutRKlBEZQ6wTn8ozI/nI=
+golang.org/x/net v0.0.0-20200202094626-16171245cfb2/go.mod h1:z5CRVTTTmAJ677TzLLGU+0bjPO0LkuOLi4/5GtJWs/s=
+golang.org/x/sys v0.0.0-20190215142949-d0b11bdaac8a/go.mod h1:STP8DvDyc/dI5b8T5hshtkjS+E42TnysNCUPdjciGhY=
+golang.org/x/text v0.3.0/go.mod h1:NqM8EUOU14njkJ3fqMW+pc6Ldnwhi/IjpwHt7yyuwOQ=
