@@ -1,6 +1,7 @@
 package shapeshifter_transports
 
 import (
+	"fmt"
 	"github.com/OperatorFoundation/shapeshifter-transports/transports/Dust"
 	"github.com/OperatorFoundation/shapeshifter-transports/transports/Optimizer"
 	replicant "github.com/OperatorFoundation/shapeshifter-transports/transports/Replicant"
@@ -13,7 +14,7 @@ import (
 )
 
 
-	func TestTransports(t *testing.T) {
+func TestTransports(t *testing.T) {
 	shadowConfig := shadow.Config{}
 	obfs4Config := obfs4.Config{}
 	obfs2Config:= obfs2.Transport{}
@@ -22,4 +23,5 @@ import (
 	ReplicantConfig := replicant.ClientConfig{}
 	DustConfig := Dust.Config{}
 	OptimizerConfig := Optimizer.Client{}
+	fmt.Println(shadowConfig, obfs2Config, obfs4Config, meekliteConfig, meekserverConfig, ReplicantConfig, DustConfig, OptimizerConfig)
 }
