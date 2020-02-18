@@ -930,7 +930,7 @@ func TestSilverClientPolishUnpolish(t *testing.T) {
 		t.Fail()
 	}
 
-	input := []byte{0, 1, 2, 3, 4}
+	input := []byte{3, 12, 2, 6, 31}
 
 	polished, polishError := silverClient.Polish(input)
 	if polishError != nil {
