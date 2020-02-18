@@ -58,13 +58,19 @@ func NewTransport(password string, cipherName string, address string) Transport 
 	}
 }
 
-func (config Config) Listen(address string) (net.Listener, error) {
+func (config Config) Listen(address string) net.Listener {
 	cipher, err := shadowsocks.PickCipher(config.CipherName, nil, config.Password)
 	if err != nil {
 		log.Fatal("Failed generating ciphers:", err)
+		return nil
 	}
 
-	return shadowsocks.Listen("tcp", address, cipher)
+	listener, listenerErr := shadowsocks.Listen("tcp", address, cipher)
+	if listenerErr != nil {
+		log.Fatal("Failed to start listener:", listenerErr)
+		return nil
+	}
+	return listener
 }
 
 func (config Config) Dial(address string) (net.Conn, error) {
