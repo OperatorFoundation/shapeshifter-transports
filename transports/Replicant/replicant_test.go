@@ -130,7 +130,7 @@ func replicantConnection(clientConfig ClientConfig, serverConfig ServerConfig, t
 			// Send a response back to person contacting us.
 			lWriteLength, lWriteError := lConn.Write([]byte("Message received."))
 			if lWriteError != nil {
-				println("Listener write error: ", lWriteError)
+				println("Listener write error: ", lWriteError.Error())
 				t.Fail()
 				return
 			}
@@ -172,16 +172,6 @@ func replicantConnection(clientConfig ClientConfig, serverConfig ServerConfig, t
 	}
 	println("Client read byte count: ", cReadLength)
 	fmt.Printf("Client read buffer: %v:\n", readBuffer)
-
-	//// Send another message
-	//writeBytes2 := []byte{0x13, 0x14, 0x15}
-	//cWriteLength2, cWriteError2 := cConn.Write(writeBytes2)
-	//if cWriteError2 != nil {
-	//	println("Client write error: ", cWriteError2)
-	//	t.Fail()
-	//	return
-	//}
-	//println("Wrote bytes to the server, count: ", cWriteLength2)
 
 	defer cConn.Close()
 
@@ -807,7 +797,7 @@ func TestWithSilverMonotone(t *testing.T) {
 			// Send a response back to person contacting us.
 			lWriteLength, lWriteError := lConn.Write([]byte("Message received."))
 			if lWriteError != nil {
-				println("Listener write error: ", lWriteError)
+				println("Listener write error: ", lWriteError.Error())
 				t.Fail()
 				return
 			}
