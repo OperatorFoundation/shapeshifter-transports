@@ -10,5 +10,6 @@ require (
 	github.com/OperatorFoundation/shapeshifter-transports/transports/meekserver v0.0.0-20200218000024-2ad47a09862c
 	github.com/OperatorFoundation/shapeshifter-transports/transports/obfs2 v0.0.0-20200218000024-2ad47a09862c
 	github.com/OperatorFoundation/shapeshifter-transports/transports/obfs4 v0.0.0-20200218000024-2ad47a09862c
-	github.com/OperatorFoundation/shapeshifter-transports/transports/shadow v0.0.0-20200218000024-2ad47a09862c
+	github.com/OperatorFoundation/shapeshifter-transports/transports/shadow v0.0.0-20200211223228-5b0aa21018a5
+
 )
