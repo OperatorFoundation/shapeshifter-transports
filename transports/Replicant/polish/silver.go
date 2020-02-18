@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"github.com/opentracing/opentracing-go/log"
 	"golang.org/x/crypto/chacha20poly1305"
-	"golang.org/x/crypto/hkdf"
 	"io"
 	"math/big"
 	"net"
@@ -213,14 +212,13 @@ func (silver SilverPolishClient) Handshake(conn net.Conn) error {
 
 	return nil
 }
-
-func (silver SilverPolishClient) Polish(input []byte) ([]byte, error) {
-	var output []byte
+func Polish(polishCipher cipher.AEAD, chunkSize int, input []byte) ([]byte, error) {
+	output := make([]byte, 0)
 
 	inputSize := len(input)
-	nonceSize := silver.polishCipher.NonceSize()
-	overheadSize := silver.polishCipher.Overhead()
-	payloadSize := silver.chunkSize - (nonceSize + overheadSize)
+	nonceSize := polishCipher.NonceSize()
+	overheadSize := polishCipher.Overhead()
+	payloadSize := chunkSize - (nonceSize + overheadSize)
 	maximumInputSize := payloadSize - 2
 	payload := make([]byte, payloadSize)
 
@@ -244,10 +242,11 @@ func (silver SilverPolishClient) Polish(input []byte) ([]byte, error) {
 		copy(payload[2:], input)
 
 		// Encrypt the payload
-		sealResult := silver.polishCipher.Seal(output, nonce, payload, nil)
-		//fmt.Printf("Input: %v:\n", input)
-		//fmt.Printf("Seal result: %v\n", sealResult)
-		//fmt.Printf("Output after seal: %v\n", sealResult)
+		println("> Calling seal")
+		fmt.Printf("> nonce: %v", nonce)
+		println("payload size: ", len(payload))
+		fmt.Printf("> payload: %v", payload)
+		sealResult := polishCipher.Seal(output, nonce, payload, nil)
 		result := append(nonce, sealResult...)
 
 		return result, nil
@@ -268,7 +267,7 @@ func (silver SilverPolishClient) Polish(input []byte) ([]byte, error) {
 			}
 
 			// polish this chunk of input
-			polished, polishError := silver.Polish(chunk)
+			polished, polishError := Polish(polishCipher, chunkSize, chunk)
 			if polishError != nil {
 				return nil, polishError
 			}
@@ -280,18 +279,22 @@ func (silver SilverPolishClient) Polish(input []byte) ([]byte, error) {
 	}
 }
 
-func (silver SilverPolishClient) Unpolish(input []byte) ([]byte, error) {
+func Unpolish(polishCipher cipher.AEAD, chunkSize int, input []byte) ([]byte, error) {
 	inputSize := len(input)
-	nonceSize := silver.polishCipher.NonceSize()
+	nonceSize := polishCipher.NonceSize()
 
 	output := make([]byte, 0)
 	nonce := input[:nonceSize]
 	data := input[nonceSize:]
 
-	if inputSize < silver.chunkSize {
+	if inputSize < chunkSize {
 		return nil, errors.New("silver client - unable to unpolish data, received fewer bytes than chunk size")
-	} else if inputSize == silver.chunkSize {
-		unpolished, openError := silver.polishCipher.Open(output, nonce, data, nil)
+	} else if inputSize == chunkSize {
+		println("> Calling unseal")
+		fmt.Printf("> nonce: %v", nonce)
+		println("data size: ", len(data))
+		fmt.Printf("> data: %v", data)
+		unpolished, openError := polishCipher.Open(output, nonce, data, nil)
 		println("silver open result: ", unpolished)
 		if openError != nil {
 			println("Received an error while unpolishing: ", openError.Error())
@@ -299,21 +302,21 @@ func (silver SilverPolishClient) Unpolish(input []byte) ([]byte, error) {
 		}
 
 		dataSize := int(binary.LittleEndian.Uint16(unpolished))
-		data = unpolished[2:dataSize]
+		data = unpolished[2:dataSize + 2]
 		return data, nil
 	} else {
 		//More than one chunk
 		result := make([]byte, 0)
 		for len(input) > 0 {
 
-			if len(input) < silver.chunkSize {
+			if len(input) < chunkSize {
 				return nil, errors.New("received input to unpolish that is less than chunk size")
 			}
 
-			chunk := input[:silver.chunkSize]
-			input = input[silver.chunkSize:]
+			chunk := input[:chunkSize]
+			input = input[chunkSize:]
 
-			unpolished, unpolishError := silver.Unpolish(chunk)
+			unpolished, unpolishError := Unpolish(polishCipher, chunkSize, chunk)
 			if unpolishError != nil {
 				return nil, unpolishError
 			}
@@ -323,6 +326,20 @@ func (silver SilverPolishClient) Unpolish(input []byte) ([]byte, error) {
 
 		return result, nil
 	}
+}
+
+func (silver SilverPolishClient) Polish(input []byte) ([]byte, error) {
+	println("Client Polish Called")
+	println("Polish input count: ", len(input))
+	fmt.Printf("Shared Key: %v", silver.sharedKey)
+	return Polish(silver.polishCipher, silver.chunkSize, input)
+}
+
+func (silver SilverPolishClient) Unpolish(input []byte) ([]byte, error) {
+	println("> Client Unpolish Called")
+	println("> Client Polish input count: ", len(input))
+	fmt.Printf("Shared Key: %v", silver.sharedKey)
+	return Unpolish(silver.polishCipher, silver.chunkSize, input)
 }
 
 func (silver SilverPolishClient) GetChunkSize() int {
@@ -355,15 +372,9 @@ func (silver *SilverPolishServerConnection) Handshake(conn net.Conn) error {
 	sharedKeyX, sharedKeyY := curve.ScalarMult(clientX, clientY, silver.serverPrivateKey)
 	sharedKeySeed := elliptic.Marshal(curve, sharedKeyX, sharedKeyY)
 
-	hasher := sha256.New
-	kdf := hkdf.New(hasher, sharedKeySeed, nil, nil)
-	sharedKey := make([]byte, chacha20poly1305.KeySize)
-	_, readError := kdf.Read(sharedKey)
-	if readError != nil {
-		log.Error(readError)
-		return readError
-	}
+	sharedKey := X963KDF(sharedKeySeed, clientPublicKey)
 
+	fmt.Printf("> Server handshake shared key: %v", sharedKey)
 	silver.polishCipher, err = chacha20poly1305.New(sharedKey)
 	if err != nil {
 		fmt.Println("Error initializing polish client", err)
@@ -375,43 +386,19 @@ func (silver *SilverPolishServerConnection) Handshake(conn net.Conn) error {
 }
 
 func (silver *SilverPolishServerConnection) Polish(input []byte) ([]byte, error) {
-	var output []byte
-
-	// Generate random nonce
-	nonce := make([]byte, silver.polishCipher.NonceSize())
-	_, readError := rand.Read(nonce)
-	if readError != nil {
-		log.Error(readError)
-		return nil, readError
-	}
-
-	silver.polishCipher.Seal(output, nonce, input, nil)
-
-	result := append(nonce, output...)
-
-	return result, nil
+	println("> Server Polish Called")
+	println("> Server Polish input count: ", len(input))
+	return Unpolish(silver.polishCipher, silver.chunkSize, input)
 }
 
 func (silver *SilverPolishServerConnection) Unpolish(input []byte) ([]byte, error) {
+	println("> Server Unpolish Called")
+	println("> Server Unpolish input count: ", len(input))
+
 	if silver.polishCipher != nil {
-		var output []byte
-		nonceSize := silver.polishCipher.NonceSize()
-		nonce := input[:nonceSize]
-		data := input[nonceSize:]
-
-		log.String("Silver server", "open")
-		log.String("","Nonce size")
-		log.String("Nonce size", string(nonceSize))
-
-		_, openError := silver.polishCipher.Open(output, nonce, data, nil)
-		if openError != nil {
-			log.Error(openError)
-			return nil, openError
-		}
-
-		return output, nil
+		return Unpolish(silver.polishCipher, silver.chunkSize, input)
 	} else {
-		println("unable to unpolish input, silver.polishCipher is nil")
+		println("> unable to unpolish input, silver.polishCipher is nil")
 		nilCipherError := errors.New("unable to unpolish input, silver.polishCipher is nil")
 		log.Error(nilCipherError)
 		return nil, nilCipherError
