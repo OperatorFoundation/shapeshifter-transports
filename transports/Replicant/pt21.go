@@ -85,7 +85,7 @@ func (sconn *Connection) Read(b []byte) (int, error) {
 		if unpolishError != nil {
 			println("Received an unpolish error: ", unpolishError.Error())
 			println("Polished input: ", polished)
-			fmt.Printf("Polished input:  %v", polished)
+			//fmt.Printf("Polished input:  %v", polished)
 			return 0, unpolishError
 		}
 
