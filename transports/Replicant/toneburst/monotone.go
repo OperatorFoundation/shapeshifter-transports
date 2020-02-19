@@ -106,6 +106,7 @@ func (monotone Monotone) readAll(conn net.Conn, part monolith.Monolith) (bool, e
 		return false, readError
 	}
 
+	monotone.buffer.Push(receivedData)
 	validated := part.Validate(monotone.buffer, monotone.context)
 
 	switch validated {

@@ -116,8 +116,11 @@ func replicantConnection(clientConfig ClientConfig, serverConfig ServerConfig, t
 			}
 
 			println(">> Test: Listener received an incoming connection")
-			serverChunkSize := serverConfig.Polish.GetChunkSize()
-			println(">> Test: chunk size =", serverChunkSize)
+			if serverConfig.Polish != nil {
+				serverChunkSize := serverConfig.Polish.GetChunkSize()
+				println(">> Test: chunk size =", serverChunkSize)
+			}
+
 			lBuffer := make([]byte, 4)
 			lReadLength, lReadError := lConn.Read(lBuffer)
 			if lReadError != nil {
