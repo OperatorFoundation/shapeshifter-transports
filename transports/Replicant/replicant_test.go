@@ -104,37 +104,37 @@ func replicantConnection(clientConfig ClientConfig, serverConfig ServerConfig, t
 	go func() {
 		listener := serverConfig.Listen("127.0.0.1:7777")
 		//defer listener.Close()
-		println("Created listener")
+		println(">> Test: Created listener")
 		serverStarted <- true
 
 		for {
 			lConn, lConnError := listener.Accept()
 			if lConnError != nil {
-				println("Listener connection error: ", lConnError.Error())
+				println(">> Test: Listener connection error:", lConnError.Error())
 				t.Fail()
 				return
 			}
 
-			println("received an incoming connection")
+			println(">> Test: Listener received an incoming connection")
 			serverChunkSize := serverConfig.Polish.GetChunkSize()
-			println("Server chunk size = ", serverChunkSize)
+			println(">> Test: chunk size =", serverChunkSize)
 			lBuffer := make([]byte, 4)
 			lReadLength, lReadError := lConn.Read(lBuffer)
 			if lReadError != nil {
-				println("Listener read error: ", lReadError)
+				println(">> Test: Listener read error:", lReadError)
 				t.Fail()
 				return
 			}
 
-			println("Listener read length: ", lReadLength)
+			println(">> Test: Listener read length: ", lReadLength)
 			// Send a response back to person contacting us.
 			lWriteLength, lWriteError := lConn.Write([]byte("Message received."))
 			if lWriteError != nil {
-				println("Listener write error: ", lWriteError.Error())
+				println(">> Test: Listener write error:", lWriteError.Error())
 				t.Fail()
 				return
 			}
-			println("Wrote a response to the client. Length: ", lWriteLength)
+			println(">> Test: Listener wrote a response to the client. Length:", lWriteLength)
 		}
 	}()
 
@@ -146,32 +146,30 @@ func replicantConnection(clientConfig ClientConfig, serverConfig ServerConfig, t
 
 	cConn := clientConfig.Dial("127.0.0.1:7777")
 	if cConn == nil {
-		println("Dial error: client connection is nil.")
+		println(">> Test: Dial error: client connection is nil.")
 		t.Fail()
 		return
 	}
-	println("Created client connection.")
+	println(">> Test: Created client connection.")
 
 	writeBytes := []byte{0x0A, 0x11, 0xB0, 0xB1}
 	cWriteLength, cWriteError := cConn.Write(writeBytes)
 	if cWriteError != nil {
-		println("Client write error: ", cWriteError)
+		println(">> Test: Client write error:", cWriteError)
 		t.Fail()
 		return
 	}
-	println("Wrote bytes to the server, count: ", cWriteLength)
+	println(">> Test: Wrote bytes to the server, count:", cWriteLength)
 
-	clientChunkSize := clientConfig.Polish.GetChunkSize()
-	println("Client chunk size = ", clientChunkSize)
 	readBuffer := make([]byte, 17)
 	cReadLength, cReadError := cConn.Read(readBuffer)
 	if cReadError != nil {
-		println("Client read error: ", cReadError)
+		println(">> Test: Client read error:", cReadError)
 		t.Fail()
 		return
 	}
-	println("Client read byte count: ", cReadLength)
-	fmt.Printf("Client read buffer: %v:\n", readBuffer)
+	println(">> Test: Client read byte count:", cReadLength)
+	fmt.Printf(">> Test: Client read buffer: %v", readBuffer)
 
 	defer cConn.Close()
 
