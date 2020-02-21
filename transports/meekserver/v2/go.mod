@@ -1,4 +1,4 @@
-module github.com/OperatorFoundation/shapeshifter-transports/transports/meekserver
+module github.com/OperatorFoundation/shapeshifter-transports/transports/meekserver/v2
 
 go 1.12
 
