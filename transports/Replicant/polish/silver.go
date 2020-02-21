@@ -243,9 +243,9 @@ func Polish(polishCipher cipher.AEAD, chunkSize int, input []byte) ([]byte, erro
 
 		// Encrypt the payload
 		println("> Calling seal")
-		fmt.Printf("> seal nonce: %v", nonce)
+		// fmt.Printf("> seal nonce: %v", nonce)
 		println("> seal payload size: ", len(payload))
-		fmt.Printf("> seal payload: %v", payload)
+		// fmt.Printf("> seal payload: %v", payload)
 		sealResult := polishCipher.Seal(output, nonce, payload, nil)
 		result := append(nonce, sealResult...)
 

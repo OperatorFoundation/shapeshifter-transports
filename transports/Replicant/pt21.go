@@ -120,7 +120,7 @@ func (sconn *Connection) Write(b []byte) (int, error) {
 		numberOfBytesToWrite := len(polished)
 		totalBytesWritten := 0
 		println("> Polished data to write count: ", numberOfBytesToWrite)
-		fmt.Printf("> Polished output: %v\n", polished)
+		//fmt.Printf("> Polished output: %v\n", polished)
 
 		// Write all of the bytes
 		for numberOfBytesToWrite > totalBytesWritten {
