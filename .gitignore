@@ -1,6 +1,8 @@
 *.swp
 *~
 
+**/.idea
+
 obfs4proxy/obfs4proxy
 .idea/misc.xml
 .idea/modules.xml
