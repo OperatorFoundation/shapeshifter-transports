@@ -291,9 +291,9 @@ func Unpolish(polishCipher cipher.AEAD, chunkSize int, input []byte) ([]byte, er
 		return nil, errors.New("silver client - unable to unpolish data, received fewer bytes than chunk size")
 	} else if inputSize == chunkSize {
 		println("> Calling polishCipher open")
-		fmt.Printf("> open nonce: %v", nonce)
+		// fmt.Printf("> open nonce: %v", nonce)
 		println("> open data size: ", len(data))
-		fmt.Printf("> open data: %v", data)
+		// fmt.Printf("> open data: %v", data)
 		unpolished, openError := polishCipher.Open(output, nonce, data, nil)
 		println("> silver open result: ", unpolished)
 		if openError != nil {
