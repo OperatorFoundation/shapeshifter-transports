@@ -2,8 +2,8 @@ package replicant
 
 import (
 	"encoding/json"
-	"github.com/OperatorFoundation/shapeshifter-transports/transports/Replicant/polish"
-	"github.com/OperatorFoundation/shapeshifter-transports/transports/Replicant/toneburst"
+	"github.com/OperatorFoundation/shapeshifter-transports/transports/Replicant/v2/polish"
+	"github.com/OperatorFoundation/shapeshifter-transports/transports/Replicant/v2/toneburst"
 	"io/ioutil"
 	"testing"
 )

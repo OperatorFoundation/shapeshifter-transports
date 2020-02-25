@@ -1,9 +1,9 @@
 package Optimizer
 
 import (
-	"github.com/OperatorFoundation/shapeshifter-transports/transports/meeklite"
-	"github.com/OperatorFoundation/shapeshifter-transports/transports/obfs4"
-	"github.com/OperatorFoundation/shapeshifter-transports/transports/shadow"
+	"github.com/OperatorFoundation/shapeshifter-transports/transports/meeklite/v2"
+	"github.com/OperatorFoundation/shapeshifter-transports/transports/obfs4/v2"
+	"github.com/OperatorFoundation/shapeshifter-transports/transports/shadow/v2"
 	"golang.org/x/net/proxy"
 	"net"
 	"net/url"

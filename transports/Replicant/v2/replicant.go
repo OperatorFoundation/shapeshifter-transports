@@ -11,8 +11,8 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/OperatorFoundation/shapeshifter-transports/transports/Replicant/polish"
-	"github.com/OperatorFoundation/shapeshifter-transports/transports/Replicant/toneburst"
+	"github.com/OperatorFoundation/shapeshifter-transports/transports/Replicant/v2/polish"
+	"github.com/OperatorFoundation/shapeshifter-transports/transports/Replicant/v2/toneburst"
 )
 
 type ConnectionState struct {
