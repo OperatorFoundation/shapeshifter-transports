@@ -87,6 +87,18 @@ func TestOneAddOneRemove(t *testing.T) {
 	replicantConnection(clientConfig, serverConfig, t)
 }
 
+func TestMonotoneEnumerated(t *testing.T) {
+	clientConfig := createMonotoneClientConfigEnumeratedItems()
+	serverConfig := createMonotoneServerConfigEnumeratedItems()
+	replicantConnection(clientConfig, serverConfig, t)
+}
+
+func TestMonotoneRandom(t *testing.T) {
+	clientConfig := createMonotoneClientConfigRandomItems()
+	serverConfig := createMonotoneServerConfigRandomItems()
+	replicantConnection(clientConfig, serverConfig, t)
+}
+
 func TestMonotoneRandomEnumerated(t *testing.T) {
 	clientConfig := createMonotoneClientConfigRandomEnumeratedItems()
 	serverConfig := createMonotoneServerConfigRandomEnumeratedItems()
@@ -386,6 +398,172 @@ func createMonotoneServerConfigOneAddOneRemove() ServerConfig {
 
 	monotoneConfig := toneburst.MonotoneConfig{
 		AddSequences:    &monolithInstance,
+		RemoveSequences: &removeSequences,
+		SpeakFirst:      false,
+	}
+
+	serverConfig := ServerConfig{
+		Toneburst: monotoneConfig,
+		Polish:    nil,
+	}
+
+	return serverConfig
+}
+
+func createMonotoneClientConfigEnumeratedItems() ClientConfig {
+	set := []byte{0x11, 0x12, 0x13, 0x14}
+	parts := make([]monolith.Monolith, 0)
+	part := monolith.BytesPart{
+		Items: []monolith.ByteType{
+			monolith.EnumeratedByteType{set},
+			monolith.EnumeratedByteType{set},
+		},
+	}
+	parts = append(parts, part)
+	part = monolith.BytesPart{
+		Items: []monolith.ByteType{
+			monolith.EnumeratedByteType{set},
+			monolith.EnumeratedByteType{set},
+		},
+	}
+	parts = append(parts, part)
+	desc := monolith.Description{parts}
+	args := monolith.NewEmptyArgs()
+	monolithInstance := monolith.Instance{
+		Desc: desc,
+		Args: args,
+	}
+
+	addSequences := monolithInstance
+	removeSequences := desc
+
+	monotoneConfig := toneburst.MonotoneConfig{
+		AddSequences:    &addSequences,
+		RemoveSequences: &removeSequences,
+		SpeakFirst:      true,
+	}
+
+	clientConfig := ClientConfig{
+		Toneburst: monotoneConfig,
+		Polish:    nil,
+	}
+
+	return clientConfig
+}
+
+func createMonotoneServerConfigEnumeratedItems() ServerConfig {
+	rand.Seed(time.Now().UnixNano())
+	set := []byte{0x11, 0x12, 0x13, 0x14}
+	parts := make([]monolith.Monolith, 0)
+	part := monolith.BytesPart{
+		Items: []monolith.ByteType{
+			monolith.EnumeratedByteType{set},
+			monolith.EnumeratedByteType{set},
+		},
+	}
+	parts = append(parts, part)
+	part = monolith.BytesPart{
+		Items: []monolith.ByteType{
+			monolith.EnumeratedByteType{set},
+			monolith.EnumeratedByteType{set},
+		},
+	}
+	parts = append(parts, part)
+	desc := monolith.Description{parts}
+	args := monolith.NewEmptyArgs()
+	monolithInstance := monolith.Instance{
+		Desc: desc,
+		Args: args,
+	}
+
+	addSequences := monolithInstance
+	removeSequences := desc
+
+	monotoneConfig := toneburst.MonotoneConfig{
+		AddSequences:    &addSequences,
+		RemoveSequences: &removeSequences,
+		SpeakFirst:      false,
+	}
+
+	serverConfig := ServerConfig{
+		Toneburst: monotoneConfig,
+		Polish:    nil,
+	}
+
+	return serverConfig
+}
+
+func createMonotoneClientConfigRandomItems() ClientConfig {
+
+	rand.Seed(time.Now().UnixNano())
+	parts := make([]monolith.Monolith, 0)
+	part := monolith.BytesPart{
+		Items: []monolith.ByteType{
+			monolith.RandomByteType{},
+			monolith.RandomByteType{},
+		},
+	}
+	parts = append(parts, part)
+	part = monolith.BytesPart{
+		Items: []monolith.ByteType{
+			monolith.RandomByteType{},
+			monolith.RandomByteType{},
+		},
+	}
+	parts = append(parts, part)
+	desc := monolith.Description{parts}
+	args := monolith.NewEmptyArgs()
+	monolithInstance := monolith.Instance{
+		Desc: desc,
+		Args: args,
+	}
+
+	addSequences := monolithInstance
+	removeSequences := desc
+
+	monotoneConfig := toneburst.MonotoneConfig{
+		AddSequences:    &addSequences,
+		RemoveSequences: &removeSequences,
+		SpeakFirst:      true,
+	}
+
+	clientConfig := ClientConfig{
+		Toneburst: monotoneConfig,
+		Polish:    nil,
+	}
+
+	return clientConfig
+}
+
+func createMonotoneServerConfigRandomItems() ServerConfig {
+	rand.Seed(time.Now().UnixNano())
+	parts := make([]monolith.Monolith, 0)
+	part := monolith.BytesPart{
+		Items: []monolith.ByteType{
+			monolith.RandomByteType{},
+			monolith.RandomByteType{},
+		},
+	}
+	parts = append(parts, part)
+	part = monolith.BytesPart{
+		Items: []monolith.ByteType{
+			monolith.RandomByteType{},
+			monolith.RandomByteType{},
+		},
+	}
+	parts = append(parts, part)
+	desc := monolith.Description{parts}
+	args := monolith.NewEmptyArgs()
+	monolithInstance := monolith.Instance{
+		Desc: desc,
+		Args: args,
+	}
+
+	addSequences := monolithInstance
+	removeSequences := desc
+
+	monotoneConfig := toneburst.MonotoneConfig{
+		AddSequences:    &addSequences,
 		RemoveSequences: &removeSequences,
 		SpeakFirst:      false,
 	}
