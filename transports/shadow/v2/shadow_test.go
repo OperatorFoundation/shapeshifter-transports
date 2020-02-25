@@ -35,8 +35,8 @@ func TestShadow(t *testing.T) {
 	config := NewConfig("password", "aes-128-ctr")
 
 	//call listen on the server
-	serverListener, listenError := config.Listen("127.0.0.1:1234")
-	if listenError != nil {
+	serverListener := config.Listen("127.0.0.1:1234")
+	if serverListener != nil {
 		t.Fail()
 		return
 	}
