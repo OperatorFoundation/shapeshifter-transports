@@ -1,4 +1,4 @@
-module github.com/OperatorFoundation/shapeshifter-transports/transports/obfs2
+module github.com/OperatorFoundation/shapeshifter-transports/transports/obfs2/v2
 
 go 1.12
 
