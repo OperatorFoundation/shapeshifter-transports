@@ -1,5 +1,7 @@
-github.com/OperatorFoundation/obfs4 v0.0.0-20161108041644-17f2cb99c264 h1:8UbFvUSYrlcEU9W92tohq74kYvtXJo11WLI16TMi904=
-github.com/OperatorFoundation/obfs4 v0.0.0-20161108041644-17f2cb99c264/go.mod h1:oxwvRzQ4FDp7ysA1En4F/pyOh2Jfef4YTo1YhHUsBOA=
+github.com/OperatorFoundation/ed25519 v0.0.0-20200225224545-b22b4bd3ddef h1:1xEtDEuNE9/yybZaHS94OIjx5FUo4e8M3UwcK9bFC9s=
+github.com/OperatorFoundation/ed25519 v0.0.0-20200225224545-b22b4bd3ddef/go.mod h1:gQNGvsyT4Zmps9H/yzCqdc+RQzt8ZxCndRNtGTYnBzQ=
+github.com/OperatorFoundation/obfs4 v0.0.0-20200225231820-9c573c3785a2 h1:iIpJUjWdCHYYjb9UvAq6SZLeVYJ6TvonEl7gBVL70Rc=
+github.com/OperatorFoundation/obfs4 v0.0.0-20200225231820-9c573c3785a2/go.mod h1:oxwvRzQ4FDp7ysA1En4F/pyOh2Jfef4YTo1YhHUsBOA=
 github.com/OperatorFoundation/shapeshifter-ipc v0.0.0-20170814234159-11746ba927e0 h1:zDYt6FDJwDSX4woVFVK2EMt7fkxU5L5qDNLUjQwA+BQ=
 github.com/OperatorFoundation/shapeshifter-ipc v0.0.0-20170814234159-11746ba927e0/go.mod h1:kB00Ak8Dgn1uZlZHLc/WsUta58Jc+n/ZhCetcPkh42Q=
 github.com/dchest/siphash v1.2.1 h1:4cLinnzVJDKxTCl9B01807Yiy+W7ZzVHj/KIroQRvT4=

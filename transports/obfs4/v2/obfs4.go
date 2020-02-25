@@ -40,6 +40,7 @@ import (
 	"github.com/OperatorFoundation/obfs4/common/replayfilter"
 	"github.com/OperatorFoundation/shapeshifter-ipc"
 	"github.com/OperatorFoundation/shapeshifter-transports/transports/obfs4/v2/framing"
+	"golang.org/x/net/proxy"
 	"math/rand"
 	"net"
 	"strconv"
