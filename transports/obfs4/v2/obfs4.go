@@ -34,20 +34,17 @@ import (
 	"crypto/sha256"
 	"flag"
 	"fmt"
-	"math/rand"
-	"net"
-	"strconv"
-	"syscall"
-	"time"
-
-	"golang.org/x/net/proxy"
-
 	"github.com/OperatorFoundation/obfs4/common/drbg"
 	"github.com/OperatorFoundation/obfs4/common/ntor"
 	"github.com/OperatorFoundation/obfs4/common/probdist"
 	"github.com/OperatorFoundation/obfs4/common/replayfilter"
 	"github.com/OperatorFoundation/shapeshifter-ipc"
 	"github.com/OperatorFoundation/shapeshifter-transports/transports/obfs4/v2/framing"
+	"math/rand"
+	"net"
+	"strconv"
+	"syscall"
+	"time"
 )
 
 const (

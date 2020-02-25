@@ -2,8 +2,6 @@ github.com/OperatorFoundation/obfs4 v0.0.0-20161108041644-17f2cb99c264 h1:8UbFvU
 github.com/OperatorFoundation/obfs4 v0.0.0-20161108041644-17f2cb99c264/go.mod h1:oxwvRzQ4FDp7ysA1En4F/pyOh2Jfef4YTo1YhHUsBOA=
 github.com/OperatorFoundation/shapeshifter-ipc v0.0.0-20170814234159-11746ba927e0 h1:zDYt6FDJwDSX4woVFVK2EMt7fkxU5L5qDNLUjQwA+BQ=
 github.com/OperatorFoundation/shapeshifter-ipc v0.0.0-20170814234159-11746ba927e0/go.mod h1:kB00Ak8Dgn1uZlZHLc/WsUta58Jc+n/ZhCetcPkh42Q=
-github.com/agl/ed25519 v0.0.0-20170116200512-5312a6153412 h1:w1UutsfOrms1J05zt7ISrnJIXKzwaspym5BTKGx93EI=
-github.com/agl/ed25519 v0.0.0-20170116200512-5312a6153412/go.mod h1:WPjqKcmVOxf0XSf3YxCJs6N6AOSrOx3obionmG7T0y0=
 github.com/dchest/siphash v1.2.1 h1:4cLinnzVJDKxTCl9B01807Yiy+W7ZzVHj/KIroQRvT4=
 github.com/dchest/siphash v1.2.1/go.mod h1:q+IRvb2gOSrUnYoPqHiyHXS0FOBBOdl6tONBlVnOnt4=
 golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2/go.mod h1:djNgcEr1/C05ACkg1iLfiJU5Ep61QUkGW8qpdssI0+w=
