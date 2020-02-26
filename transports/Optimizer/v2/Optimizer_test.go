@@ -12,8 +12,8 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	transport := shadow.NewShadowServer("orange", "aes-128-ctr")
-	listener := transport.Listen("127.0.0.1:1234")
+	config := shadow.NewConfig("orange", "aes-128-ctr")
+	listener := config.Listen("127.0.0.1:1234")
 	go acceptConnections(listener)
 
 	os.Exit(m.Run())
@@ -51,8 +51,8 @@ func TestOptimizerMeekliteDial1(t *testing.T) {
 	Url, _ := url.Parse(unparsedUrl)
 	meekliteTransport := meeklite.Transport{Url: Url, Front: "a0.awsstatic.com", Address: "127.0.0.1:1234" }
 	transports := []Transport{meekliteTransport}
-	strategy := FirstStrategy{}
-	optimizerTransport := NewOptimizerClient(transports, &strategy)
+	strategy := NewFirstStrategy(transports)
+	optimizerTransport := NewOptimizerClient(transports, strategy)
 	_, err := optimizerTransport.Dial()
 	if err != nil {
 		t.Fail()
@@ -68,10 +68,10 @@ func TestShadowDial2(t *testing.T) {
 }
 
 func TestOptimizerShadowDial1(t *testing.T) {
-	shadowTransport := shadow.Transport{Password: "orange", CipherName: "aes-128-ctr", Address: "127.0.0.1:1234"}
-	transports := []Transport{shadowTransport}
-	strategy := FirstStrategy{}
-	optimizerTransport := NewOptimizerClient(transports, &strategy)
+	shadowTransport := shadow.NewTransport("orange", "aes-128-ctr", "127.0.0.1:1234")
+	transports := []Transport{&shadowTransport}
+	strategy := NewFirstStrategy(transports)
+	optimizerTransport := NewOptimizerClient(transports, strategy)
 	_, err := optimizerTransport.Dial()
 	if err != nil {
 		t.Fail()
@@ -79,10 +79,10 @@ func TestOptimizerShadowDial1(t *testing.T) {
 }
 
 func TestOptimizerShadowDial2(t *testing.T) {
-	shadowTransport := shadow.Transport{Password: "banana", CipherName: "aes-192-ctr", Address: "127.0.0.1:1234"}
-	transports := []Transport{shadowTransport}
-	strategy := FirstStrategy{}
-	optimizerTransport := NewOptimizerClient(transports, &strategy)
+	shadowTransport := shadow.NewTransport("orange", "aes-128-ctr", "127.0.0.1:1234")
+	transports := []Transport{&shadowTransport}
+	strategy := NewFirstStrategy(transports)
+	optimizerTransport := NewOptimizerClient(transports, strategy)
 	_, err:= optimizerTransport.Dial()
 	if err != nil {
 		t.Fail()
@@ -123,8 +123,8 @@ func TestOptimizerObfs4Transport_Dial1(t *testing.T) {
 		Address:    "77.81.104.251:443",
 		Dialer:     dialer,}
 	transports := []Transport{obfs4Transport}
-	strategy := FirstStrategy{}
-	optimizerTransport := NewOptimizerClient(transports, &strategy)
+	strategy := NewFirstStrategy(transports)
+	optimizerTransport := NewOptimizerClient(transports, strategy)
 	_, err := optimizerTransport.Dial()
 	if err != nil {
 		t.Fail()
@@ -139,8 +139,8 @@ func TestOptimizerObfs4Transport_Dial2(t *testing.T) {
 		Address:    "77.81.104.251:443",
 		Dialer:     dialer,}
 	transports := []Transport{obfs4Transport}
-	strategy := FirstStrategy{}
-	optimizerTransport := NewOptimizerClient(transports, &strategy)
+	strategy := NewFirstStrategy(transports)
+	optimizerTransport := NewOptimizerClient(transports, strategy)
 	_, err := optimizerTransport.Dial()
 	if err != nil {
 		t.Fail()
@@ -154,9 +154,10 @@ func TestOptimizerTransportFirstDial(t *testing.T) {
 		IatMode:    0,
 		Address:    "77.81.104.251:443",
 		Dialer:     dialer,}
-	shadowTransport := shadow.Transport{Password: "orange", CipherName: "aes-128-ctr", Address: "127.0.0.1:1234"}
-	transports := []Transport{obfs4Transport, shadowTransport}
-	optimizerTransport := NewOptimizerClient(transports, &FirstStrategy{})
+	shadowTransport := shadow.NewTransport("orange", "aes-128-ctr", "127.0.0.1:1234")
+	transports := []Transport{obfs4Transport, &shadowTransport}
+	strategy := NewFirstStrategy(transports)
+	optimizerTransport := NewOptimizerClient(transports, strategy)
 	for i := 1; i <= 3; i++ {
 		_, err := optimizerTransport.Dial()
 		if err != nil {
@@ -173,8 +174,8 @@ func TestOptimizerTransportRandomDial(t *testing.T) {
 		Address:    "77.81.104.251:443",
 		Dialer:     dialer,
 	}
-	shadowTransport := shadow.Transport{Password: "orange", CipherName: "aes-128-ctr", Address: "127.0.0.1:1234"}
-	transports := []Transport{obfs4Transport, shadowTransport}
+	shadowTransport := shadow.NewTransport("orange", "aes-128-ctr", "127.0.0.1:1234")
+	transports := []Transport{obfs4Transport, &shadowTransport}
 	optimizerTransport := NewOptimizerClient(transports, &RandomStrategy{})
 
 	for i := 1; i <= 3; i++ {
@@ -193,8 +194,8 @@ func TestOptimizerTransportRotateDial(t *testing.T) {
 		Address:    "77.81.104.251:443",
 		Dialer:     dialer,
 }
-shadowTransport := shadow.Transport{Password: "orange", CipherName: "aes-128-ctr", Address: "127.0.0.1:1234"}
-	transports := []Transport{obfs4Transport, shadowTransport}
+	shadowTransport := shadow.NewTransport("orange", "aes-128-ctr", "127.0.0.1:1234")
+	transports := []Transport{obfs4Transport, &shadowTransport}
 	optimizerTransport := NewOptimizerClient(transports, &RotateStrategy{})
 
 	for i := 1; i <= 3; i++ {
@@ -213,8 +214,8 @@ func TestOptimizerTransportTrackDial(t *testing.T) {
 		Address:    "77.81.104.251:443",
 		Dialer:     dialer,
 }
-shadowTransport := shadow.Transport{Password: "orange", CipherName: "aes-128-ctr", Address: "127.0.0.1:1234"}
-	transports := []Transport{obfs4Transport, shadowTransport}
+	shadowTransport := shadow.NewTransport("orange", "aes-128-ctr", "127.0.0.1:1234")
+	transports := []Transport{obfs4Transport, &shadowTransport}
 	optimizerTransport := NewOptimizerClient(transports, NewTrackStrategy(transports))
 
 	for i := 1; i <= 3; i++ {
@@ -233,8 +234,8 @@ func TestOptimizerTransportminimizeDialDurationDial(t *testing.T) {
 		Address:    "77.81.104.251:443",
 		Dialer:     dialer,
 	}
-	shadowTransport := shadow.Transport{Password: "orange", CipherName: "aes-128-ctr", Address: "127.0.0.1:1234"}
-	transports := []Transport{obfs4Transport, shadowTransport}
+	shadowTransport := shadow.NewTransport("orange", "aes-128-ctr", "127.0.0.1:1234")
+	transports := []Transport{obfs4Transport, &shadowTransport}
 	strategy := NewMinimizeDialDuration(transports)
 	optimizerTransport := NewOptimizerClient(transports, strategy)
 
