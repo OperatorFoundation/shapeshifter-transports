@@ -1,7 +1,6 @@
 package replicant
 
 import (
-	"fmt"
 	pt "github.com/OperatorFoundation/shapeshifter-ipc"
 	"net"
 	"time"
@@ -11,13 +10,11 @@ import (
 func (config ClientConfig) Dial(address string) net.Conn {
 	conn, dialErr := net.Dial("tcp", address)
 	if dialErr != nil {
-		fmt.Println("Dial Error: ", dialErr)
 		return nil
 	}
 
 	transportConn, err := NewClientConnection(conn, config)
 	if err != nil {
-		fmt.Println("Connection Error: ", err)
 		if conn != nil {
 			_ = conn.Close()
 		}
@@ -31,13 +28,11 @@ func (config ClientConfig) Dial(address string) net.Conn {
 func (config ServerConfig) Listen(address string) net.Listener {
 	addr, resolveErr := pt.ResolveAddr(address)
 	if resolveErr != nil {
-		fmt.Println(resolveErr.Error())
 		return nil
 	}
 
 	ln, err := net.ListenTCP("tcp", addr)
 	if err != nil {
-		fmt.Println(err.Error())
 		return nil
 	}
 
@@ -83,9 +78,6 @@ func (sconn *Connection) Read(b []byte) (int, error) {
 		// Decrypt the data
 		unpolished, unpolishError := sconn.state.polish.Unpolish(polished)
 		if unpolishError != nil {
-			println("Received an unpolish error: ", unpolishError.Error())
-			println("Polished input: ", polished)
-			//fmt.Printf("Polished input:  %v", polished)
 			return 0, unpolishError
 		}
 
@@ -119,8 +111,6 @@ func (sconn *Connection) Write(b []byte) (int, error) {
 
 		numberOfBytesToWrite := len(polished)
 		totalBytesWritten := 0
-		println("> Polished data to write count: ", numberOfBytesToWrite)
-		//fmt.Printf("> Polished output: %v\n", polished)
 
 		// Write all of the bytes
 		for numberOfBytesToWrite > totalBytesWritten {

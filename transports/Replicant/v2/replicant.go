@@ -93,8 +93,6 @@ func NewServerConnection(conn net.Conn, config ServerConfig) (*Connection, error
 			fmt.Println("> Toneburst error: ", err.Error())
 			return nil, err
 		}
-
-		println("> Performed toneburst succesfully.")
 	}
 
 	if state.polish != nil {
@@ -103,11 +101,8 @@ func NewServerConnection(conn net.Conn, config ServerConfig) (*Connection, error
 			fmt.Println("> Polish handshake failed", err.Error())
 			return nil, err
 		}
-
-		println("> Successful polish handshake.")
 	}
 
-	println("> New server connection created.")
 	return rconn, nil
 }
 

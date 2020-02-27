@@ -7,7 +7,6 @@ import (
 	"crypto/sha256"
 	"encoding/binary"
 	"errors"
-	"fmt"
 	"github.com/opentracing/opentracing-go/log"
 	"golang.org/x/crypto/chacha20poly1305"
 	"io"
@@ -174,14 +173,6 @@ func X963KDF(sharedKeySeed []byte, ephemeralPublicKey []byte) []byte {
 		counter += 1
 	}
 
-	// Key
-	//encryptionKey := output[0:16]
-	//iv := output[16:]
-	//
-	//fmt.Println("Created an encryption key and iv for the Silver client:")
-	//fmt.Println(hex.EncodeToString(encryptionKey))
-	//fmt.Println(hex.EncodeToString(iv))
-
 	return output
 }
 
@@ -242,10 +233,6 @@ func Polish(polishCipher cipher.AEAD, chunkSize int, input []byte) ([]byte, erro
 		copy(payload[2:], input)
 
 		// Encrypt the payload
-		println("> Calling seal")
-		// fmt.Printf("> seal nonce: %v", nonce)
-		println("> seal payload size: ", len(payload))
-		// fmt.Printf("> seal payload: %v", payload)
 		sealResult := polishCipher.Seal(output, nonce, payload, nil)
 		result := append(nonce, sealResult...)
 
@@ -290,14 +277,8 @@ func Unpolish(polishCipher cipher.AEAD, chunkSize int, input []byte) ([]byte, er
 	if inputSize < chunkSize {
 		return nil, errors.New("silver client - unable to unpolish data, received fewer bytes than chunk size")
 	} else if inputSize == chunkSize {
-		println("> Calling polishCipher open")
-		// fmt.Printf("> open nonce: %v", nonce)
-		println("> open data size: ", len(data))
-		// fmt.Printf("> open data: %v", data)
 		unpolished, openError := polishCipher.Open(output, nonce, data, nil)
-		println("> silver open result: ", unpolished)
 		if openError != nil {
-			println("> Received an error while unpolishing: ", openError.Error())
 			return nil, openError
 		}
 
@@ -329,16 +310,10 @@ func Unpolish(polishCipher cipher.AEAD, chunkSize int, input []byte) ([]byte, er
 }
 
 func (silver SilverPolishClient) Polish(input []byte) ([]byte, error) {
-	println("> Client Polish Called")
-	println("> Client Polish input count: ", len(input))
-	fmt.Printf("> Shared Key: %v", silver.sharedKey)
 	return Polish(silver.polishCipher, silver.chunkSize, input)
 }
 
 func (silver SilverPolishClient) Unpolish(input []byte) ([]byte, error) {
-	println("> Client Unpolish Called")
-	println("> Client Polish input count: ", len(input))
-	fmt.Printf("\n> Client Shared Key: %v", silver.sharedKey)
 	return Unpolish(silver.polishCipher, silver.chunkSize, input)
 }
 
@@ -352,7 +327,6 @@ func (silver *SilverPolishServerConnection) Handshake(conn net.Conn) error {
 	clientPublicKeyBlock := make([]byte, silver.chunkSize)
 	_, err := io.ReadFull(conn, clientPublicKeyBlock)
 	if err != nil {
-		fmt.Println("> Server Handshake: Error initializing polish shared key: ", err)
 		log.Error(errors.New("handshake error initializing polish shared key"))
 		log.Error(err)
 		return err
@@ -374,10 +348,8 @@ func (silver *SilverPolishServerConnection) Handshake(conn net.Conn) error {
 
 	sharedKey := X963KDF(sharedKeySeed, clientPublicKey)
 
-	fmt.Printf("> Server handshake shared key: %v", sharedKey)
 	silver.polishCipher, err = chacha20poly1305.New(sharedKey)
 	if err != nil {
-		fmt.Println("\n> Error initializing polish client", err)
 		log.Error(err)
 		return err
 	}
@@ -386,19 +358,13 @@ func (silver *SilverPolishServerConnection) Handshake(conn net.Conn) error {
 }
 
 func (silver *SilverPolishServerConnection) Polish(input []byte) ([]byte, error) {
-	println("> Server Polish Called")
-	println("> Server Polish input count: ", len(input))
 	return Polish(silver.polishCipher, silver.chunkSize, input)
 }
 
 func (silver *SilverPolishServerConnection) Unpolish(input []byte) ([]byte, error) {
-	println("> Server Unpolish Called")
-	println("> Server Unpolish input count: ", len(input))
-
 	if silver.polishCipher != nil {
 		return Unpolish(silver.polishCipher, silver.chunkSize, input)
 	} else {
-		println("> unable to unpolish input, silver.polishCipher is nil")
 		nilCipherError := errors.New("unable to unpolish input, silver.polishCipher is nil")
 		log.Error(nilCipherError)
 		return nil, nilCipherError

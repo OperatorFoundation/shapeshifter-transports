@@ -4,6 +4,8 @@ github.com/OperatorFoundation/monolith-go/monolith v1.0.1 h1:krnieqiUjzCGE/Mb4zy
 github.com/OperatorFoundation/monolith-go/monolith v1.0.1/go.mod h1:qc60ZvCt83JnWf2ZtLq8nkVH6s1gStEwywhox+2y0FY=
 github.com/OperatorFoundation/monolith-go/monolith v1.0.3 h1:KVh1TcURzc+aFb98klXSap2gtvDhXlWyJJ0MRvt8khA=
 github.com/OperatorFoundation/monolith-go/monolith v1.0.3/go.mod h1:qc60ZvCt83JnWf2ZtLq8nkVH6s1gStEwywhox+2y0FY=
+github.com/OperatorFoundation/monolith-go/monolith v1.0.4 h1:9BmDs+f0VvDz94X8GW8G6L3UG6H7ziIFEw9H0AajnHI=
+github.com/OperatorFoundation/monolith-go/monolith v1.0.4/go.mod h1:qc60ZvCt83JnWf2ZtLq8nkVH6s1gStEwywhox+2y0FY=
 github.com/OperatorFoundation/shapeshifter-ipc v0.0.0-20170814234159-11746ba927e0 h1:zDYt6FDJwDSX4woVFVK2EMt7fkxU5L5qDNLUjQwA+BQ=
 github.com/OperatorFoundation/shapeshifter-ipc v0.0.0-20170814234159-11746ba927e0/go.mod h1:kB00Ak8Dgn1uZlZHLc/WsUta58Jc+n/ZhCetcPkh42Q=
 github.com/OperatorFoundation/shapeshifter-transports v2.1.5+incompatible h1:1S3doS1jE/2X0FTiJWakrZVAmknj2IqZ1XL46zBA0XM=

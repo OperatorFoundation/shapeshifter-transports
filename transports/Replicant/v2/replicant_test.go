@@ -2,7 +2,6 @@ package replicant
 
 import (
 	"bytes"
-	"fmt"
 	"github.com/OperatorFoundation/monolith-go/monolith"
 	"github.com/OperatorFoundation/shapeshifter-transports/transports/Replicant/v2/polish"
 	"github.com/OperatorFoundation/shapeshifter-transports/transports/Replicant/v2/toneburst"
@@ -19,27 +18,23 @@ func TestMarshalConfigs(t *testing.T) {
 
 	clientConfigJsonString, clientConfigJsonError := clientConfig.Marshal()
 	if clientConfigJsonError != nil {
-		println("Client config json error: ", clientConfigJsonError.Error())
 		t.Fail()
 		return
 	}
 
 	serverConfigJsonString, serverConfigJsonError := serverConfig.Marshal()
 	if serverConfigJsonError != nil {
-		println("Server config json error: ", serverConfigJsonError.Error())
 		t.Fail()
 		return
 	}
 
 	serverConfigWriteError := ioutil.WriteFile("ReplicantServerConfig.json", []byte(serverConfigJsonString), 0644)
 	if serverConfigWriteError != nil {
-		println("Server config write error: ", serverConfigWriteError.Error())
 		t.Fail()
 		return
 	}
 	clientConfigWriteError := ioutil.WriteFile("ReplicantClientConfig.json", []byte(clientConfigJsonString), 0644)
 	if clientConfigWriteError != nil {
-		println("Client config write error: ", clientConfigWriteError.Error())
 		t.Fail()
 		return
 	}
@@ -76,27 +71,23 @@ func TestMarshalSilverRandomEnumeratedConfigs(t *testing.T) {
 
 	clientConfigJsonString, clientConfigJsonError := clientConfig.Marshal()
 	if clientConfigJsonError != nil {
-		println("Client config json error: ", clientConfigJsonError.Error())
 		t.Fail()
 		return
 	}
 
 	serverConfigJsonString, serverConfigJsonError := serverConfig.Marshal()
 	if serverConfigJsonError != nil {
-		println("Server config json error: ", serverConfigJsonError.Error())
 		t.Fail()
 		return
 	}
 
 	serverConfigWriteError := ioutil.WriteFile("ReplicantServerConfig1.json", []byte(serverConfigJsonString), 0644)
 	if serverConfigWriteError != nil {
-		println("Server config write error: ", serverConfigWriteError.Error())
 		t.Fail()
 		return
 	}
 	clientConfigWriteError := ioutil.WriteFile("ReplicantClientConfig1.json", []byte(clientConfigJsonString), 0644)
 	if clientConfigWriteError != nil {
-		println("Client config write error: ", clientConfigWriteError.Error())
 		t.Fail()
 		return
 	}
@@ -156,54 +147,35 @@ func replicantConnection(clientConfig ClientConfig, serverConfig ServerConfig, t
 	min := 1025
 	max := 65535
 	portNumber := min + rand.Intn(max-min+1)
-	println("Port number:")
-	println(portNumber)
 	portString := strconv.Itoa(portNumber)
-	println("Port string:")
-	println(portString)
 	addr := "127.0.0.1:"
 	addr += portString
-	println("server address:")
-	println(addr)
 
 	go func() {
 		listener := serverConfig.Listen(addr)
-		//defer listener.Close()
-		println(">> Test: Created listener")
 		serverStarted <- true
 
-		for {
-			lConn, lConnError := listener.Accept()
-			if lConnError != nil {
-				println(">> Test: Listener connection error:", lConnError.Error())
-				t.Fail()
-				return
-			}
-
-			println(">> Test: Listener received an incoming connection")
-			if serverConfig.Polish != nil {
-				serverChunkSize := serverConfig.Polish.GetChunkSize()
-				println(">> Test: chunk size =", serverChunkSize)
-			}
-
-			lBuffer := make([]byte, 4)
-			lReadLength, lReadError := lConn.Read(lBuffer)
-			if lReadError != nil {
-				println(">> Test: Listener read error:", lReadError)
-				t.Fail()
-				return
-			}
-
-			println(">> Test: Listener read length: ", lReadLength)
-			// Send a response back to person contacting us.
-			lWriteLength, lWriteError := lConn.Write([]byte("Message received."))
-			if lWriteError != nil {
-				println(">> Test: Listener write error:", lWriteError.Error())
-				t.Fail()
-				return
-			}
-			println(">> Test: Listener wrote a response to the client. Length:", lWriteLength)
+		lConn, lConnError := listener.Accept()
+		if lConnError != nil {
+			t.Fail()
+			return
 		}
+
+		lBuffer := make([]byte, 4)
+		_, lReadError := lConn.Read(lBuffer)
+		if lReadError != nil {
+			t.Fail()
+			return
+		}
+
+		// Send a response back to person contacting us.
+		_, lWriteError := lConn.Write([]byte("Message received."))
+		if lWriteError != nil {
+			t.Fail()
+			return
+		}
+
+		_ = listener.Close()
 	}()
 
 	serverFinishedStarting := <- serverStarted
@@ -214,32 +186,25 @@ func replicantConnection(clientConfig ClientConfig, serverConfig ServerConfig, t
 
 	cConn := clientConfig.Dial(addr)
 	if cConn == nil {
-		println(">> Test: Dial error: client connection is nil.")
 		t.Fail()
 		return
 	}
-	println(">> Test: Created client connection.")
 
 	writeBytes := []byte{0x0A, 0x11, 0xB0, 0xB1}
-	cWriteLength, cWriteError := cConn.Write(writeBytes)
+	_, cWriteError := cConn.Write(writeBytes)
 	if cWriteError != nil {
-		println(">> Test: Client write error:", cWriteError)
 		t.Fail()
 		return
 	}
-	println(">> Test: Wrote bytes to the server, count:", cWriteLength)
 
 	readBuffer := make([]byte, 17)
-	cReadLength, cReadError := cConn.Read(readBuffer)
+	_, cReadError := cConn.Read(readBuffer)
 	if cReadError != nil {
-		println(">> Test: Client read error:", cReadError)
 		t.Fail()
 		return
 	}
-	println(">> Test: Client read byte count:", cReadLength)
-	fmt.Printf(">> Test: Client read buffer: %v", readBuffer)
 
-	defer cConn.Close()
+	_ = cConn.Close()
 
 	return
 }
@@ -276,7 +241,7 @@ func createMonotoneServerConfigNils() ServerConfig {
 
 func createMonotoneClientConfigEmpty() ClientConfig {
 	parts := make([]monolith.Monolith, 0)
-	desc := monolith.Description{parts}
+	desc := monolith.Description{Parts: parts}
 	args := monolith.NewEmptyArgs()
 	monolithInstance := monolith.Instance{
 		Desc: desc,
@@ -302,7 +267,7 @@ func createMonotoneClientConfigEmpty() ClientConfig {
 
 func createMonotoneServerConfigEmpty() ServerConfig {
 	parts := make([]monolith.Monolith, 0)
-	desc := monolith.Description{parts}
+	desc := monolith.Description{Parts: parts}
 	args := monolith.NewEmptyArgs()
 	monolithInstance := monolith.Instance{
 		Desc: desc,
@@ -468,20 +433,25 @@ func createMonotoneClientConfigEnumeratedItems() ClientConfig {
 	parts := make([]monolith.Monolith, 0)
 	part := monolith.BytesPart{
 		Items: []monolith.ByteType{
-			monolith.EnumeratedByteType{set},
-			monolith.EnumeratedByteType{set},
+			monolith.EnumeratedByteType{Options: set},
+			monolith.EnumeratedByteType{Options: set},
 		},
 	}
 	parts = append(parts, part)
 	part = monolith.BytesPart{
 		Items: []monolith.ByteType{
-			monolith.EnumeratedByteType{set},
-			monolith.EnumeratedByteType{set},
+			monolith.EnumeratedByteType{Options: set},
+			monolith.EnumeratedByteType{Options: set},
 		},
 	}
 	parts = append(parts, part)
-	desc := monolith.Description{parts}
-	args := monolith.NewEmptyArgs()
+	desc := monolith.Description{Parts: parts}
+	bargs := []byte{0x14, 0x14, 0x14, 0x14}
+	iargs := make([]interface{}, len(bargs))
+	for index, value := range bargs {
+		iargs[index] = value
+	}
+	args := monolith.NewArgs(iargs)
 	monolithInstance := monolith.Instance{
 		Desc: desc,
 		Args: args,
@@ -510,20 +480,25 @@ func createMonotoneServerConfigEnumeratedItems() ServerConfig {
 	parts := make([]monolith.Monolith, 0)
 	part := monolith.BytesPart{
 		Items: []monolith.ByteType{
-			monolith.EnumeratedByteType{set},
-			monolith.EnumeratedByteType{set},
+			monolith.EnumeratedByteType{Options: set},
+			monolith.EnumeratedByteType{Options: set},
 		},
 	}
 	parts = append(parts, part)
 	part = monolith.BytesPart{
 		Items: []monolith.ByteType{
-			monolith.EnumeratedByteType{set},
-			monolith.EnumeratedByteType{set},
+			monolith.EnumeratedByteType{Options: set},
+			monolith.EnumeratedByteType{Options: set},
 		},
 	}
 	parts = append(parts, part)
-	desc := monolith.Description{parts}
-	args := monolith.NewEmptyArgs()
+	desc := monolith.Description{Parts: parts}
+	bargs := []byte{0x11, 0x11, 0x11, 0x12}
+	iargs := make([]interface{}, len(bargs))
+	for index, value := range bargs {
+		iargs[index] = value
+	}
+	args := monolith.NewArgs(iargs)
 	monolithInstance := monolith.Instance{
 		Desc: desc,
 		Args: args,
@@ -564,7 +539,7 @@ func createMonotoneClientConfigRandomItems() ClientConfig {
 		},
 	}
 	parts = append(parts, part)
-	desc := monolith.Description{parts}
+	desc := monolith.Description{Parts: parts}
 	args := monolith.NewEmptyArgs()
 	monolithInstance := monolith.Instance{
 		Desc: desc,
@@ -605,7 +580,7 @@ func createMonotoneServerConfigRandomItems() ServerConfig {
 		},
 	}
 	parts = append(parts, part)
-	desc := monolith.Description{parts}
+	desc := monolith.Description{Parts: parts}
 	args := monolith.NewEmptyArgs()
 	monolithInstance := monolith.Instance{
 		Desc: desc,
@@ -648,19 +623,19 @@ func createMonotoneClientConfigRandomEnumeratedItems() ClientConfig {
 	parts := make([]monolith.Monolith, 0)
 	part := monolith.BytesPart{
 		Items: []monolith.ByteType{
-			monolith.RandomEnumeratedByteType{set},
-			monolith.RandomEnumeratedByteType{set},
+			monolith.RandomEnumeratedByteType{RandomOptions: set},
+			monolith.RandomEnumeratedByteType{RandomOptions: set},
 		},
 	}
 	parts = append(parts, part)
 	part = monolith.BytesPart{
 		Items: []monolith.ByteType{
-			monolith.RandomEnumeratedByteType{set},
-			monolith.RandomEnumeratedByteType{set},
+			monolith.RandomEnumeratedByteType{RandomOptions: set},
+			monolith.RandomEnumeratedByteType{RandomOptions: set},
 		},
 	}
 	parts = append(parts, part)
-	desc := monolith.Description{parts}
+	desc := monolith.Description{Parts: parts}
 	args := monolith.NewEmptyArgs()
 	monolithInstance := monolith.Instance{
 		Desc: desc,
@@ -690,19 +665,19 @@ func createMonotoneServerConfigRandomEnumeratedItems() ServerConfig {
 	parts := make([]monolith.Monolith, 0)
 	part := monolith.BytesPart{
 		Items: []monolith.ByteType{
-			monolith.RandomEnumeratedByteType{set},
-			monolith.RandomEnumeratedByteType{set},
+			monolith.RandomEnumeratedByteType{RandomOptions: set},
+			monolith.RandomEnumeratedByteType{RandomOptions: set},
 		},
 	}
 	parts = append(parts, part)
 	part = monolith.BytesPart{
 		Items: []monolith.ByteType{
-			monolith.RandomEnumeratedByteType{set},
-			monolith.RandomEnumeratedByteType{set},
+			monolith.RandomEnumeratedByteType{RandomOptions: set},
+			monolith.RandomEnumeratedByteType{RandomOptions: set},
 		},
 	}
 	parts = append(parts, part)
-	desc := monolith.Description{parts}
+	desc := monolith.Description{Parts: parts}
 	args := monolith.NewEmptyArgs()
 	monolithInstance := monolith.Instance{
 		Desc: desc,
@@ -729,12 +704,10 @@ func createMonotoneServerConfigRandomEnumeratedItems() ServerConfig {
 func createSilverConfigs()(*ClientConfig, *ServerConfig) {
 	polishServerConfig, polishServerError := polish.NewSilverServerConfig()
 	if polishServerError != nil {
-		println("Polish server error: ", polishServerError)
 		return nil, nil
 	}
 	polishClientConfig, polishClientError := polish.NewSilverClientConfig(polishServerConfig)
 	if polishClientError != nil {
-		println("Polish  client error: ", polishClientError)
 		return nil, nil
 	}
 
@@ -766,23 +739,19 @@ func createSilverMonotoneConfigsOneFixedAddByte() (*ClientConfig, *ServerConfig)
 		Args: args,
 	}
 
-	addSequences := monolithInstance
-
 	monotoneConfig := toneburst.MonotoneConfig{
-		AddSequences:    &addSequences,
+		AddSequences:    &monolithInstance,
 		RemoveSequences: nil,
 		SpeakFirst:      true,
 	}
 
 	polishServerConfig, polishServerError := polish.NewSilverServerConfig()
 	if polishServerError != nil {
-		println("Polish server error: ", polishServerError)
 		return nil, nil
 	}
 
 	polishClientConfig, polishClientConfigError := polish.NewSilverClientConfig(polishServerConfig)
 	if polishClientConfigError != nil {
-		println("Error creating silver client config: ", polishClientConfigError)
 		return nil, nil
 	}
 
@@ -822,19 +791,19 @@ func createSilverMonotoneClientConfigRandomEnumeratedItems() *ClientConfig {
 	parts := make([]monolith.Monolith, 0)
 	part := monolith.BytesPart{
 		Items: []monolith.ByteType{
-			monolith.RandomEnumeratedByteType{set},
-			monolith.RandomEnumeratedByteType{set},
+			monolith.RandomEnumeratedByteType{RandomOptions: set},
+			monolith.RandomEnumeratedByteType{RandomOptions: set},
 		},
 	}
 	parts = append(parts, part)
 	part = monolith.BytesPart{
 		Items: []monolith.ByteType{
-			monolith.RandomEnumeratedByteType{set},
-			monolith.RandomEnumeratedByteType{set},
+			monolith.RandomEnumeratedByteType{RandomOptions: set},
+			monolith.RandomEnumeratedByteType{RandomOptions: set},
 		},
 	}
 	parts = append(parts, part)
-	desc := monolith.Description{parts}
+	desc := monolith.Description{Parts: parts}
 	args := monolith.NewEmptyArgs()
 	monolithInstance := monolith.Instance{
 		Desc: desc,
@@ -852,13 +821,11 @@ func createSilverMonotoneClientConfigRandomEnumeratedItems() *ClientConfig {
 
 	polishServerConfig, polishServerError := polish.NewSilverServerConfig()
 	if polishServerError != nil {
-		println("Polish server error: ", polishServerError)
 		return nil
 	}
 
 	polishClientConfig, polishClientConfigError := polish.NewSilverClientConfig(polishServerConfig)
 	if polishClientConfigError != nil {
-		println("Error creating silver client config: ", polishClientConfigError)
 		return nil
 	}
 
@@ -876,19 +843,19 @@ func createSilverMonotoneServerConfigRandomEnumeratedItems() *ServerConfig {
 	parts := make([]monolith.Monolith, 0)
 	part := monolith.BytesPart{
 		Items: []monolith.ByteType{
-			monolith.RandomEnumeratedByteType{set},
-			monolith.RandomEnumeratedByteType{set},
+			monolith.RandomEnumeratedByteType{RandomOptions: set},
+			monolith.RandomEnumeratedByteType{RandomOptions: set},
 		},
 	}
 	parts = append(parts, part)
 	part = monolith.BytesPart{
 		Items: []monolith.ByteType{
-			monolith.RandomEnumeratedByteType{set},
-			monolith.RandomEnumeratedByteType{set},
+			monolith.RandomEnumeratedByteType{RandomOptions: set},
+			monolith.RandomEnumeratedByteType{RandomOptions: set},
 		},
 	}
 	parts = append(parts, part)
-	desc := monolith.Description{parts}
+	desc := monolith.Description{Parts: parts}
 	args := monolith.NewEmptyArgs()
 	monolithInstance := monolith.Instance{
 		Desc: desc,
@@ -906,7 +873,6 @@ func createSilverMonotoneServerConfigRandomEnumeratedItems() *ServerConfig {
 
 	polishServerConfig, polishServerError := polish.NewSilverServerConfig()
 	if polishServerError != nil {
-		println("Polish server error: ", polishServerError)
 		return nil
 	}
 
@@ -920,224 +886,21 @@ func createSilverMonotoneServerConfigRandomEnumeratedItems() *ServerConfig {
 
 
 // Polish Tests
-func TestConn(t *testing.T) {
-	clientConfig, serverConfig := createSilverConfigs()
-	// Run the server concurrently
-	go func() {
-		listener := serverConfig.Listen("127.0.0.1:7777")
-		defer listener.Close()
-		for {
-			conn, err := listener.Accept()
-			if err != nil {
-				println("Listener accept func error: ", err)
-				return
-			}
-			defer conn.Close()
-
-			println("received an incoming connection")
-			// Make a buffer to hold incoming data.
-			buf := make([]byte, 1024)
-			// Read the incoming connection into the buffer.
-			reqLen, err := conn.Read(buf)
-			if err != nil {
-				fmt.Println("Error reading:", err.Error())
-			}
-
-			println("regLen: ", reqLen)
-			println("readBuffer: ")
-			fmt.Println(string(buf[:]))
-			// Send a response back to person contacting us.
-			conn.Write([]byte("Message received."))
-		}
-	}()
-
-	// Run the client
-	client := clientConfig.Dial("127.0.0.1:7777")
-	if client == nil {
-		println("Dial error: Conn is nil.")
-		t.Fail()
-		return
-	}
-
-	println("Successful client connection to a replicant server with Silver polish!")
-	writeBytes := []byte{0x0A, 0x11, 0xB0, 0xB1}
-	writeCount, writeError := client.Write(writeBytes)
-	if writeError != nil {
-		println("Write error from client: ", writeError)
-	}
-	println("Client write byte count = ", writeCount)
-
-	readBuffer := make([]byte, 1024)
-	client.Read(readBuffer)
-	fmt.Printf("Client read buffer: %v:\n", readBuffer)
-
-	defer client.Close()
-	return
-}
-
 func TestPolishOnlyConnection(t *testing.T) {
-	polishServerConfig, polishServerError := polish.NewSilverServerConfig()
-	if polishServerError != nil {
-		t.Fail()
-		return
-	}
-
-	go runServerWithSilver(polishServerConfig)
-	runClientWithSilver(polishServerConfig)
-}
-
-func TestPolishOnlyClientSend(t *testing.T) {
-	polishServerConfig, polishServerError := polish.NewSilverServerConfig()
-	if polishServerError != nil {
-		t.Fail()
-		return
-	}
-
-	go runServerWithSilver(polishServerConfig)
-	clientWriteSilver(polishServerConfig)
-}
-
-func runServerWithSilver(polishServerConfig *polish.SilverPolishServerConfig) {
-
-	serverConfig := ServerConfig{
-		Toneburst: nil,
-		Polish:    polishServerConfig,
-	}
-
-	listener := serverConfig.Listen("127.0.0.1:7777")
-	_, serverConnError := listener.Accept()
-	if serverConnError != nil {
-		return
-	}
+	clientConfig, serverConfig := createSilverConfigs()
+	replicantConnection(*clientConfig, *serverConfig, t)
 }
 
 //Both
 func TestWithSilverMonotone(t *testing.T) {
-
-	clientConfig := createSilverMonotoneClientConfigRandomEnumeratedItems()
-	serverConfig := createSilverMonotoneServerConfigRandomEnumeratedItems()
-	//monotoneConfig := createMonotoneConfig()
-
-	go func() {
-		listener := serverConfig.Listen("127.0.0.1:7777")
-		println("Created listener")
-		defer listener.Close()
-
-		for {
-			lConn, lConnError := listener.Accept()
-			if lConnError != nil {
-				println("Listener connection error: ", lConnError.Error())
-				t.Fail()
-				return
-			}
-
-			println("received an incoming connection")
-			lBuffer := make([]byte, 1024)
-			lReadLength, lReadError := lConn.Read(lBuffer)
-			if lReadError != nil {
-				println("Listener read error: ", lReadError)
-				t.Fail()
-				return
-			}
-			println("Listener read length: ", lReadLength)
-			// Send a response back to person contacting us.
-			lWriteLength, lWriteError := lConn.Write([]byte("Message received."))
-			if lWriteError != nil {
-				println("Listener write error: ", lWriteError.Error())
-				t.Fail()
-				return
-			}
-			println("Wrote a response to the client. Length: ", lWriteLength)
-		}
-	}()
-
-	cConn := clientConfig.Dial("127.0.0.1:7777")
-	if cConn == nil {
-		println("Dial error: client connection is nil.")
-		t.Fail()
-		return
-	}
-	println("Created client connection.")
-
-	writeBytes := []byte{0x0A, 0x11, 0xB0, 0xB1}
-	cWriteLength, cWriteError := cConn.Write(writeBytes)
-	if cWriteError != nil {
-		println("Client write error: ", cWriteError)
-		t.Fail()
-		return
-	}
-	println("Wrote bytes to the server, count: ", cWriteLength)
-
-	readBuffer := make([]byte, 1024)
-	cReadLength, cReadError := cConn.Read(readBuffer)
-	if cReadError != nil {
-		println("Client read error: ", cReadError)
-		t.Fail()
-		return
-	}
-	println("Client read byte count: ", cReadLength)
-	fmt.Printf("Client read buffer: %v:\n", readBuffer)
-
-	defer cConn.Close()
-
-	return
-}
-
-func runClientWithSilver(polishServerConfig *polish.SilverPolishServerConfig) {
-	polishClientConfig, polishClientError := polish.NewSilverClientConfig(polishServerConfig)
-	if polishClientError != nil {
-		return
-	}
-
-	clientConfig := ClientConfig{
-		Toneburst: nil,
-		Polish:    polishClientConfig,
-	}
-
-	client := clientConfig.Dial("127.0.0.1:7777")
-	if client == nil {
-		return
-	} else {
-		println("Successful client connection to a replicant server with Silver polish!")
-		readBuffer := make([]byte, 1024)
-		client.Read(readBuffer)
-	}
-}
-
-func clientWriteSilver(polishServerConfig *polish.SilverPolishServerConfig) {
-	polishClientConfig, polishClientError := polish.NewSilverClientConfig(polishServerConfig)
-	if polishClientError != nil {
-		return
-	}
-
-	clientConfig := ClientConfig{
-		Toneburst: nil,
-		Polish:    polishClientConfig,
-	}
-
-	client := clientConfig.Dial("127.0.0.1:7777")
-	if client == nil {
-		return
-	} else {
-		println("Successful client connection to a replicant server with Silver polish!")
-		readBuffer := make([]byte, 1024)
-		go client.Read(readBuffer)
-		writeBytes := []byte{0x0A, 0x11, 0xB0, 0xB1}
-		writeCount, writeError := client.Write(writeBytes)
-		if writeError != nil {
-			println("Write error from client: ", writeError)
-		}
-
-		println("Write byte count = ", writeCount)
-	}
+	clientConfig, serverConfig := createSilverMonotoneConfigsRandomEnumeratedItems()
+	replicantConnection(clientConfig, serverConfig, t)
 }
 
 func TestSilverClientPolishUnpolish(t *testing.T) {
-
 	silverServerConfig, serverConfigError := polish.NewSilverServerConfig()
 
 	if serverConfigError != nil{
-		println("Silver server config error: ", serverConfigError.Error())
 		t.Fail()
 	}
 
@@ -1151,14 +914,12 @@ func TestSilverClientPolishUnpolish(t *testing.T) {
 	}
 
 	if clientConfigError != nil {
-		println("Silver client config error: ", clientConfigError)
 		t.Fail()
 	}
 
 	silverClient, clientError := polish.NewSilverClient(*silverClientConfig)
 
 	if clientError != nil {
-		println("Silver client error: ", clientError)
 		t.Fail()
 	}
 
@@ -1170,29 +931,19 @@ func TestSilverClientPolishUnpolish(t *testing.T) {
 
 	polished, polishError := silverClient.Polish(input)
 	if polishError != nil {
-		println("Received polish error: ", polishError)
 		t.Fail()
 	}
 
 	if bytes.Equal(input, polished) {
-		fmt.Println("original input and polished are the same")
 		t.Fail()
 	}
-
-	println("data before polish length:", len(input))
-	println("after polish: ", len(polished))
 
 	unpolished, unpolishError := silverClient.Unpolish(polished)
 	if unpolishError != nil {
-		println("Received an unpolish error: ", unpolishError.Error())
 		t.Fail()
 	}
 
-	println("unpolished length: ", len(unpolished))
 	if !bytes.Equal(unpolished, input) {
-		fmt.Println("original input and unpolished are not the same")
-		fmt.Printf("%v\n", input)
-		fmt.Printf("%v\n", unpolished)
 		t.Fail()
 	}
 }
@@ -1231,13 +982,11 @@ func createSampleConfigs() (*ClientConfig, *ServerConfig) {
 
 	polishServerConfig, polishServerError := polish.NewSilverServerConfig()
 	if polishServerError != nil {
-		println("Polish server error: ", polishServerError)
 		return nil, nil
 	}
 
 	polishClientConfig, polishClientConfigError := polish.NewSilverClientConfig(polishServerConfig)
 	if polishClientConfigError != nil {
-		println("Error creating silver client config: ", polishClientConfigError)
 		return nil, nil
 	}
 
