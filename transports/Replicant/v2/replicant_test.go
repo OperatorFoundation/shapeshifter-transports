@@ -8,6 +8,7 @@ import (
 	"github.com/OperatorFoundation/shapeshifter-transports/transports/Replicant/v2/toneburst"
 	"io/ioutil"
 	"math/rand"
+	"strconv"
 	"testing"
 	"time"
 )
@@ -70,6 +71,37 @@ func TestNilsMonotone(t *testing.T) {
 	replicantConnection(clientConfig, serverConfig, t)
 }
 
+func TestMarshalSilverRandomEnumeratedConfigs(t *testing.T) {
+	clientConfig, serverConfig := createSilverMonotoneConfigsRandomEnumeratedItems()
+
+	clientConfigJsonString, clientConfigJsonError := clientConfig.Marshal()
+	if clientConfigJsonError != nil {
+		println("Client config json error: ", clientConfigJsonError.Error())
+		t.Fail()
+		return
+	}
+
+	serverConfigJsonString, serverConfigJsonError := serverConfig.Marshal()
+	if serverConfigJsonError != nil {
+		println("Server config json error: ", serverConfigJsonError.Error())
+		t.Fail()
+		return
+	}
+
+	serverConfigWriteError := ioutil.WriteFile("ReplicantServerConfig1.json", []byte(serverConfigJsonString), 0644)
+	if serverConfigWriteError != nil {
+		println("Server config write error: ", serverConfigWriteError.Error())
+		t.Fail()
+		return
+	}
+	clientConfigWriteError := ioutil.WriteFile("ReplicantClientConfig1.json", []byte(clientConfigJsonString), 0644)
+	if clientConfigWriteError != nil {
+		println("Client config write error: ", clientConfigWriteError.Error())
+		t.Fail()
+		return
+	}
+}
+
 func TestOneFixedByteMonotone(t *testing.T) {
 	clientConfig := createMonotoneClientConfigOneFixedAddByte()
 	serverConfig := createMonotoneServerConfigOneFixedRemoveByte()
@@ -113,8 +145,23 @@ func TestSilver(t *testing.T) {
 func replicantConnection(clientConfig ClientConfig, serverConfig ServerConfig, t *testing.T) {
 	serverStarted := make(chan bool)
 
+	// Get a random port
+	rand.Seed(time.Now().UnixNano())
+	min := 1025
+	max := 65535
+	portNumber := min + rand.Intn(max-min+1)
+	println("Port number:")
+	println(portNumber)
+	portString := strconv.Itoa(portNumber)
+	println("Port string:")
+	println(portString)
+	addr := "127.0.0.1:"
+	addr += portString
+	println("server address:")
+	println(addr)
+
 	go func() {
-		listener := serverConfig.Listen("127.0.0.1:7777")
+		listener := serverConfig.Listen(addr)
 		//defer listener.Close()
 		println(">> Test: Created listener")
 		serverStarted <- true
@@ -159,7 +206,7 @@ func replicantConnection(clientConfig ClientConfig, serverConfig ServerConfig, t
 		return
 	}
 
-	cConn := clientConfig.Dial("127.0.0.1:7777")
+	cConn := clientConfig.Dial(addr)
 	if cConn == nil {
 		println(">> Test: Dial error: client connection is nil.")
 		t.Fail()
@@ -574,6 +621,19 @@ func createMonotoneServerConfigRandomItems() ServerConfig {
 	}
 
 	return serverConfig
+}
+
+func createSilverMonotoneConfigsRandomEnumeratedItems() (ClientConfig, ServerConfig) {
+	serverConfig := createMonotoneServerConfigRandomEnumeratedItems()
+	clientConfig := createMonotoneClientConfigRandomEnumeratedItems()
+
+	silverServerConfig, _ := polish.NewSilverServerConfig()
+	silverClientConfig, _ := polish.NewSilverClientConfig(silverServerConfig)
+
+	serverConfig.Polish = silverServerConfig
+	clientConfig.Polish = silverClientConfig
+
+	return clientConfig, serverConfig
 }
 
 func createMonotoneClientConfigRandomEnumeratedItems() ClientConfig {
