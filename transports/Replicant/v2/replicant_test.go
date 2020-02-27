@@ -110,6 +110,12 @@ func TestSilver(t *testing.T) {
 	replicantConnection(*clientConfig, *serverConfig, t)
 }
 
+// This test uses a more realistic config, like one might use in real deployment.
+func TestSampleConfig(t *testing.T) {
+	clientConfig, serverConfig := createSampleConfigs()
+	replicantConnection(*clientConfig, *serverConfig, t)
+}
+
 func replicantConnection(clientConfig ClientConfig, serverConfig ServerConfig, t *testing.T) {
 	serverStarted := make(chan bool)
 
@@ -852,6 +858,7 @@ func createSilverMonotoneServerConfigRandomEnumeratedItems() *ServerConfig {
 	return &serverConfig
 }
 
+
 // Polish Tests
 func TestConn(t *testing.T) {
 	clientConfig, serverConfig := createSilverConfigs()
@@ -1128,4 +1135,61 @@ func TestSilverClientPolishUnpolish(t *testing.T) {
 		fmt.Printf("%v\n", unpolished)
 		t.Fail()
 	}
+}
+
+func createSampleConfigs() (*ClientConfig, *ServerConfig) {
+	rand.Seed(time.Now().UnixNano())
+
+	parts := []monolith.Monolith{
+		monolith.BytesPart{
+			Items: []monolith.ByteType{
+				monolith.SemanticIntProducerByteType{"n", monolith.RandomByteType{}},
+			},
+		},
+		&monolith.SemanticSeedConsumerDynamicPart{Name: "n", Item:monolith.RandomByteType{}},
+	}
+
+	desc := monolith.Description{parts}
+
+	instance := monolith.Instance{
+		Desc: desc,
+		Args: monolith.NewEmptyArgs(),
+	}
+
+
+	monotoneServerConfig := toneburst.MonotoneConfig{
+		AddSequences:    &instance,
+		RemoveSequences: &desc,
+		SpeakFirst:      false,
+	}
+
+	monotoneClientConfig := toneburst.MonotoneConfig{
+		AddSequences:    &instance,
+		RemoveSequences: &desc,
+		SpeakFirst:      true,
+	}
+
+	polishServerConfig, polishServerError := polish.NewSilverServerConfig()
+	if polishServerError != nil {
+		println("Polish server error: ", polishServerError)
+		return nil, nil
+	}
+
+	polishClientConfig, polishClientConfigError := polish.NewSilverClientConfig(polishServerConfig)
+	if polishClientConfigError != nil {
+		println("Error creating silver client config: ", polishClientConfigError)
+		return nil, nil
+	}
+
+	clientConfig := ClientConfig{
+		Toneburst: monotoneClientConfig,
+		Polish:    polishClientConfig,
+	}
+
+	serverConfig := ServerConfig{
+		Toneburst: monotoneServerConfig,
+		Polish:    polishServerConfig,
+	}
+
+	return &clientConfig, &serverConfig
 }
