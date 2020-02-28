@@ -951,7 +951,23 @@ func TestSilverClientPolishUnpolish(t *testing.T) {
 func createSampleConfigs() (*ClientConfig, *ServerConfig) {
 	rand.Seed(time.Now().UnixNano())
 
-	parts := []monolith.Monolith{
+	clientParts := []monolith.Monolith{
+		monolith.BytesPart{
+			Items: []monolith.ByteType{
+				monolith.SemanticIntProducerByteType{"m", monolith.RandomByteType{}},
+			},
+		},
+		&monolith.SemanticSeedConsumerDynamicPart{Name: "m", Item:monolith.RandomByteType{}},
+	}
+
+	clientDesc := monolith.Description{clientParts}
+
+	clientInstance := monolith.Instance{
+		Desc: clientDesc,
+		Args: monolith.NewEmptyArgs(),
+	}
+
+	serverParts := []monolith.Monolith{
 		monolith.BytesPart{
 			Items: []monolith.ByteType{
 				monolith.SemanticIntProducerByteType{"n", monolith.RandomByteType{}},
@@ -960,26 +976,22 @@ func createSampleConfigs() (*ClientConfig, *ServerConfig) {
 		&monolith.SemanticSeedConsumerDynamicPart{Name: "n", Item:monolith.RandomByteType{}},
 	}
 
-	clientDesc := monolith.Description{parts}
+	serverDesc := monolith.Description{serverParts}
 
-	clientInstance := monolith.Instance{
-		Desc: clientDesc,
+	serverInstance := monolith.Instance{
+		Desc: serverDesc,
 		Args: monolith.NewEmptyArgs(),
 	}
 
-	// Make copies to avoid shared mutable state between client and server
-	serverDesc := clientDesc
-	serverInstance := clientInstance
-
 	monotoneServerConfig := toneburst.MonotoneConfig{
 		AddSequences:    &serverInstance,
-		RemoveSequences: &serverDesc,
+		RemoveSequences: &clientDesc,
 		SpeakFirst:      false,
 	}
 
 	monotoneClientConfig := toneburst.MonotoneConfig{
 		AddSequences:    &clientInstance,
-		RemoveSequences: &clientDesc,
+		RemoveSequences: &serverDesc,
 		SpeakFirst:      true,
 	}
 
