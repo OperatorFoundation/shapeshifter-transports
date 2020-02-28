@@ -960,23 +960,26 @@ func createSampleConfigs() (*ClientConfig, *ServerConfig) {
 		&monolith.SemanticSeedConsumerDynamicPart{Name: "n", Item:monolith.RandomByteType{}},
 	}
 
-	desc := monolith.Description{parts}
+	clientDesc := monolith.Description{parts}
 
-	instance := monolith.Instance{
-		Desc: desc,
+	clientInstance := monolith.Instance{
+		Desc: clientDesc,
 		Args: monolith.NewEmptyArgs(),
 	}
 
+	// Make copies to avoid shared mutable state between client and server
+	serverDesc := clientDesc
+	serverInstance := clientInstance
 
 	monotoneServerConfig := toneburst.MonotoneConfig{
-		AddSequences:    &instance,
-		RemoveSequences: &desc,
+		AddSequences:    &serverInstance,
+		RemoveSequences: &serverDesc,
 		SpeakFirst:      false,
 	}
 
 	monotoneClientConfig := toneburst.MonotoneConfig{
-		AddSequences:    &instance,
-		RemoveSequences: &desc,
+		AddSequences:    &clientInstance,
+		RemoveSequences: &clientDesc,
 		SpeakFirst:      true,
 	}
 
