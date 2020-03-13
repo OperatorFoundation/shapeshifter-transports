@@ -135,15 +135,15 @@ func (ca *meekClientArgs) Network() string {
 }
 //begin optimizer code
 type Transport struct {
-	Url     *gourl.URL
-	Front   string
+	Url     *gourl.URL `json:"url"`
+	Front   string `json:"front"`
 	Address string
 	Dialer  proxy.Dialer
 }
 
 type Config struct {
-	Url *gourl.URL
-	Front string
+	Url *gourl.URL `json:"url"`
+	Front string `json:"front"`
 }
 func (transport Transport) Dial() (net.Conn, error) {
 	meekTransport := NewMeekTransportWithFront(transport.Url.String(), transport.Front, transport.Dialer)

@@ -52,6 +52,11 @@ type MeekServer struct {
 	CertManager  *autocert.Manager
 }
 
+type Config struct {
+	AcmeEmail    string `json:"acme-email"`
+	AcmeHostname string `json:"acme-hostnames"`
+}
+
 type meekListener struct {
 	server *http.Server
 	state  *State
