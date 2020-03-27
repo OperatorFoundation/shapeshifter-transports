@@ -4,7 +4,6 @@ github.com/OperatorFoundation/obfs4 v0.0.0-20200225231820-9c573c3785a2 h1:iIpJUj
 github.com/OperatorFoundation/obfs4 v0.0.0-20200225231820-9c573c3785a2/go.mod h1:oxwvRzQ4FDp7ysA1En4F/pyOh2Jfef4YTo1YhHUsBOA=
 github.com/OperatorFoundation/shapeshifter-ipc v0.0.0-20170814234159-11746ba927e0 h1:zDYt6FDJwDSX4woVFVK2EMt7fkxU5L5qDNLUjQwA+BQ=
 github.com/OperatorFoundation/shapeshifter-ipc v0.0.0-20170814234159-11746ba927e0/go.mod h1:kB00Ak8Dgn1uZlZHLc/WsUta58Jc+n/ZhCetcPkh42Q=
-github.com/OperatorFoundation/shapeshifter-transports v2.1.6+incompatible h1:IFjefYvrRDUNgcTG86nOBZr5Ixe823E0Gg12nu8+XzQ=
 github.com/OperatorFoundation/shapeshifter-transports/transports/meeklite/v2 v2.1.7 h1:8tQQSXVhBB7nhIYKnsfEMBNP8KsMC4CLoMmrrVJ0yd4=
 github.com/OperatorFoundation/shapeshifter-transports/transports/meeklite/v2 v2.1.7/go.mod h1:yPCbCoTjLIG+p0xiuRDwW5t+DivxTHqGU5njf89AkHY=
 github.com/OperatorFoundation/shapeshifter-transports/transports/obfs4/v2 v2.1.7 h1:hplHl0aeDkTjs5ptEE0yvZ9NlqFUjRURMHWvj0au7gg=

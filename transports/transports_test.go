@@ -2,14 +2,15 @@ package transports
 
 import (
 	"fmt"
-	"github.com/OperatorFoundation/shapeshifter-transports/transports/Dust"
-	"github.com/OperatorFoundation/shapeshifter-transports/transports/Optimizer"
-	replicant "github.com/OperatorFoundation/shapeshifter-transports/transports/Replicant"
-	"github.com/OperatorFoundation/shapeshifter-transports/transports/meeklite"
-	"github.com/OperatorFoundation/shapeshifter-transports/transports/meekserver"
-	"github.com/OperatorFoundation/shapeshifter-transports/transports/obfs2"
-	"github.com/OperatorFoundation/shapeshifter-transports/transports/obfs4"
-	"github.com/OperatorFoundation/shapeshifter-transports/transports/shadow"
+	"github.com/OperatorFoundation/shapeshifter-transports/transports/Dust/v2"
+	"github.com/OperatorFoundation/shapeshifter-transports/transports/Optimizer/v2"
+	replicant "github.com/OperatorFoundation/shapeshifter-transports/transports/Replicant/v2"
+	"github.com/OperatorFoundation/shapeshifter-transports/transports/meeklite/v2"
+	"github.com/OperatorFoundation/shapeshifter-transports/transports/meekserver/v2"
+	"github.com/OperatorFoundation/shapeshifter-transports/transports/obfs2/v2"
+	"github.com/OperatorFoundation/shapeshifter-transports/transports/obfs4/v2"
+	"github.com/OperatorFoundation/shapeshifter-transports/transports/shadow/v2"
+
 	"testing"
 )
 
