@@ -12,7 +12,6 @@ import (
 	"time"
 )
 
-
 func TestMarshalConfigs(t *testing.T) {
 	clientConfig, serverConfig := createSilverMonotoneConfigsOneFixedAddByte()
 
@@ -178,7 +177,7 @@ func replicantConnection(clientConfig ClientConfig, serverConfig ServerConfig, t
 		_ = listener.Close()
 	}()
 
-	serverFinishedStarting := <- serverStarted
+	serverFinishedStarting := <-serverStarted
 	if !serverFinishedStarting {
 		t.Fail()
 		return
@@ -295,11 +294,11 @@ func createMonotoneClientConfigOneFixedAddByte() ClientConfig {
 	parts := make([]monolith.Monolith, 0)
 	part := monolith.BytesPart{
 		Items: []monolith.ByteType{
-			monolith.FixedByteType{Byte:0x13},
+			monolith.FixedByteType{Byte: 0x13},
 		},
 	}
 	parts = append(parts, part)
-	desc := monolith.Description{Parts:parts}
+	desc := monolith.Description{Parts: parts}
 	args := monolith.NewEmptyArgs()
 	monolithInstance := monolith.Instance{
 		Desc: desc,
@@ -326,12 +325,12 @@ func createMonotoneServerConfigOneFixedRemoveByte() ServerConfig {
 	parts := make([]monolith.Monolith, 0)
 	part := monolith.BytesPart{
 		Items: []monolith.ByteType{
-			monolith.FixedByteType{Byte:0x13},
+			monolith.FixedByteType{Byte: 0x13},
 		},
 	}
 	parts = append(parts, part)
 
-	desc := monolith.Description{Parts:parts}
+	desc := monolith.Description{Parts: parts}
 	removeSequences := desc
 
 	monotoneConfig := toneburst.MonotoneConfig{
@@ -352,11 +351,11 @@ func createMonotoneClientConfigOneAddOneRemove() ClientConfig {
 	parts := make([]monolith.Monolith, 0)
 	part := monolith.BytesPart{
 		Items: []monolith.ByteType{
-			monolith.FixedByteType{Byte:0x13},
+			monolith.FixedByteType{Byte: 0x13},
 		},
 	}
 	parts = append(parts, part)
-	desc := monolith.Description{Parts:parts}
+	desc := monolith.Description{Parts: parts}
 	args := monolith.NewEmptyArgs()
 	monolithInstance := monolith.Instance{
 		Desc: desc,
@@ -368,11 +367,11 @@ func createMonotoneClientConfigOneAddOneRemove() ClientConfig {
 	removeParts := make([]monolith.Monolith, 0)
 	removePart := monolith.BytesPart{
 		Items: []monolith.ByteType{
-			monolith.FixedByteType{Byte:0x14},
+			monolith.FixedByteType{Byte: 0x14},
 		},
 	}
 	removeParts = append(removeParts, removePart)
-	removeDesc := monolith.Description{Parts:removeParts}
+	removeDesc := monolith.Description{Parts: removeParts}
 
 	monotoneConfig := toneburst.MonotoneConfig{
 		AddSequences:    &addSequences,
@@ -392,7 +391,7 @@ func createMonotoneServerConfigOneAddOneRemove() ServerConfig {
 	removeParts := make([]monolith.Monolith, 0)
 	removePart := monolith.BytesPart{
 		Items: []monolith.ByteType{
-			monolith.FixedByteType{Byte:0x13},
+			monolith.FixedByteType{Byte: 0x13},
 		},
 	}
 	removeParts = append(removeParts, removePart)
@@ -403,11 +402,11 @@ func createMonotoneServerConfigOneAddOneRemove() ServerConfig {
 	addParts := make([]monolith.Monolith, 0)
 	addPart := monolith.BytesPart{
 		Items: []monolith.ByteType{
-			monolith.FixedByteType{Byte:0x14},
+			monolith.FixedByteType{Byte: 0x14},
 		},
 	}
 	addParts = append(addParts, addPart)
-	addDesc := monolith.Description{Parts:addParts}
+	addDesc := monolith.Description{Parts: addParts}
 	args := monolith.NewEmptyArgs()
 	monolithInstance := monolith.Instance{
 		Desc: addDesc,
@@ -701,7 +700,7 @@ func createMonotoneServerConfigRandomEnumeratedItems() ServerConfig {
 	return serverConfig
 }
 
-func createSilverConfigs()(*ClientConfig, *ServerConfig) {
+func createSilverConfigs() (*ClientConfig, *ServerConfig) {
 	polishServerConfig, polishServerError := polish.NewSilverServerConfig()
 	if polishServerError != nil {
 		return nil, nil
@@ -728,11 +727,11 @@ func createSilverMonotoneConfigsOneFixedAddByte() (*ClientConfig, *ServerConfig)
 	parts := make([]monolith.Monolith, 0)
 	part := monolith.BytesPart{
 		Items: []monolith.ByteType{
-			monolith.FixedByteType{Byte:0x13},
+			monolith.FixedByteType{Byte: 0x13},
 		},
 	}
 	parts = append(parts, part)
-	desc := monolith.Description{Parts:parts}
+	desc := monolith.Description{Parts: parts}
 	args := monolith.NewEmptyArgs()
 	monolithInstance := monolith.Instance{
 		Desc: desc,
@@ -763,12 +762,12 @@ func createSilverMonotoneConfigsOneFixedAddByte() (*ClientConfig, *ServerConfig)
 	serverParts := make([]monolith.Monolith, 0)
 	serverPart := monolith.BytesPart{
 		Items: []monolith.ByteType{
-			monolith.FixedByteType{Byte:0x13},
+			monolith.FixedByteType{Byte: 0x13},
 		},
 	}
 	serverParts = append(serverParts, serverPart)
 
-	serverDesc := monolith.Description{Parts:serverParts}
+	serverDesc := monolith.Description{Parts: serverParts}
 	serverRemoveSequences := serverDesc
 
 	monotoneServerConfig := toneburst.MonotoneConfig{
@@ -884,7 +883,6 @@ func createSilverMonotoneServerConfigRandomEnumeratedItems() *ServerConfig {
 	return &serverConfig
 }
 
-
 // Polish Tests
 func TestPolishOnlyConnection(t *testing.T) {
 	clientConfig, serverConfig := createSilverConfigs()
@@ -900,7 +898,7 @@ func TestWithSilverMonotone(t *testing.T) {
 func TestSilverClientPolishUnpolish(t *testing.T) {
 	silverServerConfig, serverConfigError := polish.NewSilverServerConfig()
 
-	if serverConfigError != nil{
+	if serverConfigError != nil {
 		t.Fail()
 	}
 
@@ -908,7 +906,7 @@ func TestSilverClientPolishUnpolish(t *testing.T) {
 		t.Fail()
 	}
 
-	silverClientConfig, clientConfigError  := polish.NewSilverClientConfig(silverServerConfig)
+	silverClientConfig, clientConfigError := polish.NewSilverClientConfig(silverServerConfig)
 	if silverClientConfig == nil {
 		t.Fail()
 	}
@@ -957,7 +955,7 @@ func createSampleConfigs() (*ClientConfig, *ServerConfig) {
 				monolith.SemanticIntProducerByteType{"m", monolith.RandomByteType{}},
 			},
 		},
-		&monolith.SemanticSeedConsumerDynamicPart{Name: "m", Item:monolith.RandomByteType{}},
+		&monolith.SemanticSeedConsumerDynamicPart{Name: "m", Item: monolith.RandomByteType{}},
 	}
 
 	clientDesc := monolith.Description{clientParts}
@@ -973,7 +971,7 @@ func createSampleConfigs() (*ClientConfig, *ServerConfig) {
 				monolith.SemanticIntProducerByteType{"n", monolith.RandomByteType{}},
 			},
 		},
-		&monolith.SemanticSeedConsumerDynamicPart{Name: "n", Item:monolith.RandomByteType{}},
+		&monolith.SemanticSeedConsumerDynamicPart{Name: "n", Item: monolith.RandomByteType{}},
 	}
 
 	serverDesc := monolith.Description{serverParts}
