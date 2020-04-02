@@ -27,7 +27,7 @@ func TestDust(t *testing.T) {
 
 	//call listen on the server
 	serverListener := serverConfig.Listen("127.0.0.1:1234")
-	if serverListener != nil {
+	if serverListener == nil {
 		t.Fail()
 		return
 	}

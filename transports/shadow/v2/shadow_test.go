@@ -25,6 +25,7 @@
 package shadow
 
 import (
+	"fmt"
 	"testing"
 )
 
@@ -32,11 +33,13 @@ const data = "test"
 
 func TestShadow(t *testing.T) {
 	//create a server
-	config := NewConfig("password", "aes-128-ctr")
+	print("please work")
+	config := NewConfig("1234", "CHACHA20-IETF-POLY1305")
 
 	//call listen on the server
 	serverListener := config.Listen("127.0.0.1:1234")
-	if serverListener != nil {
+	if serverListener == nil {
+		fmt.Println("serverListener failed")
 		t.Fail()
 		return
 	}
@@ -49,6 +52,7 @@ func TestShadow(t *testing.T) {
 		//create serverConn
 		serverConn, acceptErr := serverListener.Accept()
 		if acceptErr != nil {
+			println("serverConn could not Accept")
 			t.Fail()
 			return
 		}
@@ -56,6 +60,7 @@ func TestShadow(t *testing.T) {
 		//read on server side
 		_, serverReadErr := serverConn.Read(serverBuffer)
 		if serverReadErr != nil {
+			fmt.Println("serverRead couldnt read")
 			t.Fail()
 			return
 		}
@@ -63,6 +68,7 @@ func TestShadow(t *testing.T) {
 		//write data from serverConn for client to read
 		_, serverWriteErr := serverConn.Write([]byte(data))
 		if serverWriteErr != nil {
+			fmt.Println("server write error")
 			t.Fail()
 			return
 		}
@@ -73,6 +79,7 @@ func TestShadow(t *testing.T) {
 	//call dial on client and check error
 	clientConn, dialErr := config.Dial("127.0.0.1:1234")
 	if dialErr != nil {
+		fmt.Println("clientConn Dial error")
 		t.Fail()
 		return
 	}
@@ -80,6 +87,7 @@ func TestShadow(t *testing.T) {
 	//write data from clientConn for server to read
 	_, clientWriteErr := clientConn.Write([]byte(data))
 	if clientWriteErr != nil {
+		fmt.Println("client write error")
 		t.Fail()
 		return
 	}
@@ -87,6 +95,7 @@ func TestShadow(t *testing.T) {
 	//read on client side
 	_, clientReadErr := clientConn.Read(clientBuffer)
 	if clientReadErr != nil {
+		fmt.Println("client read error")
 		t.Fail()
 		return
 	}

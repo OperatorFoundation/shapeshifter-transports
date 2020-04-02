@@ -60,7 +60,7 @@ func TestOptimizerMeekliteDial1(t *testing.T) {
 }
 
 func TestShadowDial2(t *testing.T) {
-	shadowTransport := shadow.Transport{Password: "banana", CipherName: "aes-192-ctr", Address: "127.0.0.1:1234"}
+	shadowTransport := shadow.Transport{Password: "1234", CipherName: "CHACHA20-IETF-POLY1305", Address: "127.0.0.1:1234"}
 	_, err := shadowTransport.Dial()
 	if err != nil {
 		t.Fail()
@@ -68,7 +68,7 @@ func TestShadowDial2(t *testing.T) {
 }
 
 func TestOptimizerShadowDial1(t *testing.T) {
-	shadowTransport := shadow.NewTransport("orange", "aes-128-ctr", "127.0.0.1:1234")
+	shadowTransport := shadow.NewTransport("1234", "CHACHA20-IETF-POLY1305", "127.0.0.1:1234")
 	transports := []Transport{&shadowTransport}
 	strategy := NewFirstStrategy(transports)
 	optimizerTransport := NewOptimizerClient(transports, strategy)
@@ -79,7 +79,7 @@ func TestOptimizerShadowDial1(t *testing.T) {
 }
 
 func TestOptimizerShadowDial2(t *testing.T) {
-	shadowTransport := shadow.NewTransport("orange", "aes-128-ctr", "127.0.0.1:1234")
+	shadowTransport := shadow.NewTransport("1234", "CHACHA20-IETF-POLY1305", "127.0.0.1:1234")
 	transports := []Transport{&shadowTransport}
 	strategy := NewFirstStrategy(transports)
 	optimizerTransport := NewOptimizerClient(transports, strategy)
@@ -92,10 +92,10 @@ func TestOptimizerShadowDial2(t *testing.T) {
 func TestObfs4Transport_Dial1(t *testing.T) {
 	dialer := proxy.Direct
 	obfs4Transport := obfs4.Transport{
-		CertString: "UsuF7oN4KNKviZP54JOyTCoCphrdM5gwZK4vT8GnCAcmqLUJEJxyw1dpko9a/ii6He4iZg",
+		CertString: "60RNHBMRrf+aOSPzSj8bD4ASGyyPl0mkaOUAQsAYljSkFB0G8B8m9fGvGJCpOxwoXS1baA",
 		IatMode:    0,
-		Address:    "77.81.104.251:443",
-		Dialer:     dialer,}
+		Address:    "127.0.0.1:1234",
+		Dialer:     dialer}
 	_, err := obfs4Transport.Dial()
 	if err != nil {
 		t.Fail()
@@ -105,10 +105,10 @@ func TestObfs4Transport_Dial1(t *testing.T) {
 func TestObfs4Transport_Dial2(t *testing.T) {
 	dialer := proxy.Direct
 	obfs4Transport := obfs4.Transport{
-		CertString: "UsuF7oN4KNKviZP54JOyTCoCphrdM5gwZK4vT8GnCAcmqLUJEJxyw1dpko9a/ii6He4iZg",
+		CertString: "60RNHBMRrf+aOSPzSj8bD4ASGyyPl0mkaOUAQsAYljSkFB0G8B8m9fGvGJCpOxwoXS1baA",
 		IatMode:    0,
 		Address:    "77.81.104.251:443",
-		Dialer:     dialer,}
+		Dialer:     dialer}
 	_, err := obfs4Transport.Dial()
 	if err != nil {
 		t.Fail()
@@ -118,10 +118,10 @@ func TestObfs4Transport_Dial2(t *testing.T) {
 func TestOptimizerObfs4Transport_Dial1(t *testing.T) {
 	dialer := proxy.Direct
 	obfs4Transport := obfs4.Transport{
-		CertString: "UsuF7oN4KNKviZP54JOyTCoCphrdM5gwZK4vT8GnCAcmqLUJEJxyw1dpko9a/ii6He4iZg",
+		CertString: "60RNHBMRrf+aOSPzSj8bD4ASGyyPl0mkaOUAQsAYljSkFB0G8B8m9fGvGJCpOxwoXS1baA",
 		IatMode:    0,
 		Address:    "77.81.104.251:443",
-		Dialer:     dialer,}
+		Dialer:     dialer}
 	transports := []Transport{obfs4Transport}
 	strategy := NewFirstStrategy(transports)
 	optimizerTransport := NewOptimizerClient(transports, strategy)
@@ -134,10 +134,10 @@ func TestOptimizerObfs4Transport_Dial1(t *testing.T) {
 func TestOptimizerObfs4Transport_Dial2(t *testing.T) {
 	dialer := proxy.Direct
 	obfs4Transport := obfs4.Transport{
-		CertString: "UsuF7oN4KNKviZP54JOyTCoCphrdM5gwZK4vT8GnCAcmqLUJEJxyw1dpko9a/ii6He4iZg",
+		CertString: "60RNHBMRrf+aOSPzSj8bD4ASGyyPl0mkaOUAQsAYljSkFB0G8B8m9fGvGJCpOxwoXS1baA",
 		IatMode:    0,
 		Address:    "77.81.104.251:443",
-		Dialer:     dialer,}
+		Dialer:     dialer}
 	transports := []Transport{obfs4Transport}
 	strategy := NewFirstStrategy(transports)
 	optimizerTransport := NewOptimizerClient(transports, strategy)
@@ -150,11 +150,11 @@ func TestOptimizerObfs4Transport_Dial2(t *testing.T) {
 func TestOptimizerTransportFirstDial(t *testing.T) {
 	dialer := proxy.Direct
 	obfs4Transport := obfs4.Transport{
-		CertString: "UsuF7oN4KNKviZP54JOyTCoCphrdM5gwZK4vT8GnCAcmqLUJEJxyw1dpko9a/ii6He4iZg",
+		CertString: "60RNHBMRrf+aOSPzSj8bD4ASGyyPl0mkaOUAQsAYljSkFB0G8B8m9fGvGJCpOxwoXS1baA",
 		IatMode:    0,
 		Address:    "77.81.104.251:443",
-		Dialer:     dialer,}
-	shadowTransport := shadow.NewTransport("orange", "aes-128-ctr", "127.0.0.1:1234")
+		Dialer:     dialer}
+	shadowTransport := shadow.NewTransport("1234", "CHACHA20-IETF-POLY1305", "127.0.0.1:1234")
 	transports := []Transport{obfs4Transport, &shadowTransport}
 	strategy := NewFirstStrategy(transports)
 	optimizerTransport := NewOptimizerClient(transports, strategy)
@@ -169,12 +169,12 @@ func TestOptimizerTransportFirstDial(t *testing.T) {
 func TestOptimizerTransportRandomDial(t *testing.T) {
 	dialer := proxy.Direct
 	obfs4Transport := obfs4.Transport{
-		CertString: "UsuF7oN4KNKviZP54JOyTCoCphrdM5gwZK4vT8GnCAcmqLUJEJxyw1dpko9a/ii6He4iZg",
+		CertString: "60RNHBMRrf+aOSPzSj8bD4ASGyyPl0mkaOUAQsAYljSkFB0G8B8m9fGvGJCpOxwoXS1baA",
 		IatMode:    0,
 		Address:    "77.81.104.251:443",
 		Dialer:     dialer,
 	}
-	shadowTransport := shadow.NewTransport("orange", "aes-128-ctr", "127.0.0.1:1234")
+	shadowTransport := shadow.NewTransport("1234", "CHACHA20-IETF-POLY1305", "127.0.0.1:1234")
 	transports := []Transport{obfs4Transport, &shadowTransport}
 	optimizerTransport := NewOptimizerClient(transports, &RandomStrategy{})
 
@@ -189,12 +189,12 @@ func TestOptimizerTransportRandomDial(t *testing.T) {
 func TestOptimizerTransportRotateDial(t *testing.T) {
 	dialer := proxy.Direct
 	obfs4Transport := obfs4.Transport{
-		CertString: "UsuF7oN4KNKviZP54JOyTCoCphrdM5gwZK4vT8GnCAcmqLUJEJxyw1dpko9a/ii6He4iZg",
+		CertString: "60RNHBMRrf+aOSPzSj8bD4ASGyyPl0mkaOUAQsAYljSkFB0G8B8m9fGvGJCpOxwoXS1baA",
 		IatMode:    0,
 		Address:    "77.81.104.251:443",
 		Dialer:     dialer,
 }
-	shadowTransport := shadow.NewTransport("orange", "aes-128-ctr", "127.0.0.1:1234")
+	shadowTransport := shadow.NewTransport("1234", "CHACHA20-IETF-POLY1305", "127.0.0.1:1234")
 	transports := []Transport{obfs4Transport, &shadowTransport}
 	optimizerTransport := NewOptimizerClient(transports, &RotateStrategy{})
 
@@ -209,12 +209,12 @@ func TestOptimizerTransportRotateDial(t *testing.T) {
 func TestOptimizerTransportTrackDial(t *testing.T) {
 	dialer := proxy.Direct
 	obfs4Transport := obfs4.Transport{
-		CertString: "UsuF7oN4KNKviZP54JOyTCoCphrdM5gwZK4vT8GnCAcmqLUJEJxyw1dpko9a/ii6He4iZg",
+		CertString: "60RNHBMRrf+aOSPzSj8bD4ASGyyPl0mkaOUAQsAYljSkFB0G8B8m9fGvGJCpOxwoXS1baA",
 		IatMode:    0,
 		Address:    "77.81.104.251:443",
 		Dialer:     dialer,
 }
-	shadowTransport := shadow.NewTransport("orange", "aes-128-ctr", "127.0.0.1:1234")
+	shadowTransport := shadow.NewTransport("1234", "CHACHA20-IETF-POLY1305", "127.0.0.1:1234")
 	transports := []Transport{obfs4Transport, &shadowTransport}
 	optimizerTransport := NewOptimizerClient(transports, NewTrackStrategy(transports))
 
@@ -229,12 +229,12 @@ func TestOptimizerTransportTrackDial(t *testing.T) {
 func TestOptimizerTransportminimizeDialDurationDial(t *testing.T) {
 	dialer := proxy.Direct
 	obfs4Transport := obfs4.Transport{
-		CertString: "UsuF7oN4KNKviZP54JOyTCoCphrdM5gwZK4vT8GnCAcmqLUJEJxyw1dpko9a/ii6He4iZg",
+		CertString: "60RNHBMRrf+aOSPzSj8bD4ASGyyPl0mkaOUAQsAYljSkFB0G8B8m9fGvGJCpOxwoXS1baA",
 		IatMode:    0,
 		Address:    "77.81.104.251:443",
 		Dialer:     dialer,
 	}
-	shadowTransport := shadow.NewTransport("orange", "aes-128-ctr", "127.0.0.1:1234")
+	shadowTransport := shadow.NewTransport("1234", "CHACHA20-IETF-POLY1305", "127.0.0.1:1234")
 	transports := []Transport{obfs4Transport, &shadowTransport}
 	strategy := NewMinimizeDialDuration(transports)
 	optimizerTransport := NewOptimizerClient(transports, strategy)

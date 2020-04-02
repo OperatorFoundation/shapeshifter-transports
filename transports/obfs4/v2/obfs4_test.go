@@ -30,6 +30,9 @@
 package obfs4
 
 import (
+	"io/ioutil"
+	"path"
+	"strings"
 	"testing"
 )
 
@@ -37,15 +40,36 @@ const data = "test"
 
 func TestObfs4(t *testing.T) {
 	//create a server
-	config := Obfs4Transport{
-		dialer:        nil,
-		serverFactory: nil,
-		clientArgs:    nil,
+	serverConfig, confError := NewObfs4Server("/Users/bluesaxorcist/stateDir")
+	if confError != nil {
+		t.Fail()
+		return
 	}
-
+	fPath := path.Join("/Users/bluesaxorcist/stateDir", "obfs4_bridgeline.txt")
+	bytes, fileError := ioutil.ReadFile(fPath)
+	if fileError != nil {
+		t.Fail()
+		return
+	}
+	//print(bytes)
+	byteString := string(bytes)
+	//print(byteString)
+	lines := strings.Split(byteString, "\n")
+	//print(lines)
+	bridgeLine := lines[len(lines)-2]
+	//println(bridgeLine)
+	bridgeParts1 := strings.Split(bridgeLine, " ")
+	bridgePart := bridgeParts1[5]
+	certstring := bridgePart[5:]
+	//println(certstring)
+	clientConfig, confError := NewObfs4Client(certstring, 0, nil)
+	if confError != nil {
+		t.Fail()
+		return
+	}
 	//call listen on the server
-	serverListener := config.Listen("127.0.0.1:1234")
-	if serverListener != nil {
+	serverListener := serverConfig.Listen("127.0.0.1:1234")
+	if serverListener == nil {
 		t.Fail()
 		return
 	}
@@ -80,7 +104,7 @@ func TestObfs4(t *testing.T) {
 	//create client buffer
 	clientBuffer := make([]byte, 4)
 	//call dial on client and check error
-	clientConn, dialErr := config.Dial("127.0.0.1:1234")
+	clientConn, dialErr := clientConfig.Dial("127.0.0.1:1234")
 	if dialErr != nil {
 		t.Fail()
 		return

@@ -39,11 +39,11 @@ const data = "test"
 
 func TestObfs2(t *testing.T) {
 	//create a server
-	config := obfs2Transport{dialer:nil}
+	config := NewObfs2Transport()
 
 	//call listen on the server
 	serverListener := config.Listen("127.0.0.1:1234")
-	if serverListener != nil {
+	if serverListener == nil {
 		t.Fail()
 		return
 	}

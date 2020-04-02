@@ -167,7 +167,11 @@ func NewObfs4Client(certString string, iatMode int, dialer proxy.Dialer) (*Obfs4
 		return nil, err
 	}
 
-	return &Obfs4Transport{dialer: dialer, serverFactory: nil, clientArgs: &Obfs4ClientArgs{nodeID, publicKey, sessionKey, iatMode}}, nil
+	if dialer == nil {
+		return &Obfs4Transport{dialer: proxy.Direct, serverFactory: nil, clientArgs: &Obfs4ClientArgs{nodeID, publicKey, sessionKey, iatMode}}, nil
+	} else {
+		return &Obfs4Transport{dialer: dialer, serverFactory: nil, clientArgs: &Obfs4ClientArgs{nodeID, publicKey, sessionKey, iatMode}}, nil
+	}
 }
 
 // Create outgoing transport connection
@@ -198,7 +202,7 @@ type Transport struct {
 
 type Config struct {
 	CertString string `json:"cert"`
-	IatMode string `json:"iat-mode"`
+	IatMode    string `json:"iat-mode"`
 }
 
 func (transport Transport) Dial() (net.Conn, error) {
