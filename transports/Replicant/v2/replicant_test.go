@@ -952,13 +952,13 @@ func createSampleConfigs() (*ClientConfig, *ServerConfig) {
 	clientParts := []monolith.Monolith{
 		monolith.BytesPart{
 			Items: []monolith.ByteType{
-				monolith.SemanticIntProducerByteType{"m", monolith.RandomByteType{}},
+				monolith.SemanticIntProducerByteType{Name: "m", Value: monolith.RandomByteType{}},
 			},
 		},
 		&monolith.SemanticSeedConsumerDynamicPart{Name: "m", Item: monolith.RandomByteType{}},
 	}
 
-	clientDesc := monolith.Description{clientParts}
+	clientDesc := monolith.Description{Parts: clientParts}
 
 	clientInstance := monolith.Instance{
 		Desc: clientDesc,
@@ -968,13 +968,13 @@ func createSampleConfigs() (*ClientConfig, *ServerConfig) {
 	serverParts := []monolith.Monolith{
 		monolith.BytesPart{
 			Items: []monolith.ByteType{
-				monolith.SemanticIntProducerByteType{"n", monolith.RandomByteType{}},
+				monolith.SemanticIntProducerByteType{Name: "n", Value: monolith.RandomByteType{}},
 			},
 		},
 		&monolith.SemanticSeedConsumerDynamicPart{Name: "n", Item: monolith.RandomByteType{}},
 	}
 
-	serverDesc := monolith.Description{serverParts}
+	serverDesc := monolith.Description{Parts: serverParts}
 
 	serverInstance := monolith.Instance{
 		Desc: serverDesc,
