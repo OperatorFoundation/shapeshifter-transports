@@ -61,7 +61,7 @@ type Transport struct {
 }
 
 type Config struct {
-	ServerPublic string
+	ServerPublic string `json:"server-public"`
 }
 func (transport Transport) Dial() (net.Conn, error) {
 	dustTransport := NewDustClient(transport.ServerPublic, transport.Dialer)
