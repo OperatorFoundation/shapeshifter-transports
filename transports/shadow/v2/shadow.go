@@ -88,9 +88,9 @@ func (config Config) Dial(address string) (net.Conn, error) {
 	conn, err := shadowsocks.Dial("tcp", address, cipher)
 	if err != nil {
 		return nil, err
-	} else {
-		return conn, nil
 	}
+
+	return conn, nil
 }
 
 // Dial creates outgoing transport connection
