@@ -31,15 +31,11 @@ import (
 	"sync"
 	"time"
 
-	"git.torproject.org/pluggable-transports/goptlib.git"
 	"github.com/deckarep/golang-set"
 	"golang.org/x/net/http2"
 )
 
 const (
-	programVersion = "0.34"
-
-	ptMethodName = "meek"
 	// Reject session ids shorter than this, as a weak defense against
 	// client bugs that send an empty session id or something similarly
 	// likely to collide.
@@ -47,9 +43,6 @@ const (
 	// The largest request body we are willing to process, and the largest
 	// chunk of data we'll send back in a response.
 	maxPayloadLength = 0x10000
-	// How long we try to read something back from the OR port before
-	// returning the response.
-	turnaroundTimeout = 10 * time.Millisecond
 	// Passed as ReadTimeout and WriteTimeout when constructing the
 	// http.Server.
 	readWriteTimeout = 20 * time.Second
@@ -60,8 +53,6 @@ const (
 	// error before deciding that it's not going to return.
 	listenAndServeErrorTimeout = 100 * time.Millisecond
 )
-
-var ptInfo pt.ServerInfo
 
 func httpBadRequest(w http.ResponseWriter) {
 	http.Error(w, "Bad request.", http.StatusBadRequest)
@@ -124,31 +115,23 @@ func (state *State) Get(w http.ResponseWriter, req *http.Request) {
 	}
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("I’m just a happy little web server.\n"))
+	_, _ = w.Write([]byte("I’m just a happy little web server.\n"))
 }
 
 // Get a string representing the original client address, if available, as a
 // "host:port" string suitable to pass as the addr parameter to pt.DialOr. Never
 // fails: if the original client address is not available, returns "". If the
 // original client address is available, the returned port number is always 1.
-func getUseraddr(req *http.Request) string {
-	ip, err := originalClientIP(req)
-	if err != nil {
-		return ""
-	}
-	return net.JoinHostPort(ip.String(), "1")
-}
 
 // Look up a session by id, or create a new one (with its OR port connection) if
 // it doesn't already exist.
-func (state *State) GetSession(sessionID string, req *http.Request) (*Session, error) {
+func (state *State) GetSession(sessionID string) (*Session, error) {
 	state.lock.Lock()
 	defer state.lock.Unlock()
 
 	session := state.sessionMap[sessionID]
 	if session == nil {
 		// log.Printf("unknown session id %q; creating new session", sessionID)
-
 
 		session = &Session{Or: newFakeConn()}
 		state.sessionMap[sessionID] = session
@@ -233,7 +216,7 @@ func (state *State) Post(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	session, err := state.GetSession(sessionID, req)
+	session, err := state.GetSession(sessionID)
 	if err != nil {
 		log.Print(err)
 		httpInternalServerError(w)

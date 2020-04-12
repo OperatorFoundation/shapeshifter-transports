@@ -39,15 +39,6 @@ func NewDustClient(serverPublic string, dialer proxy.Dialer) *dustClient {
 	return &dustClient{serverPubkey: spub, dialer: dialer}
 }
 
-func NewDustServer(idPath string) *dustServer {
-	spriv, err := Dust.LoadServerPrivateFile(idPath)
-	if err != nil {
-		return nil
-	}
-
-	return &dustServer{serverPrivkey: spriv}
-}
-
 type dustTransportListener struct {
 	listener  *net.TCPListener
 	transport *dustServer
@@ -87,7 +78,7 @@ func (transport *dustClient) Dial(address string) (net.Conn, error) {
 
 	transportConn, err := Dust.BeginRawStreamClient(conn, transport.serverPubkey)
 	if err != nil {
-		conn.Close()
+		_ = conn.Close()
 		return conn, dialErr
 	}
 
@@ -177,13 +168,6 @@ func (sconn *dustConn) SetReadDeadline(t time.Time) error {
 
 func (sconn *dustConn) SetWriteDeadline(t time.Time) error {
 	return sconn.conn.SetWriteDeadline(t)
-}
-
-func newDustClientConn(conn *Dust.RawStreamConn) (c *dustConn, err error) {
-	// Initialize a client connection.
-	c = &dustConn{conn}
-
-	return
 }
 
 func newDustServerConn(conn *Dust.RawStreamConn) (c *dustConn, err error) {

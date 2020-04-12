@@ -280,7 +280,7 @@ func (hs *serverHandshake) parseClientHandshake(filter *replayfilter.ReplayFilte
 	macFound := false
 	for _, off := range []int64{0, -1, 1} {
 		// Allow epoch to be off by up to a hour in either direction.
-		epochHour := []byte(strconv.FormatInt(getEpochHour()+int64(off), 10))
+		epochHour := []byte(strconv.FormatInt(getEpochHour()+off, 10))
 		hs.mac.Reset()
 		hs.mac.Write(resp[:pos+markLength])
 		hs.mac.Write(epochHour)

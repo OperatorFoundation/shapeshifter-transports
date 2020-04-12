@@ -67,7 +67,7 @@ func (strategy *FirstStrategy) Choose() Transport {
 	return strategy.transports[0]
 }
 
-func (strategy *FirstStrategy) Report(transport Transport, success bool, durationElapsed float64) {
+func (strategy *FirstStrategy) Report(Transport, bool, float64) {
 
 }
 
@@ -76,25 +76,17 @@ type RandomStrategy struct {
 	transports []Transport
 }
 
-func NewRandomStrategy(transports []Transport) Strategy {
-	return &RandomStrategy{transports}
-}
-
 func (strategy *RandomStrategy) Choose() Transport {
 	return strategy.transports[0]
 }
 
-func (strategy *RandomStrategy) Report(transport Transport, success bool, durationElapsed float64) {
+func (strategy *RandomStrategy) Report(Transport, bool, float64) {
 
 }
 
 type RotateStrategy struct {
 	transports []Transport
 	index      int
-}
-
-func NewRotateStrategy(transports []Transport) Strategy {
-	return &RotateStrategy{transports, 0}
 }
 
 func (strategy *RotateStrategy) Choose() Transport {
@@ -106,7 +98,7 @@ func (strategy *RotateStrategy) Choose() Transport {
 	return transport
 }
 
-func (strategy *RotateStrategy) Report(transport Transport, success bool, durationElapsed float64) {
+func (strategy *RotateStrategy) Report(Transport, bool, float64) {
 
 }
 
@@ -156,7 +148,7 @@ func (strategy *TrackStrategy) incrementIndex(transports []Transport) {
 	}
 }
 
-func (strategy *TrackStrategy) Report(transport Transport, success bool, durationElapsed float64) {
+func (strategy *TrackStrategy) Report(transport Transport, success bool, _ float64) {
 	if success {
 		strategy.trackMap[transport] = 1
 	} else {

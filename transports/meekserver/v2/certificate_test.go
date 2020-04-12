@@ -101,12 +101,12 @@ func mustMakeTempFileFromContents(contents []byte) string {
 
 // Return a random filename that is unlikely to exist.
 func makeNonexistentFilename() string {
-	bytes := make([]byte, 8)
-	_, err := rand.Read(bytes)
+	fileBytes := make([]byte, 8)
+	_, err := rand.Read(fileBytes)
 	if err != nil {
 		panic(err)
 	}
-	return filepath.Join(os.TempDir(), hex.EncodeToString(bytes))
+	return filepath.Join(os.TempDir(), hex.EncodeToString(fileBytes))
 }
 
 // Call tls.X509KeyPair and panic if it fails.
@@ -157,11 +157,11 @@ func loadTestFiles() *testFiles {
 // Delete temporary files created by loadTestFiles (to be called in a defer
 // handler).
 func (files *testFiles) Cleanup() {
-	os.Remove(files.key1Filename)
-	os.Remove(files.key2Filename)
-	os.Remove(files.cert1Filename)
-	os.Remove(files.cert2Filename)
-	os.Remove(files.badSyntaxFilename)
+	_ = os.Remove(files.key1Filename)
+	_ = os.Remove(files.key2Filename)
+	_ = os.Remove(files.cert1Filename)
+	_ = os.Remove(files.cert2Filename)
+	_ = os.Remove(files.badSyntaxFilename)
 }
 
 // Check if two certificate chains are equal.
@@ -258,7 +258,7 @@ func TestDelete(t *testing.T) {
 	}
 	checkCertificate(t, ctx, files.cert1, false)
 	// Try removing the cert file; cert should be the same but now raise an error.
-	os.Remove(files.cert1Filename)
+	_ = os.Remove(files.cert1Filename)
 	checkCertificate(t, ctx, files.cert1, true)
 
 	ctx, err = newCertContext(files.cert2Filename, files.key2Filename)
@@ -267,7 +267,7 @@ func TestDelete(t *testing.T) {
 	}
 	checkCertificate(t, ctx, files.cert2, false)
 	// Try removing the key file; cert should be the same but now raise an error.
-	os.Remove(files.key2Filename)
+	_ = os.Remove(files.key2Filename)
 	checkCertificate(t, ctx, files.cert2, true)
 }
 

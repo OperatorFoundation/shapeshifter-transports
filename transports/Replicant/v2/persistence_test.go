@@ -160,7 +160,7 @@ func TestSaveServerConfigPolish(t *testing.T) {
 		return
 	}
 
-	ioutil.WriteFile("/Users/mafalda/Documents/Operator/replicant_server.json", []byte(jsonString), 0644)
+	_ = ioutil.WriteFile("/Users/mafalda/Documents/Operator/replicant_server.json", jsonString, 0644)
 }
 
 func TestSaveClientConfigPolish(t *testing.T) {
@@ -193,5 +193,5 @@ func TestSaveClientConfigPolish(t *testing.T) {
 		return
 	}
 
-	ioutil.WriteFile("/Users/mafalda/Documents/Operator/replicant_client.json", []byte(jsonString), 0644)
+	_ = ioutil.WriteFile("/Users/mafalda/Documents/Operator/replicant_client.json", jsonString, 0644)
 }

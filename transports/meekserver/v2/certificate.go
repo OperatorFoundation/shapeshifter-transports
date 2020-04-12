@@ -89,7 +89,7 @@ func (ctx *certContext) reloadCertificate() (*tls.Certificate, error) {
 	return cert, nil
 }
 
-func (ctx *certContext) GetCertificate(clientHello *tls.ClientHelloInfo) (*tls.Certificate, error) {
+func (ctx *certContext) GetCertificate(*tls.ClientHelloInfo) (*tls.Certificate, error) {
 	cert, err := ctx.reloadCertificate()
 	if err != nil {
 		// Failure to reload the certificate is a non-fatal error as this

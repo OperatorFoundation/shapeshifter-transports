@@ -104,9 +104,6 @@ func TestHandshakeNtorClient(t *testing.T) {
 
 	// Test oversized client padding.
 	clientHs := newClientHandshake(nodeID, idKeypair.Public(), clientKeypair)
-	if err != nil {
-		t.Fatalf("newClientHandshake failed: %s", err)
-	}
 	clientHs.padLen = clientMaxPadLength + 1
 	clientBlob, err := clientHs.generateHandshake()
 	if err != nil {
@@ -193,9 +190,6 @@ func TestHandshakeNtorServer(t *testing.T) {
 
 	// Test oversized client padding.
 	clientHs := newClientHandshake(nodeID, idKeypair.Public(), clientKeypair)
-	if err != nil {
-		t.Fatalf("newClientHandshake failed: %s", err)
-	}
 	clientHs.padLen = clientMaxPadLength + 1
 	clientBlob, err := clientHs.generateHandshake()
 	if err != nil {

@@ -69,7 +69,7 @@ func (e InvalidPayloadLengthError) Error() string {
 
 var zeroPadBytes [maxPacketPaddingLength]byte
 
-func (conn *obfs4Conn) makePacket(w io.Writer, pktType uint8, data []byte, padLen uint16) error {
+func (transportConn *obfs4Conn) makePacket(w io.Writer, pktType uint8, data []byte, padLen uint16) error {
 	var pkt [framing.MaximumFramePayloadLength]byte
 
 	if len(data)+int(padLen) > maxPacketPayloadLength {
@@ -93,7 +93,7 @@ func (conn *obfs4Conn) makePacket(w io.Writer, pktType uint8, data []byte, padLe
 
 	// Encode the packet in an AEAD frame.
 	var frame [framing.MaximumSegmentLength]byte
-	frameLen, err := conn.encoder.Encode(frame[:], pkt[:pktLen])
+	frameLen, err := transportConn.encoder.Encode(frame[:], pkt[:pktLen])
 	if err != nil {
 		// All encoder errors are fatal.
 		return err
@@ -108,16 +108,16 @@ func (conn *obfs4Conn) makePacket(w io.Writer, pktType uint8, data []byte, padLe
 	return nil
 }
 
-func (conn *obfs4Conn) readPackets() (err error) {
+func (transportConn *obfs4Conn) readPackets() (err error) {
 	// Attempt to read off the network.
-	rdLen, rdErr := conn.Conn.Read(conn.readBuffer)
-	conn.receiveBuffer.Write(conn.readBuffer[:rdLen])
+	rdLen, rdErr := transportConn.Conn.Read(transportConn.readBuffer)
+	transportConn.receiveBuffer.Write(transportConn.readBuffer[:rdLen])
 
 	var decoded [framing.MaximumFramePayloadLength]byte
-	for conn.receiveBuffer.Len() > 0 {
+	for transportConn.receiveBuffer.Len() > 0 {
 		// Decrypt an AEAD frame.
 		decLen := 0
-		decLen, err = conn.decoder.Decode(decoded[:], conn.receiveBuffer)
+		decLen, err = transportConn.decoder.Decode(decoded[:], transportConn.receiveBuffer)
 		if err == framing.ErrAgain {
 			break
 		} else if err != nil {
@@ -140,24 +140,24 @@ func (conn *obfs4Conn) readPackets() (err error) {
 		switch pktType {
 		case packetTypePayload:
 			if payloadLen > 0 {
-				conn.receiveDecodedBuffer.Write(payload)
+				transportConn.receiveDecodedBuffer.Write(payload)
 			}
 		case packetTypePrngSeed:
 			// Only regenerate the distribution if we are the client.
-			if len(payload) == seedPacketPayloadLength && !conn.isServer {
+			if len(payload) == seedPacketPayloadLength && !transportConn.isServer {
 				var seed *drbg.Seed
 				seed, err = drbg.SeedFromBytes(payload)
 				if err != nil {
 					break
 				}
-				conn.lenDist.Reset(seed)
-				if conn.iatDist != nil {
+				transportConn.lenDist.Reset(seed)
+				if transportConn.iatDist != nil {
 					iatSeedSrc := sha256.Sum256(seed.Bytes()[:])
 					iatSeed, err := drbg.SeedFromBytes(iatSeedSrc[:])
 					if err != nil {
 						break
 					}
-					conn.iatDist.Reset(iatSeed)
+					transportConn.iatDist.Reset(iatSeed)
 				}
 			}
 		default:

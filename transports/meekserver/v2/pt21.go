@@ -134,15 +134,15 @@ func (conn meekServerConn) RemoteAddr() net.Addr {
 	return nil
 }
 
-func (conn meekServerConn) SetDeadline(t time.Time) error {
+func (conn meekServerConn) SetDeadline(time.Time) error {
 	return errors.New("unimplemented")
 }
 
-func (conn meekServerConn) SetReadDeadline(t time.Time) error {
+func (conn meekServerConn) SetReadDeadline(time.Time) error {
 	return errors.New("unimplemented")
 }
 
-func (conn meekServerConn) SetWriteDeadline(t time.Time) error {
+func (conn meekServerConn) SetWriteDeadline(time.Time) error {
 	return errors.New("unimplemented")
 }
 
