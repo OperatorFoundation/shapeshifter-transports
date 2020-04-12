@@ -27,7 +27,7 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"github.com/OperatorFoundation/shapeshifter-transports/transports/obfs2"
+	"github.com/OperatorFoundation/shapeshifter-transports/transports/obfs2/v2"
 	"os"
 )
 
@@ -47,7 +47,7 @@ func main() {
 			return
 		}
 
-		var buffer []byte = []byte(text)
+		var buffer = []byte(text)
 		bytesWritten, writeErr := conn.Write(buffer)
 		if writeErr != nil {
 			return

@@ -140,7 +140,7 @@ func TestDecoder_Decode(t *testing.T) {
 	}
 }
 
-// BencharkEncoder_Encode benchmarks Encoder.Encode processing 1 MiB
+// BenchmarkEncoder_Encode benchmarks Encoder.Encode processing 1 MiB
 // of payload.
 func BenchmarkEncoder_Encode(b *testing.B) {
 	var chopBuf [MaximumFramePayloadLength]byte
@@ -150,7 +150,7 @@ func BenchmarkEncoder_Encode(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		transfered := 0
+		transferred := 0
 		buffer := bytes.NewBuffer(payload)
 		for 0 < buffer.Len() {
 			n, err := buffer.Read(chopBuf[:])
@@ -159,10 +159,10 @@ func BenchmarkEncoder_Encode(b *testing.B) {
 			}
 
 			n, err = encoder.Encode(frame[:], chopBuf[:n])
-			transfered += n - FrameOverhead
+			transferred += n - FrameOverhead
 		}
-		if transfered != len(payload) {
-			b.Fatalf("Transfered length mismatch: %d != %d", transfered,
+		if transferred != len(payload) {
+			b.Fatalf("Transfered length mismatch: %d != %d", transferred,
 				len(payload))
 		}
 	}

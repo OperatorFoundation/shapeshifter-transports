@@ -28,12 +28,12 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/OperatorFoundation/shapeshifter-transports/transports/obfs2"
+	"github.com/OperatorFoundation/shapeshifter-transports/transports/obfs2/v2"
 )
 
 func main() {
 	var transport = obfs2.NewObfs2Transport()
-	var listener net.Listener = transport.Listen("0.0.0.0:1234")
+	var listener = transport.Listen("0.0.0.0:1234")
 
 	for {
 		var conn net.Conn
@@ -43,11 +43,11 @@ func main() {
 			return
 		}
 
-		var buffer []byte = make([]byte, 1024)
+		var buffer = make([]byte, 1024)
 		bytesRead, err := conn.Read(buffer)
 		for {
 			if err != nil {
-				conn.Close()
+				_ = conn.Close()
 				break
 			}
 			fmt.Println("Received", bytesRead)

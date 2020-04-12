@@ -394,7 +394,7 @@ func (transportConn *obfs4Conn) Read(b []byte) (n int, err error) {
 	for transportConn.receiveDecodedBuffer.Len() == 0 {
 		err = transportConn.readPackets()
 		if err == framing.ErrAgain {
-			// Don't proagate this back up the call stack if we happen to break
+			// Don't propagate this back up the call stack if we happen to break
 			// out of the loop.
 			err = nil
 			continue
@@ -479,7 +479,7 @@ func (transportConn *obfs4Conn) Write(b []byte) (n int, err error) {
 					if frameBuf.Len() != targetLen {
 						// Ugh, padding came out to a value that required more
 						// than one frame, this is relatively unlikely so just
-						// resample since there's enough data to ensure that
+						// re-sample since there's enough data to ensure that
 						// the next sample will be written.
 						continue
 					}
@@ -572,7 +572,7 @@ func (transportConn *obfs4Conn) clientHandshake(nodeID *ntor.NodeID, peerIdentit
 		}
 		_ = transportConn.receiveBuffer.Next(n)
 
-		// Use the derived key material to intialize the link crypto.
+		// Use the derived key material to initialize the link crypto.
 		okm := ntor.Kdf(seed, framing.KeyLength*2)
 		transportConn.encoder = framing.NewEncoder(okm[:framing.KeyLength])
 		transportConn.decoder = framing.NewDecoder(okm[framing.KeyLength:])
@@ -615,7 +615,7 @@ func (transportConn *obfs4Conn) serverHandshake(sf *ServerFactory, sessionKey *n
 			return nil
 		}
 
-		// Use the derived key material to intialize the link crypto.
+		// Use the derived key material to initialize the link crypto.
 		okm := ntor.Kdf(seed, framing.KeyLength*2)
 		transportConn.encoder = framing.NewEncoder(okm[framing.KeyLength:])
 		transportConn.decoder = framing.NewDecoder(okm[:framing.KeyLength])
@@ -627,8 +627,8 @@ func (transportConn *obfs4Conn) serverHandshake(sf *ServerFactory, sessionKey *n
 	// the length obfuscation, this makes the amount of data received from the
 	// server inconsistent with the length sent from the client.
 	//
-	// Rebalance this by tweaking the client mimimum padding/server maximum
-	// padding, and sending the PRNG seed unpadded (As in, treat the PRNG seed
+	// Re-balance this by tweaking the client minimum padding/server maximum
+	// padding, and sending the PRNG seed un-padded (As in, treat the PRNG seed
 	// as part of the server response).  See inlineSeedFrameLength in
 	// handshake_ntor.go.
 

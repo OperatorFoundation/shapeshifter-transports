@@ -60,7 +60,7 @@ func TestShadow(t *testing.T) {
 		//read on server side
 		_, serverReadErr := serverConn.Read(serverBuffer)
 		if serverReadErr != nil {
-			fmt.Println("serverRead couldnt read")
+			fmt.Println("serverRead couldn't read")
 			t.Fail()
 			return
 		}

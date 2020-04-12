@@ -170,14 +170,14 @@ func (hs *clientHandshake) generateHandshake() ([]byte, error) {
 }
 
 func (hs *clientHandshake) parseServerHandshake(resp []byte) (int, []byte, error) {
-	// No point in examining the data unless the miminum plausible response has
+	// No point in examining the data unless the minimum plausible response has
 	// been received.
 	if serverMinHandshakeLength > len(resp) {
 		return 0, nil, ErrMarkNotFoundYet
 	}
 
 	if hs.serverRepresentative == nil || hs.serverAuth == nil {
-		// Pull out the representative/AUTH. (XXX: Add ctors to ntor)
+		// Pull out the representative/AUTH. (XXX: Add actors to ntor)
 		hs.serverRepresentative = new(ntor.Representative)
 		copy(hs.serverRepresentative.Bytes()[:], resp[0:ntor.RepresentativeLength])
 		hs.serverAuth = new(ntor.Auth)
@@ -249,14 +249,14 @@ func newServerHandshake(nodeID *ntor.NodeID, serverIdentity *ntor.Keypair, sessi
 }
 
 func (hs *serverHandshake) parseClientHandshake(filter *replayfilter.ReplayFilter, resp []byte) ([]byte, error) {
-	// No point in examining the data unless the miminum plausible response has
+	// No point in examining the data unless the minimum plausible response has
 	// been received.
 	if clientMinHandshakeLength > len(resp) {
 		return nil, ErrMarkNotFoundYet
 	}
 
 	if hs.clientRepresentative == nil {
-		// Pull out the representative/AUTH. (XXX: Add ctors to ntor)
+		// Pull out the representative/AUTH. (XXX: Add actors to ntor)
 		hs.clientRepresentative = new(ntor.Representative)
 		copy(hs.clientRepresentative.Bytes()[:], resp[0:ntor.RepresentativeLength])
 

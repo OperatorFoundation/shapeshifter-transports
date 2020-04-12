@@ -80,7 +80,7 @@ func TestHandshakeNtorClient(t *testing.T) {
 			t.Fatalf("[%d:0] serverHandshake.parseClientHandshake() failed: %s", l, err)
 		}
 
-		// Genrate what the server will send to the client.
+		// Generate what the server will send to the client.
 		serverBlob, err := serverHs.generateHandshake()
 		if err != nil {
 			t.Fatalf("[%d:0]: serverHandshake.generateHandshake() failed: %s", l, err)
@@ -167,7 +167,7 @@ func TestHandshakeNtorServer(t *testing.T) {
 			t.Fatalf("[%d:1] serverHandshake.parseClientHandshake() failed: %s", l, err)
 		}
 
-		// Genrate what the server will send to the client.
+		// Generate what the server will send to the client.
 		serverBlob, err := serverHs.generateHandshake()
 		if err != nil {
 			t.Fatalf("[%d:1]: serverHandshake.generateHandshake() failed: %s", l, err)
@@ -216,7 +216,7 @@ func TestHandshakeNtorServer(t *testing.T) {
 	// Test oversized server padding.
 	//
 	// NB: serverMaxPadLength isn't the real maxPadLength that triggers client
-	// rejection, because the implementation is written with the asusmption
+	// rejection, because the implementation is written with the assumption
 	// that the PRNG_SEED is also inlined with the response.  Thus the client
 	// actually accepts longer padding.  The server handshake test and this
 	// test adjust around that.

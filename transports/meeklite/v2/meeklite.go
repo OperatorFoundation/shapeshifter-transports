@@ -240,7 +240,7 @@ func (transportConn *meekConn) Read(p []byte) (n int, err error) {
 	n, err = buf.Read(p)
 	if buf.Len() > 0 {
 		// If there's data pending, stash the buffer so the next
-		// Read() call will use it to fulfuill the Read().
+		// Read() call will use it to fulfill the Read().
 		transportConn.rdBuf = buf
 	}
 	return

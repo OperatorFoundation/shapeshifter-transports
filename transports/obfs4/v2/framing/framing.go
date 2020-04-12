@@ -31,7 +31,7 @@
 // The Encoder/Decoder shared secret format is:
 //    uint8_t[32] NaCl secretbox key
 //    uint8_t[16] NaCl Nonce prefix
-//    uint8_t[16] SipHash-2-4 key (used to obfsucate length)
+//    uint8_t[16] SipHash-2-4 key (used to obfuscate length)
 //    uint8_t[8]  SipHash-2-4 IV
 //
 // The frame format is:
@@ -103,7 +103,7 @@ const (
 // Error returned when Decoder.Decode() requires more data to continue.
 var ErrAgain = errors.New("framing: More data needed to decode")
 
-// Error returned when Decoder.Decode() failes to authenticate a frame.
+// Error returned when Decoder.Decode() fails to authenticate a frame.
 var ErrTagMismatch = errors.New("framing: Poly1305 tag mismatch")
 
 // Error returned when the NaCl secretbox nonce's counter wraps (FATAL).
@@ -136,7 +136,7 @@ func (nonce boxNonce) bytes(out *[nonceLength]byte) error {
 	// for a given key.  Detect this by checking for counter wraparound since
 	// we start each counter at 1.  If it ever happens that more than 2^64 - 1
 	// frames are transmitted over a given connection, support for rekeying
-	// will be neccecary, but that's unlikely to happen.
+	// will be necessary, but that's unlikely to happen.
 	if nonce.counter == 0 {
 		return ErrNonceCounterWrapped
 	}
@@ -266,7 +266,7 @@ func (decoder *Decoder) Decode(data []byte, frames *bytes.Buffer) (int, error) {
 		if maxFrameLength < length || minFrameLength > length {
 			// Per "Plaintext Recovery Attacks Against SSH" by
 			// Martin R. Albrecht, Kenneth G. Paterson and Gaven J. Watson,
-			// there are a class of attacks againt protocols that use similar
+			// there are a class of attacks against protocols that use similar
 			// sorts of framing schemes.
 			//
 			// While obfs4 should not allow plaintext recovery (CBC mode is
