@@ -38,7 +38,10 @@ func TestShadowDial1(t *testing.T) {
 
 func TestMeekliteDial1(t *testing.T) {
 	unparsedUrl := "https://d2zfqthxsdq309.cloudfront.net/"
-	Url, _ := url.Parse(unparsedUrl)
+	Url, parseErr := url.Parse(unparsedUrl)
+	if parseErr != nil {
+		t.Fail()
+	}
 	meekliteTransport := meeklite.Transport{Url: Url, Front: "a0.awsstatic.com", Address: "127.0.0.1:1234" }
 	_, err := meekliteTransport.Dial()
 	if err != nil {
@@ -48,7 +51,10 @@ func TestMeekliteDial1(t *testing.T) {
 
 func TestOptimizerMeekliteDial1(t *testing.T) {
 	unparsedUrl := "https://d2zfqthxsdq309.cloudfront.net/"
-	Url, _ := url.Parse(unparsedUrl)
+	Url, parseErr := url.Parse(unparsedUrl)
+	if parseErr != nil {
+		t.Fail()
+	}
 	meekliteTransport := meeklite.Transport{Url: Url, Front: "a0.awsstatic.com", Address: "127.0.0.1:1234" }
 	transports := []Transport{meekliteTransport}
 	strategy := NewFirstStrategy(transports)

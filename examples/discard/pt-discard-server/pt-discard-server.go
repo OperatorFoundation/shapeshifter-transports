@@ -26,6 +26,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/OperatorFoundation/obfs4/common/log"
 	"net"
 
 	"github.com/OperatorFoundation/shapeshifter-transports/transports/obfs2/v2"
@@ -47,7 +48,10 @@ func main() {
 		bytesRead, err := conn.Read(buffer)
 		for {
 			if err != nil {
-				_ = conn.Close()
+				closeErr := conn.Close()
+				if closeErr != nil {
+					log.Errorf("could not close")
+				}
 				break
 			}
 			fmt.Println("Received", bytesRead)

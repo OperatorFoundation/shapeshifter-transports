@@ -186,7 +186,10 @@ func (transport *Transport) Dial(address string) (net.Conn, error) {
 	dialConn := conn
 	transportConn, err := newObfs4ClientConn(conn, transport.clientArgs)
 	if err != nil {
-		_ = dialConn.Close()
+		closeErr := dialConn.Close()
+		if closeErr != nil {
+			log.Errorf("could not close")
+		}
 		return nil, err
 	}
 

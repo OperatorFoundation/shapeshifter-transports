@@ -9,6 +9,7 @@ package Dust
 
 import (
 	"fmt"
+	"github.com/OperatorFoundation/obfs4/common/log"
 	"golang.org/x/net/proxy"
 	"net"
 	"time"
@@ -78,7 +79,10 @@ func (transport *dustClient) Dial(address string) (net.Conn, error) {
 
 	transportConn, err := Dust.BeginRawStreamClient(conn, transport.serverPubkey)
 	if err != nil {
-		_ = conn.Close()
+		closeErr := conn.Close()
+		if closeErr != nil {
+			log.Errorf("could not close")
+		}
 		return conn, dialErr
 	}
 

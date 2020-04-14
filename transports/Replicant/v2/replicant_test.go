@@ -930,6 +930,7 @@ func TestSilverClientPolishUnpolish(t *testing.T) {
 	polished, polishError := silverClient.Polish(input)
 	if polishError != nil {
 		t.Fail()
+		return
 	}
 
 	if bytes.Equal(input, polished) {
