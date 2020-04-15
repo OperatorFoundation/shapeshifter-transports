@@ -61,13 +61,15 @@ const (
 	hsLen              = 4 + 4
 )
 
-//begin code added from optimizer
-type Transport struct {
+//OptimizerTransport contains params needed for Optimizer
+type OptimizerTransport struct {
 	Address string
 	Dialer  proxy.Dialer
 }
 
-func (transport Transport) Dial() (net.Conn, error) {
+//Dial connects to a specified address.
+//this dial function is made to be Optimizer compatible
+func (transport OptimizerTransport) Dial() (net.Conn, error) {
 
 	dialFn := transport.Dialer.Dial
 	conn, dialErr := dialFn("tcp", transport.Address)
@@ -85,32 +87,34 @@ func (transport Transport) Dial() (net.Conn, error) {
 	return  transportConn, nil
 }
 
-// obfs2Transport is the obfs2 implementation of the base.Transport interface.
-type obfs2Transport struct {
+// Transport is the obfs2 implementation of the base.Transport interface.
+type Transport struct {
 	dialer *net.Dialer
 }
-
-func NewObfs2Transport() *obfs2Transport {
-	return &obfs2Transport{dialer: nil}
+//NewObfs2Transport is the initializer for obfs2
+func NewObfs2Transport() *Transport {
+	return &Transport{dialer: nil}
 }
 
+//obfs2TransportListener defines a TCP network listener.
 type obfs2TransportListener struct {
 	listener *net.TCPListener
 }
 
+//newObfs4TransportListener initializes the TCP network listener
 func newObfs2TransportListener(listener *net.TCPListener) *obfs2TransportListener {
 	return &obfs2TransportListener{listener: listener}
 }
 
+// NetworkDialer can be modified to change how the network connections are made.
 // Methods that the implement base.Transport interface
 // Dialer for the underlying network connection
-// The Dialer can be modified to change how the network connections are made.
-func (transport *obfs2Transport) NetworkDialer() net.Dialer {
+func (transport *Transport) NetworkDialer() net.Dialer {
 	return *transport.dialer
 }
 
-// Create outgoing transport connection
-func (transport *obfs2Transport) Dial(address string) (net.Conn, error) {
+// Dial creates outgoing transport connection
+func (transport *Transport) Dial(address string) (net.Conn, error) {
 	// FIXME - should use dialer
 	dialFn := proxy.Direct.Dial
 	conn, dialErr := dialFn("tcp", address)
@@ -128,8 +132,8 @@ func (transport *obfs2Transport) Dial(address string) (net.Conn, error) {
 	return transportConn, nil
 }
 
-// Create listener for incoming transport connection
-func (transport *obfs2Transport) Listen(address string) net.Listener {
+// Listen creates listener for incoming transport connection
+func (transport *Transport) Listen(address string) net.Listener {
 	addr, resolveErr := pt.ResolveAddr(address)
 	if resolveErr != nil {
 		fmt.Println(resolveErr.Error())
