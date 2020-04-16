@@ -30,9 +30,6 @@
 package obfs4
 
 import (
-	"io/ioutil"
-	"path"
-	"strings"
 	"testing"
 )
 
@@ -40,67 +37,16 @@ const data = "test"
 
 func TestObfs4(t *testing.T) {
 	//create a server
-	serverConfig, confError := NewObfs4Server("/Users/bluesaxorcist/stateDir")
-	if confError != nil {
+	serverLaunched := RunLocalObfs4Server(data)
+	if !serverLaunched {
 		t.Fail()
 		return
 	}
-	fPath := path.Join("/Users/bluesaxorcist/stateDir", "obfs4_bridgeline.txt")
-	bytes, fileError := ioutil.ReadFile(fPath)
-	if fileError != nil {
+	clientConfig, launchErr := RunObfs4Client()
+	if launchErr != nil {
 		t.Fail()
 		return
 	}
-	//print(bytes)
-	byteString := string(bytes)
-	//print(byteString)
-	lines := strings.Split(byteString, "\n")
-	//print(lines)
-	bridgeLine := lines[len(lines)-2]
-	//println(bridgeLine)
-	bridgeParts1 := strings.Split(bridgeLine, " ")
-	bridgePart := bridgeParts1[5]
-	certstring := bridgePart[5:]
-	//println(certstring)
-	clientConfig, confError := NewObfs4Client(certstring, 0, nil)
-	if confError != nil {
-		t.Fail()
-		return
-	}
-	//call listen on the server
-	serverListener := serverConfig.Listen("127.0.0.1:1234")
-	if serverListener == nil {
-		t.Fail()
-		return
-	}
-
-	//Create Server connection and format it for concurrency
-	go func() {
-		//create server buffer
-		serverBuffer := make([]byte, 4)
-
-		//create serverConn
-		serverConn, acceptErr := serverListener.Accept()
-		if acceptErr != nil {
-			t.Fail()
-			return
-		}
-
-		//read on server side
-		_, serverReadErr := serverConn.Read(serverBuffer)
-		if serverReadErr != nil {
-			t.Fail()
-			return
-		}
-
-		//write data from serverConn for client to read
-		_, serverWriteErr := serverConn.Write([]byte(data))
-		if serverWriteErr != nil {
-			t.Fail()
-			return
-		}
-	}()
-
 	//create client buffer
 	clientBuffer := make([]byte, 4)
 	//call dial on client and check error
