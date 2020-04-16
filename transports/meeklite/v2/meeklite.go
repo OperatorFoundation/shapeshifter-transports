@@ -122,23 +122,26 @@ type meekClientArgs struct {
 func (ca *meekClientArgs) Network() string {
 	return "meek"
 }
+
 //begin optimizer code
 type Transport struct {
 	Url     *gourl.URL `json:"url"`
-	Front   string `json:"front"`
+	Front   string     `json:"front"`
 	Address string
 	Dialer  proxy.Dialer
 }
 
 type Config struct {
-	Url *gourl.URL `json:"url"`
-	Front string `json:"front"`
+	Url   *gourl.URL `json:"url"`
+	Front string     `json:"front"`
 }
+
 func (transport Transport) Dial() (net.Conn, error) {
 	meekTransport := NewMeekTransportWithFront(transport.Url.String(), transport.Front, transport.Dialer)
 	conn := meekTransport.Dial()
 	return conn, nil
 }
+
 //end optimizer code
 func (ca *meekClientArgs) String() string {
 	return "meek" + ":" + ca.front + ":" + ca.url.String()
@@ -227,21 +230,24 @@ func (transportConn *meekConn) Read(p []byte) (n int, err error) {
 		}
 		return
 	}
+	select {
+		case <-time.After(20*time.Second):
+			return 0, nil
+		// Wait for the worker to enqueue more incoming data.
+		case b, ok := <-transportConn.workerRdChan:
+			if !ok {
+				// Close() was called and the worker's shutting down.
+				return 0, io.ErrClosedPipe
+			}
 
-	// Wait for the worker to enqueue more incoming data.
-	b, ok := <-transportConn.workerRdChan
-	if !ok {
-		// Close() was called and the worker's shutting down.
-		return 0, io.ErrClosedPipe
-	}
-
-	// Ew, an extra copy, but who am I kidding, it's meek.
-	buf := bytes.NewBuffer(b)
-	n, err = buf.Read(p)
-	if buf.Len() > 0 {
-		// If there's data pending, stash the buffer so the next
-		// Read() call will use it to fulfill the Read().
-		transportConn.rdBuf = buf
+			// Ew, an extra copy, but who am I kidding, it's meek.
+			buf := bytes.NewBuffer(b)
+			n, err = buf.Read(p)
+			if buf.Len() > 0 {
+				// If there's data pending, stash the buffer so the next
+				// Read() call will use it to fulfill the Read().
+				transportConn.rdBuf = buf
+			}
 	}
 	return
 }
@@ -402,7 +408,6 @@ loop:
 			break loop
 		}
 
-
 		// Stash the remaining payload if any.
 		leftBuf = sndBuf[wrSz:] // Store the remaining data
 		if len(leftBuf) == 0 {
@@ -459,4 +464,3 @@ func newSessionID() (string, error) {
 // Force type checks to make sure that instances conform to interfaces
 var _ net.Conn = (*meekConn)(nil)
 var _ net.Addr = (*meekClientArgs)(nil)
-

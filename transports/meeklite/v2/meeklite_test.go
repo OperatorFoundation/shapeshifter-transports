@@ -54,15 +54,23 @@ func TestMeeklite(t *testing.T) {
 	}
 
 	//write data from clientConn for server to read
-	_, clientWriteErr := clientConn.Write([]byte(data))
+	writeBytes, clientWriteErr := clientConn.Write([]byte(data))
 	if clientWriteErr != nil {
+		t.Fail()
+		return
+	}
+	if writeBytes <= 0 {
 		t.Fail()
 		return
 	}
 
 	//read on client side
-	_, clientReadErr := clientConn.Read(clientBuffer)
+	readBytes, clientReadErr := clientConn.Read(clientBuffer)
 	if clientReadErr != nil {
+		t.Fail()
+		return
+	}
+	if readBytes <= 0 {
 		t.Fail()
 		return
 	}

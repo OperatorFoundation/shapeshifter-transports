@@ -20,7 +20,7 @@ func TestTransports(t *testing.T) {
 	obfs4Config := obfs4.Config{}
 	obfs2Config:= obfs2.Transport{}
 	meekliteConfig := meeklite.Config{}
-	meekserverConfig := meekserver.State{}
+	meekserverConfig := meekserver.Config{}
 	ReplicantConfig := replicant.ClientConfig{}
 	DustConfig := Dust.Config{}
 	OptimizerConfig := Optimizer.Client{}

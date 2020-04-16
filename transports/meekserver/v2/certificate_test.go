@@ -79,15 +79,15 @@ func makeTempFileFromContents(contents []byte) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	defer f.Close()
 
 	_, err = f.Write(contents)
 	if err != nil {
+		f.Close()
 		return f.Name(), err
 	}
 
 	err = backdateFile(f.Name())
-
+	f.Close()
 	return f.Name(), err
 }
 

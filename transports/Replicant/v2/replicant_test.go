@@ -784,105 +784,6 @@ func createSilverMonotoneConfigsOneFixedAddByte() (*ClientConfig, *ServerConfig)
 	return &clientConfig, &serverConfig
 }
 
-func createSilverMonotoneClientConfigRandomEnumeratedItems() *ClientConfig {
-	rand.Seed(time.Now().UnixNano())
-	set := []byte{0x11, 0x12, 0x13, 0x14}
-	parts := make([]monolith.Monolith, 0)
-	part := monolith.BytesPart{
-		Items: []monolith.ByteType{
-			monolith.RandomEnumeratedByteType{RandomOptions: set},
-			monolith.RandomEnumeratedByteType{RandomOptions: set},
-		},
-	}
-	parts = append(parts, part)
-	part = monolith.BytesPart{
-		Items: []monolith.ByteType{
-			monolith.RandomEnumeratedByteType{RandomOptions: set},
-			monolith.RandomEnumeratedByteType{RandomOptions: set},
-		},
-	}
-	parts = append(parts, part)
-	desc := monolith.Description{Parts: parts}
-	args := monolith.NewEmptyArgs()
-	monolithInstance := monolith.Instance{
-		Desc: desc,
-		Args: args,
-	}
-
-	addSequences := monolithInstance
-	removeSequences := desc
-
-	monotoneConfig := toneburst.MonotoneConfig{
-		AddSequences:    &addSequences,
-		RemoveSequences: &removeSequences,
-		SpeakFirst:      true,
-	}
-
-	polishServerConfig, polishServerError := polish.NewSilverServerConfig()
-	if polishServerError != nil {
-		return nil
-	}
-
-	polishClientConfig, polishClientConfigError := polish.NewSilverClientConfig(polishServerConfig)
-	if polishClientConfigError != nil {
-		return nil
-	}
-
-	clientConfig := ClientConfig{
-		Toneburst: monotoneConfig,
-		Polish:    polishClientConfig,
-	}
-
-	return &clientConfig
-}
-
-func createSilverMonotoneServerConfigRandomEnumeratedItems() *ServerConfig {
-	rand.Seed(time.Now().UnixNano())
-	set := []byte{0x11, 0x12, 0x13, 0x14}
-	parts := make([]monolith.Monolith, 0)
-	part := monolith.BytesPart{
-		Items: []monolith.ByteType{
-			monolith.RandomEnumeratedByteType{RandomOptions: set},
-			monolith.RandomEnumeratedByteType{RandomOptions: set},
-		},
-	}
-	parts = append(parts, part)
-	part = monolith.BytesPart{
-		Items: []monolith.ByteType{
-			monolith.RandomEnumeratedByteType{RandomOptions: set},
-			monolith.RandomEnumeratedByteType{RandomOptions: set},
-		},
-	}
-	parts = append(parts, part)
-	desc := monolith.Description{Parts: parts}
-	args := monolith.NewEmptyArgs()
-	monolithInstance := monolith.Instance{
-		Desc: desc,
-		Args: args,
-	}
-
-	addSequences := monolithInstance
-	removeSequences := desc
-
-	monotoneConfig := toneburst.MonotoneConfig{
-		AddSequences:    &addSequences,
-		RemoveSequences: &removeSequences,
-		SpeakFirst:      false,
-	}
-
-	polishServerConfig, polishServerError := polish.NewSilverServerConfig()
-	if polishServerError != nil {
-		return nil
-	}
-
-	serverConfig := ServerConfig{
-		Toneburst: monotoneConfig,
-		Polish:    polishServerConfig,
-	}
-
-	return &serverConfig
-}
-
 // Polish Tests
 func TestPolishOnlyConnection(t *testing.T) {
 	clientConfig, serverConfig := createSilverConfigs()
@@ -897,32 +798,36 @@ func TestWithSilverMonotone(t *testing.T) {
 
 func TestSilverClientPolishUnpolish(t *testing.T) {
 	silverServerConfig, serverConfigError := polish.NewSilverServerConfig()
-
 	if serverConfigError != nil {
 		t.Fail()
+		return
 	}
 
 	if silverServerConfig == nil {
 		t.Fail()
+		return
 	}
 
 	silverClientConfig, clientConfigError := polish.NewSilverClientConfig(silverServerConfig)
-	if silverClientConfig == nil {
-		t.Fail()
-	}
-
 	if clientConfigError != nil {
 		t.Fail()
+		return
+	}
+
+	if silverClientConfig == nil {
+		t.Fail()
+		return
 	}
 
 	silverClient, clientError := polish.NewSilverClient(*silverClientConfig)
-
 	if clientError != nil {
 		t.Fail()
+		return
 	}
 
 	if silverClient == nil {
 		t.Fail()
+		return
 	}
 
 	input := []byte{3, 12, 2, 6, 31}
@@ -935,15 +840,18 @@ func TestSilverClientPolishUnpolish(t *testing.T) {
 
 	if bytes.Equal(input, polished) {
 		t.Fail()
+		return
 	}
 
 	unpolished, unpolishError := silverClient.Unpolish(polished)
 	if unpolishError != nil {
 		t.Fail()
+		return
 	}
 
 	if !bytes.Equal(unpolished, input) {
 		t.Fail()
+		return
 	}
 }
 
