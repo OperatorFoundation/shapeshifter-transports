@@ -4,11 +4,10 @@
  */
 
 // Package Optimizer provides a PT 2.0 Go API wrapper around the connections used
-package Optimizer
+package optimizer
 
 import (
 	"errors"
-	_ "math/rand"
 	"net"
 	"time"
 )

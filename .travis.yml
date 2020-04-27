@@ -1,0 +1,14 @@
+language: go
+
+script:
+  - go build -v
+  - go test -v github.com/OperatorFoundation/shapeshifter-transports/transports
+  - go test -v github.com/OperatorFoundation/shapeshifter-transports/transports/Dust
+  - go test -v github.com/OperatorFoundation/shapeshifter-transports/transports/meeklite
+  - go test -v github.com/OperatorFoundation/shapeshifter-transports/transports/meekserver
+  - go test -v github.com/OperatorFoundation/shapeshifter-transports/transports/obfs2
+  - go test -v github.com/OperatorFoundation/shapeshifter-transports/transports/obfs4
+  - go test -v github.com/OperatorFoundation/shapeshifter-transports/transports/Optimizer
+  - go test -v github.com/OperatorFoundation/shapeshifter-transports/transports/Replicant
+  - go test -v github.com/OperatorFoundation/shapeshifter-transports/transports/shadow
+
