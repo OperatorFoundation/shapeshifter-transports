@@ -52,8 +52,6 @@ func (listener *replicantTransportListener) Accept() (net.Conn, error) {
 		return nil, err
 	}
 
-	// FIXME - we need a real server config, not this empty one
-	//config := ServerConfig{}
 	config := listener.config
 
 	return NewServerConnection(conn, config)

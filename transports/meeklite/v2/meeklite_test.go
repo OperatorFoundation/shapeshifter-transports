@@ -42,7 +42,7 @@ const data = "test"
 
 func TestMeeklite(t *testing.T) {
 	//create a server
-	config := NewMeekTransportWithFront("https://d2zfqthxsdq309.cloudfront.net/", "a0.awsstatic.com", proxy.Direct)
+	config := NewMeekTransportWithFront("https://transport-canary-meek.appspot.com/", "www.google.com", proxy.Direct)
 
 	//create client buffer
 	clientBuffer := make([]byte, 4)

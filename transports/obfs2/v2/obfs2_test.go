@@ -32,19 +32,19 @@
 package obfs2
 
 import (
+	"os"
 	"testing"
 )
 
 const data = "test"
 
-func TestObfs2(t *testing.T) {
+func TestMain(m *testing.M) {
 	//create a server
 	config := NewObfs2Transport()
 
 	//call listen on the server
 	serverListener := config.Listen("127.0.0.1:1234")
 	if serverListener == nil {
-		t.Fail()
 		return
 	}
 
@@ -54,27 +54,57 @@ func TestObfs2(t *testing.T) {
 		serverBuffer := make([]byte, 4)
 
 		//create serverConn
-		serverConn, acceptErr := serverListener.Accept()
-		if acceptErr != nil {
-			t.Fail()
-			return
-		}
+		for {
+			serverConn, acceptErr := serverListener.Accept()
+			if acceptErr != nil {
+				return
+			}
 
-		//read on server side
-		_, serverReadErr := serverConn.Read(serverBuffer)
-		if serverReadErr != nil {
-			t.Fail()
-			return
-		}
+			//read on server side
+			_, serverReadErr := serverConn.Read(serverBuffer)
+			if serverReadErr != nil {
+				return
+			}
 
-		//write data from serverConn for client to read
-		_, serverWriteErr := serverConn.Write([]byte(data))
-		if serverWriteErr != nil {
-			t.Fail()
-			return
+			//write data from serverConn for client to read
+			_, serverWriteErr := serverConn.Write([]byte(data))
+			if serverWriteErr != nil {
+				return
+			}
 		}
 	}()
 
+	os.Exit(m.Run())
+}
+
+func TestObfs2(t *testing.T) {
+	config := NewObfs2Transport()
+	//create client buffer
+	clientBuffer := make([]byte, 4)
+	//call dial on client and check error
+	clientConn, dialErr := config.Dial("127.0.0.1:1234")
+	if dialErr != nil {
+		t.Fail()
+		return
+	}
+
+	//write data from clientConn for server to read
+	_, clientWriteErr := clientConn.Write([]byte(data))
+	if clientWriteErr != nil {
+		t.Fail()
+		return
+	}
+
+	//read on client side
+	_, clientReadErr := clientConn.Read(clientBuffer)
+	if clientReadErr != nil {
+		t.Fail()
+		return
+	}
+}
+
+func TestObfs2WithDialer(t *testing.T) {
+	config := NewObfs2Transport()
 	//create client buffer
 	clientBuffer := make([]byte, 4)
 	//call dial on client and check error

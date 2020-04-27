@@ -89,13 +89,16 @@ func (transport OptimizerTransport) Dial() (net.Conn, error) {
 
 // Transport is the obfs2 implementation of the base.Transport interface.
 type Transport struct {
-	dialer *net.Dialer
+	dialer proxy.Dialer
 }
 //NewObfs2Transport is the initializer for obfs2
 func NewObfs2Transport() *Transport {
 	return &Transport{dialer: nil}
 }
 
+func NewObfs2TransportWithDialer(dialer proxy.Dialer) *Transport {
+	return &Transport{dialer:dialer}
+}
 //obfs2TransportListener defines a TCP network listener.
 type obfs2TransportListener struct {
 	listener *net.TCPListener
@@ -106,17 +109,15 @@ func newObfs2TransportListener(listener *net.TCPListener) *obfs2TransportListene
 	return &obfs2TransportListener{listener: listener}
 }
 
-// NetworkDialer can be modified to change how the network connections are made.
-// Methods that the implement base.Transport interface
-// Dialer for the underlying network connection
-func (transport *Transport) NetworkDialer() net.Dialer {
-	return *transport.dialer
-}
-
 // Dial creates outgoing transport connection
 func (transport *Transport) Dial(address string) (net.Conn, error) {
-	// FIXME - should use dialer
-	dialFn := proxy.Direct.Dial
+	var dialFn func(string, string) (net.Conn, error)
+	if transport.dialer != nil {
+		dialerValue := transport.dialer
+		dialFn = dialerValue.Dial
+	} else {
+		dialFn = proxy.Direct.Dial
+	}
 	conn, dialErr := dialFn("tcp", address)
 	if dialErr != nil {
 		return nil, dialErr

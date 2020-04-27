@@ -57,7 +57,6 @@ func NewClientConnection(conn net.Conn, config ClientConfig) (*Connection, error
 		}
 
 	}
-	//FIXME: Handshake when polish is nil
 	if state.polish != nil {
 		err := state.polish.Handshake(conn)
 		if err != nil {

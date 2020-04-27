@@ -5,9 +5,12 @@ import (
 	"github.com/OperatorFoundation/shapeshifter-transports/transports/obfs4/v2"
 	"github.com/OperatorFoundation/shapeshifter-transports/transports/shadow/v2"
 	"golang.org/x/net/proxy"
+	"io/ioutil"
 	"net"
 	"net/url"
 	"os"
+	"path"
+	"strings"
 	"testing"
 )
 
@@ -124,19 +127,14 @@ func TestObfs4Transport_Dial2(t *testing.T) {
 }
 
 func TestOptimizerObfs4Transport_Dial1(t *testing.T) {
-	obfs4Client, transportErr := obfs4.RunObfs4Client()
-	if transportErr != nil {
-		t.Fail()
-		return
-	}
-	_, err2 := obfs4Client.Dial("127.0.0.1:1234")
-	if err2 != nil {
-		t.Fail()
-		return
-	}
 	dialer := proxy.Direct
+	certstring, certError := getObfs4CertString()
+	if certError != nil {
+		t.Fail()
+		return
+	}
 	obfs4Transport := obfs4.OptimizerTransport{
-		CertString: "yjf7z8uSxW/3zuLHtXgA8UL89cGHJe9RN2TuVxXKJqPwpzUlSyLjAWWF8b6G2yW70rmBeQ",
+		CertString: *certstring,
 		IatMode:    0,
 		Address:    "127.0.0.1:1234",
 		Dialer:     dialer}
@@ -263,4 +261,24 @@ func TestOptimizerTransportminimizeDialDurationDial(t *testing.T) {
 			t.Fail()
 		}
 	}
+}
+
+func getObfs4CertString() (*string, error){
+	fPath := path.Join("/Users/bluesaxorcist/stateDir", "obfs4_bridgeline.txt")
+	bytes, fileError := ioutil.ReadFile(fPath)
+	if fileError != nil {
+		return nil, fileError
+	}
+	//print(bytes)
+	byteString := string(bytes)
+	//print(byteString)
+	lines := strings.Split(byteString, "\n")
+	//print(lines)
+	bridgeLine := lines[len(lines)-2]
+	//println(bridgeLine)
+	bridgeParts1 := strings.Split(bridgeLine, " ")
+	bridgePart := bridgeParts1[5]
+	certstring := bridgePart[5:]
+
+	return &certstring, nil
 }

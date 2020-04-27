@@ -14,19 +14,23 @@ import (
 
 const timeoutInSeconds = 60
 
+//Transport is a program that transforms network traffic
 type Transport interface {
 	Dial() (net.Conn, error)
 }
 
+//Client contains the two parameters needed to use Optimizer.
 type Client struct {
 	Transports []Transport
 	Strategy   Strategy
 }
 
+//NewOptimizerClient is the initializer
 func NewOptimizerClient(Transports []Transport, Strategy Strategy) *Client {
 	return &Client{Transports, Strategy}
 }
 
+//Dial connects to the address on the named network
 func (OptT *Client) Dial() (net.Conn, error) {
 	firstTryTime := time.Now()
 	transport := OptT.Strategy.Choose()
@@ -48,55 +52,64 @@ func (OptT *Client) Dial() (net.Conn, error) {
 	return conn, nil
 }
 
+//Strategy is the method used to choose a transport
 type Strategy interface {
 	Choose() Transport
 	Report(transport Transport, success bool, durationElapsed float64)
 }
 
-//begin refactor
+//FirstStrategy returns the first strategy in the array
 type FirstStrategy struct {
 	transports []Transport
 }
 
+//NewFirstStrategy initializes FirstStrategy
 func NewFirstStrategy(transports []Transport) Strategy {
 	return &FirstStrategy{transports}
 }
 
+//Choose selects a transport in the array
 func (strategy *FirstStrategy) Choose() Transport {
 	return strategy.transports[0]
 }
 
+//Report returns if the transport was successful and how long the connection took
 func (strategy *FirstStrategy) Report(Transport, bool, float64) {
 
 }
 
-//end refactor
+//RandomStrategy returns a transport at random
 type RandomStrategy struct {
 	transports []Transport
 }
 
+//Choose selects a transport in the array
 func (strategy *RandomStrategy) Choose() Transport {
 	return strategy.transports[0]
 }
 
+//Report returns if the transport was successful and how long the connection took
 func (strategy *RandomStrategy) Report(Transport, bool, float64) {
 
 }
+
 
 type RotateStrategy struct {
 	transports []Transport
 	index      int
 }
 
+//Choose selects a transport in the array
 func (strategy *RotateStrategy) Choose() Transport {
 	transport := strategy.transports[strategy.index]
-	strategy.index += 1
+	strategy.index++
 	if strategy.index >= len(strategy.transports) {
 		strategy.index = 0
 	}
 	return transport
 }
 
+//Report returns if the transport was successful and how long the connection took
 func (strategy *RotateStrategy) Report(Transport, bool, float64) {
 
 }
@@ -113,6 +126,7 @@ func NewTrackStrategy(transport []Transport) Strategy {
 	return &track
 }
 
+//Choose selects a transport in the array
 func (strategy *TrackStrategy) Choose() Transport {
 	transport := strategy.transport[strategy.index]
 	score := strategy.findScore(strategy.transport)
@@ -147,6 +161,7 @@ func (strategy *TrackStrategy) incrementIndex(transports []Transport) {
 	}
 }
 
+//Report returns if the transport was successful and how long the connection took
 func (strategy *TrackStrategy) Report(transport Transport, success bool, _ float64) {
 	if success {
 		strategy.trackMap[transport] = 1
@@ -167,6 +182,7 @@ func NewMinimizeDialDuration(transport []Transport) Strategy {
 	return &duration
 }
 
+//Choose selects a transport in the array
 func (strategy *minimizeDialDuration) Choose() Transport {
 	transport := strategy.transports[strategy.index]
 	score := strategy.findScore(strategy.transports)
@@ -207,6 +223,7 @@ func (strategy *minimizeDialDuration) findScore(transports []Transport) float64 
 	}
 }
 
+//Report returns if the transport was successful and how long the connection took
 func (strategy *minimizeDialDuration) Report(transport Transport, success bool, durationElapsed float64) {
 	if success {
 		if durationElapsed < 60 {
