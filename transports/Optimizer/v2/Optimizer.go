@@ -78,6 +78,10 @@ func (strategy *FirstStrategy) Report(Transport, bool, float64) {
 
 }
 
+func NewRandomStrategy(transports []Transport) Strategy {
+	return &RandomStrategy{transports}
+}
+
 //RandomStrategy returns a transport at random
 type RandomStrategy struct {
 	transports []Transport
@@ -93,6 +97,9 @@ func (strategy *RandomStrategy) Report(Transport, bool, float64) {
 
 }
 
+func NewRotateStrategy(transports []Transport) Strategy {
+	return &RotateStrategy{transports, 1}
+}
 
 type RotateStrategy struct {
 	transports []Transport

@@ -192,7 +192,7 @@ func TestOptimizerTransportRandomDial(t *testing.T) {
 	}
 	shadowTransport := shadow.NewTransport("1234", "CHACHA20-IETF-POLY1305", "127.0.0.1:1235")
 	transports := []Transport{obfs4Transport, &shadowTransport}
-	optimizerTransport := NewOptimizerClient(transports, &RandomStrategy{})
+	optimizerTransport := NewOptimizerClient(transports, NewRandomStrategy(transports))
 
 	for i := 1; i <= 3; i++ {
 		_, err := optimizerTransport.Dial()
@@ -212,7 +212,7 @@ func TestOptimizerTransportRotateDial(t *testing.T) {
 }
 	shadowTransport := shadow.NewTransport("1234", "CHACHA20-IETF-POLY1305", "127.0.0.1:1235")
 	transports := []Transport{obfs4Transport, &shadowTransport}
-	optimizerTransport := NewOptimizerClient(transports, &RotateStrategy{})
+	optimizerTransport := NewOptimizerClient(transports, NewRotateStrategy(transports))
 
 	for i := 1; i <= 3; i++ {
 		_, err := optimizerTransport.Dial()
@@ -262,6 +262,8 @@ func TestOptimizerTransportminimizeDialDurationDial(t *testing.T) {
 		}
 	}
 }
+
+
 
 func getObfs4CertString() (*string, error){
 	fPath := path.Join("/Users/bluesaxorcist/stateDir", "obfs4_bridgeline.txt")
