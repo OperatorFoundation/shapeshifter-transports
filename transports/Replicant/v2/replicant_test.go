@@ -7,10 +7,17 @@ import (
 	"github.com/OperatorFoundation/shapeshifter-transports/transports/Replicant/v2/toneburst"
 	"io/ioutil"
 	"math/rand"
+	"os"
 	"strconv"
 	"testing"
 	"time"
 )
+
+func TestMain(m *testing.M) {
+	runReplicantServer()
+
+	os.Exit(m.Run())
+}
 
 func TestMarshalConfigs(t *testing.T) {
 	clientConfig, serverConfig := createSilverMonotoneConfigsOneFixedAddByte()
@@ -130,6 +137,42 @@ func TestMonotoneRandomEnumerated(t *testing.T) {
 func TestSilver(t *testing.T) {
 	clientConfig, serverConfig := createSilverConfigs()
 	replicantConnection(*clientConfig, *serverConfig, t)
+}
+
+func runReplicantServer() {
+	serverStarted := make(chan bool)
+	addr := "127.0.0.1:1234"
+	serverConfig := ServerConfig{
+		Toneburst: nil,
+		Polish:    nil,
+	}
+
+	go func() {
+		listener := serverConfig.Listen(addr)
+		serverStarted <- true
+
+		lConn, lConnError := listener.Accept()
+		if lConnError != nil {
+			return
+		}
+
+		lBuffer := make([]byte, 4)
+		_, lReadError := lConn.Read(lBuffer)
+		if lReadError != nil {
+			return
+		}
+
+		// Send a response back to person contacting us.
+		_, lWriteError := lConn.Write([]byte("Message received."))
+		if lWriteError != nil {
+			return
+		}
+	}()
+
+	serverFinishedStarting := <-serverStarted
+	if !serverFinishedStarting {
+	return
+	}
 }
 
 // This test uses a more realistic config, like one might use in real deployment.
