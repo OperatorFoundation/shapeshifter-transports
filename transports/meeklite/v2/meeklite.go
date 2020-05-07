@@ -30,7 +30,6 @@
 // made to normalize the TLS fingerprint.
 //
 // It borrows quite liberally from the real meek-client code.
-
 package meeklite
 
 import (
@@ -70,34 +69,33 @@ var (
 	loopbackAddr = net.IPv4(127, 0, 0, 1)
 )
 
-// Transport that uses domain fronting to shapeshift the application network traffic
-type meekTransport struct {
+// MeekTransport that uses domain fronting to shapeshift the application network traffic
+type MeekTransport struct {
 	dialer proxy.Dialer
 
 	clientArgs *meekClientArgs
 }
 
-// Public initializer method to get a new meek transport
-
-func NewMeekTransportWithFront(url string, front string, dialer proxy.Dialer) *meekTransport {
+// NewMeekTransportWithFront is a public initializer method to get a new meek transport
+func NewMeekTransportWithFront(url string, front string, dialer proxy.Dialer) *MeekTransport {
 	clientArgs, err := newClientArgsWithFront(url, front)
 	if err != nil {
 		return nil
 	}
 
-	return &meekTransport{dialer: dialer, clientArgs: clientArgs}
+	return &MeekTransport{dialer: dialer, clientArgs: clientArgs}
 }
 
 // Methods that implement the base.Transport interface
 
-// Dialer for the underlying network connection
+// NetworkDialer is a dialer for the underlying network connection
 // The Dialer can be modified to change how the network connections are made.
-func (transport *meekTransport) NetworkDialer() proxy.Dialer {
+func (transport *MeekTransport) NetworkDialer() proxy.Dialer {
 	return transport.dialer
 }
 
-// Create outgoing transport connection
-func (transport *meekTransport) Dial() net.Conn {
+// Dial creates outgoing transport connection
+func (transport *MeekTransport) Dial() net.Conn {
 	// FIXME - should use dialer
 	transportConn, err := newMeekClientConn(transport.clientArgs)
 	if err != nil {
@@ -107,8 +105,8 @@ func (transport *meekTransport) Dial() net.Conn {
 	return transportConn
 }
 
-// The meek transport does not have a corresponding server, only a client
-func (transport *meekTransport) Listen() net.Listener {
+// Listen for the meek transport does not have a corresponding server, only a client
+func (transport *MeekTransport) Listen() net.Listener {
 	return nil
 }
 
@@ -123,26 +121,27 @@ func (ca *meekClientArgs) Network() string {
 	return "meek"
 }
 
-//begin optimizer code
+//Transport contains parameters used in Optimizer
 type Transport struct {
-	Url     *gourl.URL `json:"url"`
+	URL     *gourl.URL `json:"url"`
 	Front   string     `json:"front"`
 	Address string
 	Dialer  proxy.Dialer
 }
 
+//Config puts the parameters in a json compatible format
 type Config struct {
-	Url   *gourl.URL `json:"url"`
+	URL   *gourl.URL `json:"url"`
 	Front string     `json:"front"`
 }
 
+// Dial creates outgoing transport connection
 func (transport Transport) Dial() (net.Conn, error) {
-	meekTransport := NewMeekTransportWithFront(transport.Url.String(), transport.Front, transport.Dialer)
+	meekTransport := NewMeekTransportWithFront(transport.URL.String(), transport.Front, transport.Dialer)
 	conn := meekTransport.Dial()
 	return conn, nil
 }
 
-//end optimizer code
 func (ca *meekClientArgs) String() string {
 	return "meek" + ":" + ca.front + ":" + ca.url.String()
 }
@@ -356,9 +355,9 @@ func (transportConn *meekConn) roundTrip(sndBuf []byte) (recvBuf []byte, err err
 			err = fmt.Errorf("status code was %d, not %d", resp.StatusCode, http.StatusOK)
 			if resp.StatusCode == http.StatusInternalServerError {
 				return
-			} else {
-				time.Sleep(retryDelay)
 			}
+				time.Sleep(retryDelay)
+
 		} else {
 			_ = resp.Body.Close()
 			recvBuf, err = ioutil.ReadAll(io.LimitReader(resp.Body, maxPayloadLength))

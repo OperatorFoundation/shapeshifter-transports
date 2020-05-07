@@ -34,12 +34,12 @@ func acceptConnections(listener net.Listener) {
 }
 
 func TestMeekliteDial(t *testing.T) {
-	unparsedUrl := "https://d2zfqthxsdq309.cloudfront.net/"
-	Url, parseErr := url.Parse(unparsedUrl)
+	unparsedURL := "https://d2zfqthxsdq309.cloudfront.net/"
+	URL, parseErr := url.Parse(unparsedURL)
 	if parseErr != nil {
 		t.Fail()
 	}
-	meekliteTransport := meeklite.Transport{Url: Url, Front: "a0.awsstatic.com", Address: "127.0.0.1:1235" }
+	meekliteTransport := meeklite.Transport{Url: URL, Front: "a0.awsstatic.com", Address: "127.0.0.1:1235" }
 	_, err := meekliteTransport.Dial()
 	if err != nil {
 		t.Fail()
@@ -47,12 +47,12 @@ func TestMeekliteDial(t *testing.T) {
 }
 
 func TestOptimizerMeekliteDial(t *testing.T) {
-	unparsedUrl := "https://d2zfqthxsdq309.cloudfront.net/"
-	Url, parseErr := url.Parse(unparsedUrl)
+	unparsedURL := "https://d2zfqthxsdq309.cloudfront.net/"
+	URL, parseErr := url.Parse(unparsedURL)
 	if parseErr != nil {
 		t.Fail()
 	}
-	meekliteTransport := meeklite.Transport{Url: Url, Front: "a0.awsstatic.com", Address: "127.0.0.1:1235" }
+	meekliteTransport := meeklite.Transport{Url: URL, Front: "a0.awsstatic.com", Address: "127.0.0.1:1235" }
 	transports := []Transport{meekliteTransport}
 	strategy := NewFirstStrategy(transports)
 	optimizerTransport := NewOptimizerClient(transports, strategy)

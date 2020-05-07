@@ -87,6 +87,7 @@ type Transport struct {
 	clientArgs    *ClientArgs
 }
 
+//ServerFactory contains arguments for server side
 type ServerFactory struct {
 	args *pt.Args
 
@@ -101,6 +102,7 @@ type ServerFactory struct {
 	closeDelay      int
 }
 
+//ClientArgs contains arguments for client side
 type ClientArgs struct {
 	nodeID     *ntor.NodeID
 	publicKey  *ntor.PublicKey
@@ -108,6 +110,7 @@ type ClientArgs struct {
 	iatMode    int
 }
 
+//NewObfs4Server initializes the obfs4 server side
 func NewObfs4Server(stateDir string) (*Transport, error) {
 	args := make(pt.Args)
 	st, err := serverStateFromArgs(stateDir, &args)
@@ -149,6 +152,7 @@ func NewObfs4Server(stateDir string) (*Transport, error) {
 	return &Transport{dialer: nil, serverFactory: sf, clientArgs: nil}, nil
 }
 
+//NewObfs4Client initializes the obfs4 client side
 func NewObfs4Client(certString string, iatMode int, dialer proxy.Dialer) (*Transport, error) {
 	var nodeID *ntor.NodeID
 	var publicKey *ntor.PublicKey
@@ -170,12 +174,12 @@ func NewObfs4Client(certString string, iatMode int, dialer proxy.Dialer) (*Trans
 
 	if dialer == nil {
 		return &Transport{dialer: proxy.Direct, serverFactory: nil, clientArgs: &ClientArgs{nodeID, publicKey, sessionKey, iatMode}}, nil
-	} else {
-		return &Transport{dialer: dialer, serverFactory: nil, clientArgs: &ClientArgs{nodeID, publicKey, sessionKey, iatMode}}, nil
 	}
+		return &Transport{dialer: dialer, serverFactory: nil, clientArgs: &ClientArgs{nodeID, publicKey, sessionKey, iatMode}}, nil
+
 }
 
-// Create outgoing transport connection
+// Dial creates outgoing transport connection
 func (transport *Transport) Dial(address string) (net.Conn, error) {
 	dialFn := transport.dialer.Dial
 	conn, dialErr := dialFn("tcp", address)
@@ -197,7 +201,7 @@ func (transport *Transport) Dial(address string) (net.Conn, error) {
 }
 
 
-//begin code added from optimizer
+//OptimizerTransport contains parameters to be used in Optimizer
 type OptimizerTransport struct {
 	CertString string
 	IatMode    int
@@ -205,11 +209,13 @@ type OptimizerTransport struct {
 	Dialer     proxy.Dialer
 }
 
+//Config contains arguments formatted for a json file
 type Config struct {
 	CertString string `json:"cert"`
 	IatMode    string `json:"iat-mode"`
 }
 
+// Dial creates outgoing transport connection
 func (transport OptimizerTransport) Dial() (net.Conn, error) {
 	Obfs4Transport, err := NewObfs4Client(transport.CertString, transport.IatMode, transport.Dialer)
 	if err != nil {
@@ -222,8 +228,7 @@ func (transport OptimizerTransport) Dial() (net.Conn, error) {
 	return conn, nil
 }
 
-//end code added from optimizer
-// Create listener for incoming transport connection
+// Listen creates listener for incoming transport connection
 func (transport *Transport) Listen(address string) net.Listener {
 	addr, resolveErr := pt.ResolveAddr(address)
 	if resolveErr != nil {
@@ -240,6 +245,7 @@ func (transport *Transport) Listen(address string) net.Listener {
 	return newObfs4TransportListener(transport.serverFactory, ln)
 }
 
+// Close closes the transport listener.
 func (transport *Transport) Close() error {
 	return nil
 }
@@ -261,7 +267,7 @@ func newObfs4TransportListener(sf *ServerFactory, listener *net.TCPListener) *ob
 
 // Methods that implement the net.Listener interface
 
-// Listener for underlying network connection
+// NetworkListener listens for underlying network connection
 func (listener *obfs4TransportListener) NetworkListener() net.Listener {
 	return listener.listener
 }

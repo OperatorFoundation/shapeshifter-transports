@@ -1,4 +1,4 @@
-// meek-server is the server transport plugin for the meek pluggable transport.
+// Package meekserver is the server transport plugin for the meek pluggable transport.
 // It acts as an HTTP server, keeps track of session ids, and forwards received
 // data to a local OR port.
 //
@@ -62,7 +62,7 @@ func httpInternalServerError(w http.ResponseWriter) {
 	http.Error(w, "Internal server error.", http.StatusInternalServerError)
 }
 
-// Every session id maps to an existing OR port connection, which we keep open
+// Session id maps to an existing OR port connection, which we keep open
 // between received requests. The first time we see a new session id, we create
 // a new OR port connection.
 type Session struct {
@@ -70,25 +70,26 @@ type Session struct {
 	LastSeen time.Time
 }
 
-// Mark a session as having been seen just now.
+// Touch marks a session as having been seen just now.
 func (session *Session) Touch() {
 	session.LastSeen = time.Now()
 }
 
-// Is this session old enough to be culled?
+// IsExpired finds out if this session is old enough to be culled
 func (session *Session) IsExpired() bool {
 	return time.Since(session.LastSeen) > maxSessionStaleness
 }
 
+// State serves as the http handler
 // There is one state per HTTP listener. In the usual case there is just one
-// listener, so there is just one global state. State also serves as the http
-// Handler.
+// listener, so there is just one global state.
 type State struct {
 	sessionMap map[string]*Session
 	lock       sync.Mutex
 	availableSessions mapset.Set
 }
 
+// NewState makes a new state
 func NewState() *State {
 	state := new(State)
 	state.sessionMap = make(map[string]*Session)
@@ -107,7 +108,7 @@ func (state *State) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
-// Handle a GET request. This doesn't have any purpose apart from diagnostics.
+// Get handles a GET request. This doesn't have any purpose apart from diagnostics.
 func (state *State) Get(w http.ResponseWriter, req *http.Request) {
 	if path.Clean(req.URL.Path) != "/" {
 		http.NotFound(w, req)
@@ -123,7 +124,7 @@ func (state *State) Get(w http.ResponseWriter, req *http.Request) {
 // fails: if the original client address is not available, returns "". If the
 // original client address is available, the returned port number is always 1.
 
-// Look up a session by id, or create a new one (with its OR port connection) if
+// GetSession looks up a session by id, or create a new one (with its OR port connection) if
 // it doesn't already exist.
 func (state *State) GetSession(sessionID string) (*Session, error) {
 	state.lock.Lock()
@@ -208,7 +209,7 @@ func transact(session *Session, w http.ResponseWriter, req *http.Request) error 
 	return nil
 }
 
-// Handle a POST request. Look up the session id and then do a transaction.
+// Post handles a POST request. Look up the session id and then do a transaction.
 func (state *State) Post(w http.ResponseWriter, req *http.Request) {
 	sessionID := req.Header.Get("X-Session-Id")
 	if len(sessionID) < minSessionIDLength {
@@ -231,7 +232,7 @@ func (state *State) Post(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
-// Remove a session from the map and closes its corresponding OR port
+// CloseSession removes a session from the map and closes its corresponding OR port
 // connection. Does nothing if the session id is not known.
 func (state *State) CloseSession(sessionID string) {
 	state.lock.Lock()
@@ -244,7 +245,7 @@ func (state *State) CloseSession(sessionID string) {
 	}
 }
 
-// Loop forever, checking for expired sessions and removing them.
+// ExpireSessions prevents an endless loop, checking for expired sessions and removing them.
 func (state *State) ExpireSessions() {
 	for {
 		time.Sleep(maxSessionStaleness / 2)

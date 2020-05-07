@@ -91,11 +91,12 @@ func (transport OptimizerTransport) Dial() (net.Conn, error) {
 type Transport struct {
 	dialer proxy.Dialer
 }
-//NewObfs2Transport is the initializer for obfs2
+//NewObfs2Transport is the initializer for obfs2 without a dialer
 func NewObfs2Transport() *Transport {
 	return &Transport{dialer: nil}
 }
 
+//NewObfs2Transport is the initializer for obfs2 with a dialer
 func NewObfs2TransportWithDialer(dialer proxy.Dialer) *Transport {
 	return &Transport{dialer:dialer}
 }

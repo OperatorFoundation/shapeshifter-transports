@@ -3,7 +3,7 @@
  *
  */
 
-// Package Optimizer provides a PT 2.0 Go API wrapper around the connections used
+// Package optimizer provides a PT 2.0 Go API wrapper around the connections used
 package optimizer
 
 import (
@@ -78,6 +78,7 @@ func (strategy *FirstStrategy) Report(Transport, bool, float64) {
 
 }
 
+//NewRandomStrategy initializes RandomStrategy
 func NewRandomStrategy(transports []Transport) Strategy {
 	return &RandomStrategy{transports}
 }
@@ -97,10 +98,12 @@ func (strategy *RandomStrategy) Report(Transport, bool, float64) {
 
 }
 
+//NewRotateStrategy initializes RotateStrategy
 func NewRotateStrategy(transports []Transport) Strategy {
 	return &RotateStrategy{transports, 1}
 }
 
+//RotateStrategy cycles through the list of transports, using a different one each time
 type RotateStrategy struct {
 	transports []Transport
 	index      int
@@ -121,12 +124,15 @@ func (strategy *RotateStrategy) Report(Transport, bool, float64) {
 
 }
 
+//TrackStrategy assigns a score to each transport and server that is remembered and used to
+//choose the best option
 type TrackStrategy struct {
 	index     int
 	trackMap  map[Transport]int
 	transport []Transport
 }
 
+//NewTrackStrategy initializes TrackStrategy
 func NewTrackStrategy(transport []Transport) Strategy {
 	track := TrackStrategy{0, map[Transport]int{}, transport}
 	track.trackMap = make(map[Transport]int)
@@ -142,27 +148,29 @@ func (strategy *TrackStrategy) Choose() Transport {
 	for startIndex != strategy.index {
 		if score == 1 {
 			return transport
-		} else {
-			transport = strategy.transport[strategy.index]
-			score = strategy.findScore(strategy.transport)
-			strategy.incrementIndex(strategy.transport)
 		}
+		transport = strategy.transport[strategy.index]
+		score = strategy.findScore(strategy.transport)
+		strategy.incrementIndex(strategy.transport)
+
 	}
 	return nil
 }
 
+//findScore is used to find the score given to each transport based on performance
 func (strategy *TrackStrategy) findScore(transports []Transport) int {
 	transport := transports[strategy.index]
 	score, ok := strategy.trackMap[transport]
 	if ok {
 		return score
-	} else {
-		return 1
 	}
+	return 1
+
 }
 
+//incrementIndex is used to cycle through the transport index
 func (strategy *TrackStrategy) incrementIndex(transports []Transport) {
-	strategy.index += 1
+	strategy.index++
 	if strategy.index >= len(transports) {
 		strategy.index = 0
 	}
@@ -177,12 +185,14 @@ func (strategy *TrackStrategy) Report(transport Transport, success bool, _ float
 	}
 }
 
+//minimizeDialDuration is used to find the transport with the fastest response time
 type minimizeDialDuration struct {
 	index      int
 	trackMap   map[Transport]float64
 	transports []Transport
 }
 
+//NewMinimizeDialDuration initializes minimizeDialDuration
 func NewMinimizeDialDuration(transport []Transport) Strategy {
 	duration := minimizeDialDuration{0, map[Transport]float64{}, transport}
 	duration.trackMap = make(map[Transport]float64)
@@ -198,36 +208,38 @@ func (strategy *minimizeDialDuration) Choose() Transport {
 	for startIndex != strategy.index {
 		if score == 0 {
 			return transport
-		} else {
-			strategy.incrementIndex(strategy.transports)
-			transport = strategy.minDuration()
-			if transport == nil {
-				transport = strategy.transports[strategy.index]
-				score = strategy.findScore(strategy.transports)
-				continue
-			} else {
-				return transport
-			}
 		}
+		strategy.incrementIndex(strategy.transports)
+		transport = strategy.minDuration()
+		if transport == nil {
+			transport = strategy.transports[strategy.index]
+			score = strategy.findScore(strategy.transports)
+			continue
+		} else {
+			return transport
+		}
+
 	}
 	return nil
 }
 
+//incrementIndex is used to cycle through the transport index
 func (strategy *minimizeDialDuration) incrementIndex(transports []Transport) {
-	strategy.index += 1
+	strategy.index++
 	if strategy.index >= len(transports) {
 		strategy.index = 0
 	}
 }
 
+//findScore is used to find the score given to each transport based on performance
 func (strategy *minimizeDialDuration) findScore(transports []Transport) float64 {
 	transport := transports[strategy.index]
 	score, ok := strategy.trackMap[transport]
 	if ok {
 		return score
-	} else {
-		return 0
 	}
+	return 0
+
 }
 
 //Report returns if the transport was successful and how long the connection took
@@ -243,6 +255,7 @@ func (strategy *minimizeDialDuration) Report(transport Transport, success bool, 
 	}
 }
 
+//minDuration assigns a value to the response time
 func (strategy *minimizeDialDuration) minDuration() Transport {
 	min := 61.0
 	var transport Transport = nil

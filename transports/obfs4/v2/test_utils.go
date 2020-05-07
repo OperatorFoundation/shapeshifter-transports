@@ -6,6 +6,7 @@ import (
 	"strings"
 )
 
+//RunLocalObfs4Server runs the server side in the background for the test
 func RunLocalObfs4Server(data string) bool {
 	//create a server
 	serverConfig, confError := NewObfs4Server("/Users/bluesaxorcist/stateDir")
@@ -43,6 +44,7 @@ func RunLocalObfs4Server(data string) bool {
 	return true
 }
 
+//RunObfs4Client runs the client side in the background for the test
 func RunObfs4Client() (*Transport, error){
 	fPath := path.Join("/Users/bluesaxorcist/stateDir", "obfs4_bridgeline.txt")
 	bytes, fileError := ioutil.ReadFile(fPath)
