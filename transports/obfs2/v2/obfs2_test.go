@@ -129,3 +129,29 @@ func TestObfs2WithDialer(t *testing.T) {
 		return
 	}
 }
+
+func TestObfs2OptimizerTransportWithDialer(t *testing.T) {
+	config := New("127.0.0.1:1234", proxy.Direct)
+	//create client buffer
+	clientBuffer := make([]byte, 4)
+	//call dial on client and check error
+	clientConn, dialErr := config.Dial()
+	if dialErr != nil {
+		t.Fail()
+		return
+	}
+
+	//write data from clientConn for server to read
+	_, clientWriteErr := clientConn.Write([]byte(data))
+	if clientWriteErr != nil {
+		t.Fail()
+		return
+	}
+
+	//read on client side
+	_, clientReadErr := clientConn.Read(clientBuffer)
+	if clientReadErr != nil {
+		t.Fail()
+		return
+	}
+}

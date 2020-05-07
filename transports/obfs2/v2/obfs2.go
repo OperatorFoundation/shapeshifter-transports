@@ -36,6 +36,7 @@ import (
 	"crypto/sha256"
 	"encoding/binary"
 	"fmt"
+	"github.com/OperatorFoundation/shapeshifter-transports/transports/Optimizer/v2"
 	"io"
 	"net"
 	"time"
@@ -84,13 +85,23 @@ func (transport OptimizerTransport) Dial() (net.Conn, error) {
 		return nil, err
 	}
 
-	return  transportConn, nil
+	return transportConn, nil
 }
 
 // Transport is the obfs2 implementation of the base.Transport interface.
 type Transport struct {
 	dialer proxy.Dialer
 }
+
+//New initializes obfs2 for Optimizer
+func New(address string, dialer proxy.Dialer) Optimizer.Transport {
+	result := OptimizerTransport{
+		Address: address,
+		Dialer:  dialer,
+	}
+	return &result
+}
+
 //NewObfs2Transport is the initializer for obfs2 without a dialer
 func NewObfs2Transport() *Transport {
 	return &Transport{dialer: nil}
@@ -98,8 +109,9 @@ func NewObfs2Transport() *Transport {
 
 //NewObfs2Transport is the initializer for obfs2 with a dialer
 func NewObfs2TransportWithDialer(dialer proxy.Dialer) *Transport {
-	return &Transport{dialer:dialer}
+	return &Transport{dialer: dialer}
 }
+
 //obfs2TransportListener defines a TCP network listener.
 type obfs2TransportListener struct {
 	listener *net.TCPListener
