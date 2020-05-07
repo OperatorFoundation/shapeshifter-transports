@@ -32,6 +32,7 @@
 package obfs2
 
 import (
+	"golang.org/x/net/proxy"
 	"os"
 	"testing"
 )
@@ -104,7 +105,7 @@ func TestObfs2(t *testing.T) {
 }
 
 func TestObfs2WithDialer(t *testing.T) {
-	config := NewObfs2Transport()
+	config := NewObfs2TransportWithDialer(proxy.Direct)
 	//create client buffer
 	clientBuffer := make([]byte, 4)
 	//call dial on client and check error
