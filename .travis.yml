@@ -4,7 +4,7 @@ script:
 #  - go test -v github.com/OperatorFoundation/shapeshifter-transports/transports/Dust/v2
 #  - go test -v github.com/OperatorFoundation/shapeshifter-transports/transports/meeklite/v2
 #  - go test -v github.com/OperatorFoundation/shapeshifter-transports/transports/meekserver/v2
-#  - go test -v github.com/OperatorFoundation/shapeshifter-transports/transports/obfs2/v2
+  - go test -v github.com/OperatorFoundation/shapeshifter-transports/transports/obfs2/v2
  # - go test -v github.com/OperatorFoundation/shapeshifter-transports/transports/obfs4/v2
  # - go test -v github.com/OperatorFoundation/shapeshifter-transports/transports/Optimizer/v2
   - cd transports/obfs4/v2; go test -v
