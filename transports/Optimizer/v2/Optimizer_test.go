@@ -15,7 +15,7 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	config := shadow.NewConfig("orange", "aes-128-ctr")
+	config := shadow.NewConfig("1234", "CHACHA20-IETF-POLY1305")
 	listener := config.Listen("127.0.0.1:1235")
 	go acceptConnections(listener)
 
