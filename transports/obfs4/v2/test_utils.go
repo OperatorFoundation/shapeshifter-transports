@@ -23,29 +23,33 @@ func RunLocalObfs4Server(data string) bool {
 		//create server buffer
 		serverBuffer := make([]byte, 4)
 
-		//create serverConn
-		serverConn, acceptErr := serverListener.Accept()
-		if acceptErr != nil {
-			return
-		}
+		for {
+			//create serverConn
+			serverConn, acceptErr := serverListener.Accept()
+			if acceptErr != nil {
+				return
+			}
 
-		//read on server side
-		_, serverReadErr := serverConn.Read(serverBuffer)
-		if serverReadErr != nil {
-			return
-		}
+			go func() {
+				//read on server side
+				_, serverReadErr := serverConn.Read(serverBuffer)
+				if serverReadErr != nil {
+					return
+				}
 
-		//write data from serverConn for client to read
-		_, serverWriteErr := serverConn.Write([]byte(data))
-		if serverWriteErr != nil {
-			return
+				//write data from serverConn for client to read
+				_, serverWriteErr := serverConn.Write([]byte(data))
+				if serverWriteErr != nil {
+					return
+				}
+			}()
 		}
 	}()
 	return true
 }
 
 //RunObfs4Client runs the client side in the background for the test
-func RunObfs4Client() (*Transport, error){
+func RunObfs4Client() (*Transport, error) {
 	fPath := path.Join("/Users/bluesaxorcist/stateDir", "obfs4_bridgeline.txt")
 	bytes, fileError := ioutil.ReadFile(fPath)
 	if fileError != nil {

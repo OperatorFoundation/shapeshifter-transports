@@ -36,7 +36,7 @@ import (
 	"crypto/sha256"
 	"encoding/binary"
 	"fmt"
-	"github.com/OperatorFoundation/shapeshifter-transports/transports/Optimizer/v2"
+
 	"io"
 	"net"
 	"time"
@@ -94,7 +94,7 @@ type Transport struct {
 }
 
 //New initializes obfs2 for Optimizer
-func New(address string, dialer proxy.Dialer) Optimizer.Transport {
+func New(address string, dialer proxy.Dialer) *OptimizerTransport {
 	result := OptimizerTransport{
 		Address: address,
 		Dialer:  dialer,

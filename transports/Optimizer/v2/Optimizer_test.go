@@ -39,7 +39,7 @@ func TestMeekliteDial(t *testing.T) {
 	if parseErr != nil {
 		t.Fail()
 	}
-	meekliteTransport := meeklite.Transport{Url: URL, Front: "a0.awsstatic.com", Address: "127.0.0.1:1235" }
+	meekliteTransport := meeklite.Transport{URL: URL, Front: "a0.awsstatic.com", Address: "127.0.0.1:1235" }
 	_, err := meekliteTransport.Dial()
 	if err != nil {
 		t.Fail()
@@ -52,7 +52,7 @@ func TestOptimizerMeekliteDial(t *testing.T) {
 	if parseErr != nil {
 		t.Fail()
 	}
-	meekliteTransport := meeklite.Transport{Url: URL, Front: "a0.awsstatic.com", Address: "127.0.0.1:1235" }
+	meekliteTransport := meeklite.Transport{URL: URL, Front: "a0.awsstatic.com", Address: "127.0.0.1:1235" }
 	transports := []Transport{meekliteTransport}
 	strategy := NewFirstStrategy(transports)
 	optimizerTransport := NewOptimizerClient(transports, strategy)
@@ -82,7 +82,6 @@ func TestOptimizerShadowDial(t *testing.T) {
 }
 
 func TestObfs4Transport_Dial(t *testing.T) {
-
 	obfs4Transport, transportErr := obfs4.RunObfs4Client()
 	if transportErr != nil {
 		t.Fail()
