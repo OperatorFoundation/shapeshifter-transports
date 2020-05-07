@@ -1,6 +1,7 @@
 language: go
 
 script:
+  - cd transports
   #  - go test -v github.com/OperatorFoundation/shapeshifter-transports/transports/Dust/v2
   #- cd transports/Dust/v2; go test -v
   #  - go test -v github.com/OperatorFoundation/shapeshifter-transports/transports/meeklite/v2
@@ -8,13 +9,13 @@ script:
   #  - go test -v github.com/OperatorFoundation/shapeshifter-transports/transports/meekserver/v2
   #- cd transports/meekserver/v2; go test -v
   #- go test -v github.com/OperatorFoundation/shapeshifter-transports/transports/obfs2/v2
-  - cd transports/obfs2/v2; go test -v
+  - cd obfs2/v2; go test -v
   # - go test -v github.com/OperatorFoundation/shapeshifter-transports/transports/obfs4/v2
-  - cd transports/obfs4/v2; go test -v
+  - cd ../../obfs4/v2; go test -v
   # - go test -v github.com/OperatorFoundation/shapeshifter-transports/transports/Optimizer/v2
-  - cd transports/Optimizer/v2; go test -v
+  - cd ../../Optimizer/v2; go test -v
   # - go test -v github.com/OperatorFoundation/shapeshifter-transports/transports/Replicant/v2
-  - cd transports/Replicant/v2; go test -v
+  - cd ../../Replicant/v2; go test -v
   # - go test -v github.com/OperatorFoundation/shapeshifter-transports/transports/shadow/v2
-  - cd transports/shadow/v2; go test -v
+  - cd ../../shadow/v2; go test -v
 
