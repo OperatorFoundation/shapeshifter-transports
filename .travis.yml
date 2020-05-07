@@ -2,7 +2,6 @@ language: go
 
 script:
   - go build -v
-  - go test -v github.com/OperatorFoundation/shapeshifter-transports/transports
   - go test -v github.com/OperatorFoundation/shapeshifter-transports/transports/Dust/v2
   - go test -v github.com/OperatorFoundation/shapeshifter-transports/transports/meeklite/v2
   - go test -v github.com/OperatorFoundation/shapeshifter-transports/transports/meekserver/v2
