@@ -30,18 +30,19 @@
 package obfs4
 
 import (
+	"os"
 	"testing"
 )
 
 const data = "test"
 
+func TestMain(m *testing.M) {
+	_ = RunLocalObfs4Server("test")
+
+	os.Exit(m.Run())
+}
+
 func TestObfs4(t *testing.T) {
-	//create a server
-	serverLaunched := RunLocalObfs4Server(data)
-	if !serverLaunched {
-		t.Fail()
-		return
-	}
 	clientConfig, launchErr := RunObfs4Client()
 	if launchErr != nil {
 		t.Fail()
