@@ -267,10 +267,10 @@ func getObfs4CertString() (*string, error) {
 	}
 	home := usr.HomeDir
 	var fPath string
-	if runtime.GOOS == "Linux" {
-		fPath = path.Join(home, "gopath/src/github.com/OperatorFoundation/shapeshifter-transports/stateDir/obfs4_bridgeline.txt")
-	} else {
+	if runtime.GOOS == "darwin" {
 		fPath = path.Join(home, "shapeshifter-transports/stateDir/obfs4_bridgeline.txt")
+	} else {
+		fPath = path.Join(home, "gopath/src/github.com/OperatorFoundation/shapeshifter-transports/stateDir/obfs4_bridgeline.txt")
 	}
 	bytes, fileError := ioutil.ReadFile(fPath)
 	if fileError != nil {

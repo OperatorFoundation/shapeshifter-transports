@@ -31,6 +31,7 @@ package obfs4
 
 import (
 	"os"
+	"runtime"
 	"testing"
 )
 
@@ -43,6 +44,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestObfs4(t *testing.T) {
+	print(runtime.GOOS)
 	clientConfig, launchErr := RunObfs4Client()
 	if launchErr != nil {
 		t.Fail()
