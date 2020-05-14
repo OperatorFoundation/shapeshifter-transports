@@ -3,31 +3,34 @@
  *
  */
 
-// Package Optimizer provides a PT 2.0 Go API wrapper around the connections used
-package Optimizer
+// Package optimizer provides a PT 2.0 Go API wrapper around the connections used
+package optimizer
 
 import (
 	"errors"
-	_ "math/rand"
 	"net"
 	"time"
 )
 
 const timeoutInSeconds = 60
 
+//Transport is a program that transforms network traffic
 type Transport interface {
 	Dial() (net.Conn, error)
 }
 
+//Client contains the two parameters needed to use Optimizer.
 type Client struct {
 	Transports []Transport
 	Strategy   Strategy
 }
 
+//NewOptimizerClient is the initializer
 func NewOptimizerClient(Transports []Transport, Strategy Strategy) *Client {
 	return &Client{Transports, Strategy}
 }
 
+//Dial connects to the address on the named network
 func (OptT *Client) Dial() (net.Conn, error) {
 	firstTryTime := time.Now()
 	transport := OptT.Strategy.Choose()
@@ -49,79 +52,94 @@ func (OptT *Client) Dial() (net.Conn, error) {
 	return conn, nil
 }
 
+//Strategy is the method used to choose a transport
 type Strategy interface {
 	Choose() Transport
 	Report(transport Transport, success bool, durationElapsed float64)
 }
 
-//begin refactor
+//FirstStrategy returns the first strategy in the array
 type FirstStrategy struct {
 	transports []Transport
 }
 
+//NewFirstStrategy initializes FirstStrategy
 func NewFirstStrategy(transports []Transport) Strategy {
 	return &FirstStrategy{transports}
 }
 
+//Choose selects a transport in the array
 func (strategy *FirstStrategy) Choose() Transport {
 	return strategy.transports[0]
 }
 
-func (strategy *FirstStrategy) Report(transport Transport, success bool, durationElapsed float64) {
+//Report returns if the transport was successful and how long the connection took
+func (strategy *FirstStrategy) Report(Transport, bool, float64) {
 
 }
 
-//end refactor
-type RandomStrategy struct {
-	transports []Transport
-}
-
+//NewRandomStrategy initializes RandomStrategy
 func NewRandomStrategy(transports []Transport) Strategy {
 	return &RandomStrategy{transports}
 }
 
+//RandomStrategy returns a transport at random
+type RandomStrategy struct {
+	transports []Transport
+}
+
+//Choose selects a transport in the array
 func (strategy *RandomStrategy) Choose() Transport {
 	return strategy.transports[0]
 }
 
-func (strategy *RandomStrategy) Report(transport Transport, success bool, durationElapsed float64) {
+//Report returns if the transport was successful and how long the connection took
+func (strategy *RandomStrategy) Report(Transport, bool, float64) {
 
 }
 
+//NewRotateStrategy initializes RotateStrategy
+func NewRotateStrategy(transports []Transport) Strategy {
+	return &RotateStrategy{transports, 1}
+}
+
+//RotateStrategy cycles through the list of transports, using a different one each time
 type RotateStrategy struct {
 	transports []Transport
 	index      int
 }
 
-func NewRotateStrategy(transports []Transport) Strategy {
-	return &RotateStrategy{transports, 0}
-}
-
+//Choose selects a transport in the array
 func (strategy *RotateStrategy) Choose() Transport {
 	transport := strategy.transports[strategy.index]
-	strategy.index += 1
+	strategy.index++
 	if strategy.index >= len(strategy.transports) {
 		strategy.index = 0
 	}
 	return transport
 }
 
-func (strategy *RotateStrategy) Report(transport Transport, success bool, durationElapsed float64) {
+//Report returns if the transport was successful and how long the connection took
+func (strategy *RotateStrategy) Report(Transport, bool, float64) {
 
 }
 
+//TrackStrategy assigns a score to each transport and server that is remembered and used to
+//choose the best option
 type TrackStrategy struct {
 	index     int
 	trackMap  map[Transport]int
 	transport []Transport
 }
 
+//NewTrackStrategy initializes TrackStrategy
 func NewTrackStrategy(transport []Transport) Strategy {
 	track := TrackStrategy{0, map[Transport]int{}, transport}
 	track.trackMap = make(map[Transport]int)
 	return &track
 }
 
+//Choose selects a transport in the array
 func (strategy *TrackStrategy) Choose() Transport {
 	transport := strategy.transport[strategy.index]
 	score := strategy.findScore(strategy.transport)
@@ -130,33 +148,36 @@ func (strategy *TrackStrategy) Choose() Transport {
 	for startIndex != strategy.index {
 		if score == 1 {
 			return transport
-		} else {
-			transport = strategy.transport[strategy.index]
-			score = strategy.findScore(strategy.transport)
-			strategy.incrementIndex(strategy.transport)
 		}
+		transport = strategy.transport[strategy.index]
+		score = strategy.findScore(strategy.transport)
+		strategy.incrementIndex(strategy.transport)
+
 	}
 	return nil
 }
 
+//findScore is used to find the score given to each transport based on performance
 func (strategy *TrackStrategy) findScore(transports []Transport) int {
 	transport := transports[strategy.index]
 	score, ok := strategy.trackMap[transport]
 	if ok {
 		return score
-	} else {
-		return 1
 	}
+	return 1
+
 }
 
+//incrementIndex is used to cycle through the transport index
 func (strategy *TrackStrategy) incrementIndex(transports []Transport) {
-	strategy.index += 1
+	strategy.index++
 	if strategy.index >= len(transports) {
 		strategy.index = 0
 	}
 }
 
-func (strategy *TrackStrategy) Report(transport Transport, success bool, durationElapsed float64) {
+//Report returns if the transport was successful and how long the connection took
+func (strategy *TrackStrategy) Report(transport Transport, success bool, _ float64) {
 	if success {
 		strategy.trackMap[transport] = 1
 	} else {
@@ -164,18 +185,21 @@ func (strategy *TrackStrategy) Report(transport Transport, success bool, duratio
 	}
 }
 
+//minimizeDialDuration is used to find the transport with the fastest response time
 type minimizeDialDuration struct {
 	index      int
 	trackMap   map[Transport]float64
 	transports []Transport
 }
 
+//NewMinimizeDialDuration initializes minimizeDialDuration
 func NewMinimizeDialDuration(transport []Transport) Strategy {
 	duration := minimizeDialDuration{0, map[Transport]float64{}, transport}
 	duration.trackMap = make(map[Transport]float64)
 	return &duration
 }
 
+//Choose selects a transport in the array
 func (strategy *minimizeDialDuration) Choose() Transport {
 	transport := strategy.transports[strategy.index]
 	score := strategy.findScore(strategy.transports)
@@ -184,38 +208,41 @@ func (strategy *minimizeDialDuration) Choose() Transport {
 	for startIndex != strategy.index {
 		if score == 0 {
 			return transport
-		} else {
-			strategy.incrementIndex(strategy.transports)
-			transport = strategy.minDuration()
-			if transport == nil {
-				transport = strategy.transports[strategy.index]
-				score = strategy.findScore(strategy.transports)
-				continue
-			} else {
-				return transport
-			}
 		}
+		strategy.incrementIndex(strategy.transports)
+		transport = strategy.minDuration()
+		if transport == nil {
+			transport = strategy.transports[strategy.index]
+			score = strategy.findScore(strategy.transports)
+			continue
+		} else {
+			return transport
+		}
+
 	}
 	return nil
 }
 
+//incrementIndex is used to cycle through the transport index
 func (strategy *minimizeDialDuration) incrementIndex(transports []Transport) {
-	strategy.index += 1
+	strategy.index++
 	if strategy.index >= len(transports) {
 		strategy.index = 0
 	}
 }
 
+//findScore is used to find the score given to each transport based on performance
 func (strategy *minimizeDialDuration) findScore(transports []Transport) float64 {
 	transport := transports[strategy.index]
 	score, ok := strategy.trackMap[transport]
 	if ok {
 		return score
-	} else {
-		return 0
 	}
+	return 0
+
 }
 
+//Report returns if the transport was successful and how long the connection took
 func (strategy *minimizeDialDuration) Report(transport Transport, success bool, durationElapsed float64) {
 	if success {
 		if durationElapsed < 60 {
@@ -228,6 +255,7 @@ func (strategy *minimizeDialDuration) Report(transport Transport, success bool, 
 	}
 }
 
+//minDuration assigns a value to the response time
 func (strategy *minimizeDialDuration) minDuration() Transport {
 	min := 61.0
 	var transport Transport = nil

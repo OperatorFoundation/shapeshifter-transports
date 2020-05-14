@@ -28,68 +28,13 @@
 package rot13
 
 import (
-	"fmt"
 	"net"
 	"time"
-
-	"golang.org/x/net/proxy"
-
-	"github.com/OperatorFoundation/shapeshifter-ipc"
 )
 
-// Transport that uses a ROT13 cipher to shapeshift the application network traffic
-type rot13Transport struct {
-	dialer *net.Dialer
-}
-
 // Public initializer method to get a new ROT13 transport
-func NewRot13Transport() *rot13Transport {
-	return &rot13Transport{dialer: nil}
-}
 
 // Methods that implement the base.Transport interface
-
-// Dialer for the underlying network connection
-// The Dialer can be modified to change how the network connections are made.
-func (transport *rot13Transport) NetworkDialer() net.Dialer {
-	return *transport.dialer
-}
-
-// Create outgoing transport connection
-func (transport *rot13Transport) Dial(address string) net.Conn {
-	// FIXME - should use dialer
-	dialFn := proxy.Direct.Dial
-	conn, dialErr := dialFn("tcp", address)
-	if dialErr != nil {
-		return nil
-	}
-
-	dialConn := conn
-	transportConn, err := newRot13ClientConn(conn)
-	if err != nil {
-		dialConn.Close()
-		return nil
-	}
-
-	return transportConn
-}
-
-// Create listener for incoming transport connection
-func (transport *rot13Transport) Listen(address string) net.Listener {
-	addr, resolveErr := pt.ResolveAddr(address)
-	if resolveErr != nil {
-		fmt.Println(resolveErr.Error())
-		return nil
-	}
-
-	ln, err := net.ListenTCP("tcp", addr)
-	if err != nil {
-		fmt.Println(err.Error())
-		return nil
-	}
-
-	return newRot13TransportListener(ln)
-}
 
 // End methods that implement the base.Transport interface
 
@@ -100,9 +45,6 @@ type rot13TransportListener struct {
 
 // Private initializer for the ROT13 listener.
 // You get a new listener instance by calling the Listen method on the Transport.
-func newRot13TransportListener(listener *net.TCPListener) *rot13TransportListener {
-	return &rot13TransportListener{listener: listener}
-}
 
 // Methods that implement the net.Listener interface
 
@@ -141,10 +83,6 @@ type rot13Conn struct {
 }
 
 // Private initializer methods
-func newRot13ClientConn(conn net.Conn) (c *rot13Conn, err error) {
-	// Initialize a client connection, and start the handshake timeout.
-	return &rot13Conn{conn: conn}, nil
-}
 
 func newRot13ServerConn(conn net.Conn) (c *rot13Conn, err error) {
 	// Initialize a server connection, and start the handshake timeout.
@@ -161,8 +99,8 @@ func (transportConn *rot13Conn) NetworkConn() net.Conn {
 // End methods that implement the net.Conn interface
 
 // Methods implementing net.Conn
-func (conn *rot13Conn) Read(b []byte) (int, error) {
-	i, err := conn.conn.Read(b)
+func (transportConn *rot13Conn) Read(b []byte) (int, error) {
+	i, err := transportConn.conn.Read(b)
 	if err != nil {
 		return 0, err
 	}
@@ -171,9 +109,9 @@ func (conn *rot13Conn) Read(b []byte) (int, error) {
 	return i, err
 }
 
-func (conn *rot13Conn) Write(b []byte) (int, error) {
+func (transportConn *rot13Conn) Write(b []byte) (int, error) {
 	shift(b)
-	i, err := conn.conn.Write(b)
+	i, err := transportConn.conn.Write(b)
 	if err != nil {
 		return 0, err
 	}
@@ -181,35 +119,35 @@ func (conn *rot13Conn) Write(b []byte) (int, error) {
 	return i, err
 }
 
-func (conn *rot13Conn) Close() error {
-	return conn.conn.Close()
+func (transportConn *rot13Conn) Close() error {
+	return transportConn.conn.Close()
 }
 
-func (conn *rot13Conn) LocalAddr() net.Addr {
-	return conn.conn.LocalAddr()
+func (transportConn *rot13Conn) LocalAddr() net.Addr {
+	return transportConn.conn.LocalAddr()
 }
 
-func (conn *rot13Conn) RemoteAddr() net.Addr {
-	return conn.conn.RemoteAddr()
+func (transportConn *rot13Conn) RemoteAddr() net.Addr {
+	return transportConn.conn.RemoteAddr()
 }
 
-func (conn *rot13Conn) SetDeadline(t time.Time) error {
-	return conn.conn.SetDeadline(t)
+func (transportConn *rot13Conn) SetDeadline(t time.Time) error {
+	return transportConn.conn.SetDeadline(t)
 }
 
-func (conn *rot13Conn) SetReadDeadline(t time.Time) error {
-	return conn.conn.SetReadDeadline(t)
+func (transportConn *rot13Conn) SetReadDeadline(t time.Time) error {
+	return transportConn.conn.SetReadDeadline(t)
 }
 
-func (conn *rot13Conn) SetWriteDeadline(t time.Time) error {
-	return conn.conn.SetWriteDeadline(t)
+func (transportConn *rot13Conn) SetWriteDeadline(t time.Time) error {
+	return transportConn.conn.SetWriteDeadline(t)
 }
 
 // End of methods implementing net.Conn
 
 // Private methods implementing the ROT13 cipher
 func shift(bs []byte) {
-	for i, _ := range bs {
+	for i := range bs {
 		var n int
 		n = int(bs[i])
 		n = (n + 13) % 255
@@ -218,7 +156,7 @@ func shift(bs []byte) {
 }
 
 func unshift(bs []byte) {
-	for i, _ := range bs {
+	for i := range bs {
 		var n int
 		n = int(bs[i])
 		n = (n + 255 - 13) % 255

@@ -25,54 +25,55 @@
 package shadow
 
 import (
+	"fmt"
+	"net"
+	"os"
 	"testing"
 )
 
 const data = "test"
 
+func TestMain(m *testing.M) {
+	config :=  NewConfig("1234", "CHACHA20-IETF-POLY1305")
+	listener := config.Listen("127.0.0.1:1236")
+	go acceptConnections(listener)
+
+	os.Exit(m.Run())
+}
+
+func acceptConnections(listener net.Listener) {
+	serverBuffer := make([]byte, 4)
+	for {
+		serverConn, err := listener.Accept()
+		if err != nil {
+			return
+		}
+		go func() {
+			//read on server side
+			_, serverReadErr := serverConn.Read(serverBuffer)
+			if serverReadErr != nil {
+				return
+			}
+
+			//write data from serverConn for client to read
+			_, serverWriteErr := serverConn.Write([]byte(data))
+			if serverWriteErr != nil {
+				return
+			}
+		}()
+	}
+}
+
 func TestShadow(t *testing.T) {
 	//create a server
-	config := NewConfig("password", "aes-128-ctr")
-
-	//call listen on the server
-	serverListener := config.Listen("127.0.0.1:1234")
-	if serverListener != nil {
-		t.Fail()
-		return
-	}
-
-	//Create Server connection and format it for concurrency
-	go func() {
-		//create server buffer
-		serverBuffer := make([]byte, 4)
-
-		//create serverConn
-		serverConn, acceptErr := serverListener.Accept()
-		if acceptErr != nil {
-			t.Fail()
-			return
-		}
-
-		//read on server side
-		_, serverReadErr := serverConn.Read(serverBuffer)
-		if serverReadErr != nil {
-			t.Fail()
-			return
-		}
-
-		//write data from serverConn for client to read
-		_, serverWriteErr := serverConn.Write([]byte(data))
-		if serverWriteErr != nil {
-			t.Fail()
-			return
-		}
-	}()
+	config := NewConfig("1234", "CHACHA20-IETF-POLY1305")
 
 	//create client buffer
 	clientBuffer := make([]byte, 4)
 	//call dial on client and check error
-	clientConn, dialErr := config.Dial("127.0.0.1:1234")
+	clientConn, dialErr := config.Dial("127.0.0.1:1236")
 	if dialErr != nil {
+		fmt.Println("clientConn Dial error")
 		t.Fail()
 		return
 	}
@@ -80,6 +81,7 @@ func TestShadow(t *testing.T) {
 	//write data from clientConn for server to read
 	_, clientWriteErr := clientConn.Write([]byte(data))
 	if clientWriteErr != nil {
+		fmt.Println("client write error")
 		t.Fail()
 		return
 	}
@@ -87,6 +89,7 @@ func TestShadow(t *testing.T) {
 	//read on client side
 	_, clientReadErr := clientConn.Read(clientBuffer)
 	if clientReadErr != nil {
+		fmt.Println("client read error")
 		t.Fail()
 		return
 	}

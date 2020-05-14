@@ -1,4 +1,4 @@
-// meek-server is the server transport plugin for the meek pluggable transport.
+// Package meekserver is the server transport plugin for the meek pluggable transport.
 // It acts as an HTTP server, keeps track of session ids, and forwards received
 // data to a local OR port.
 //
@@ -31,15 +31,11 @@ import (
 	"sync"
 	"time"
 
-	"git.torproject.org/pluggable-transports/goptlib.git"
 	"github.com/deckarep/golang-set"
 	"golang.org/x/net/http2"
 )
 
 const (
-	programVersion = "0.34"
-
-	ptMethodName = "meek"
 	// Reject session ids shorter than this, as a weak defense against
 	// client bugs that send an empty session id or something similarly
 	// likely to collide.
@@ -47,9 +43,6 @@ const (
 	// The largest request body we are willing to process, and the largest
 	// chunk of data we'll send back in a response.
 	maxPayloadLength = 0x10000
-	// How long we try to read something back from the OR port before
-	// returning the response.
-	turnaroundTimeout = 10 * time.Millisecond
 	// Passed as ReadTimeout and WriteTimeout when constructing the
 	// http.Server.
 	readWriteTimeout = 20 * time.Second
@@ -61,8 +54,6 @@ const (
 	listenAndServeErrorTimeout = 100 * time.Millisecond
 )
 
-var ptInfo pt.ServerInfo
-
 func httpBadRequest(w http.ResponseWriter) {
 	http.Error(w, "Bad request.", http.StatusBadRequest)
 }
@@ -71,7 +62,7 @@ func httpInternalServerError(w http.ResponseWriter) {
 	http.Error(w, "Internal server error.", http.StatusInternalServerError)
 }
 
-// Every session id maps to an existing OR port connection, which we keep open
+// Session id maps to an existing OR port connection, which we keep open
 // between received requests. The first time we see a new session id, we create
 // a new OR port connection.
 type Session struct {
@@ -79,25 +70,26 @@ type Session struct {
 	LastSeen time.Time
 }
 
-// Mark a session as having been seen just now.
+// Touch marks a session as having been seen just now.
 func (session *Session) Touch() {
 	session.LastSeen = time.Now()
 }
 
-// Is this session old enough to be culled?
+// IsExpired finds out if this session is old enough to be culled
 func (session *Session) IsExpired() bool {
 	return time.Since(session.LastSeen) > maxSessionStaleness
 }
 
+// State serves as the http handler
 // There is one state per HTTP listener. In the usual case there is just one
-// listener, so there is just one global state. State also serves as the http
-// Handler.
+// listener, so there is just one global state.
 type State struct {
 	sessionMap map[string]*Session
 	lock       sync.Mutex
 	availableSessions mapset.Set
 }
 
+// NewState makes a new state
 func NewState() *State {
 	state := new(State)
 	state.sessionMap = make(map[string]*Session)
@@ -116,7 +108,7 @@ func (state *State) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
-// Handle a GET request. This doesn't have any purpose apart from diagnostics.
+// Get handles a GET request. This doesn't have any purpose apart from diagnostics.
 func (state *State) Get(w http.ResponseWriter, req *http.Request) {
 	if path.Clean(req.URL.Path) != "/" {
 		http.NotFound(w, req)
@@ -124,31 +116,23 @@ func (state *State) Get(w http.ResponseWriter, req *http.Request) {
 	}
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("I’m just a happy little web server.\n"))
+	_, _ = w.Write([]byte("I’m just a happy little web server.\n"))
 }
 
 // Get a string representing the original client address, if available, as a
 // "host:port" string suitable to pass as the addr parameter to pt.DialOr. Never
 // fails: if the original client address is not available, returns "". If the
 // original client address is available, the returned port number is always 1.
-func getUseraddr(req *http.Request) string {
-	ip, err := originalClientIP(req)
-	if err != nil {
-		return ""
-	}
-	return net.JoinHostPort(ip.String(), "1")
-}
 
-// Look up a session by id, or create a new one (with its OR port connection) if
+// GetSession looks up a session by id, or create a new one (with its OR port connection) if
 // it doesn't already exist.
-func (state *State) GetSession(sessionID string, req *http.Request) (*Session, error) {
+func (state *State) GetSession(sessionID string) (*Session, error) {
 	state.lock.Lock()
 	defer state.lock.Unlock()
 
 	session := state.sessionMap[sessionID]
 	if session == nil {
 		// log.Printf("unknown session id %q; creating new session", sessionID)
-
 
 		session = &Session{Or: newFakeConn()}
 		state.sessionMap[sessionID] = session
@@ -225,7 +209,7 @@ func transact(session *Session, w http.ResponseWriter, req *http.Request) error 
 	return nil
 }
 
-// Handle a POST request. Look up the session id and then do a transaction.
+// Post handles a POST request. Look up the session id and then do a transaction.
 func (state *State) Post(w http.ResponseWriter, req *http.Request) {
 	sessionID := req.Header.Get("X-Session-Id")
 	if len(sessionID) < minSessionIDLength {
@@ -233,7 +217,7 @@ func (state *State) Post(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	session, err := state.GetSession(sessionID, req)
+	session, err := state.GetSession(sessionID)
 	if err != nil {
 		log.Print(err)
 		httpInternalServerError(w)
@@ -248,7 +232,7 @@ func (state *State) Post(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
-// Remove a session from the map and closes its corresponding OR port
+// CloseSession removes a session from the map and closes its corresponding OR port
 // connection. Does nothing if the session id is not known.
 func (state *State) CloseSession(sessionID string) {
 	state.lock.Lock()
@@ -261,7 +245,7 @@ func (state *State) CloseSession(sessionID string) {
 	}
 }
 
-// Loop forever, checking for expired sessions and removing them.
+// ExpireSessions prevents an endless loop, checking for expired sessions and removing them.
 func (state *State) ExpireSessions() {
 	for {
 		time.Sleep(maxSessionStaleness / 2)

@@ -1,4 +1,7 @@
 /*
+ * Copyright (c) 2014, Yawning Angel <yawning at torproject dot org>
+ * All rights reserved.
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
@@ -22,41 +25,49 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-package main
+// Package obfs4 provides an implementation of the Tor Project's obfs4
+// obfuscation protocol.
+package obfs4
 
 import (
-	"fmt"
-	"github.com/OperatorFoundation/obfs4/common/log"
-	"net"
-
-	"github.com/OperatorFoundation/shapeshifter-transports/transports/obfs2/v2"
+	"os"
+	"testing"
 )
 
-func main() {
-	var transport = obfs2.NewObfs2Transport()
-	var listener = transport.Listen("0.0.0.0:1234")
+const data = "test"
 
-	for {
-		var conn net.Conn
-		var acceptErr error
-		conn, acceptErr = listener.Accept()
-		if acceptErr != nil {
-			return
-		}
+func TestMain(m *testing.M) {
+	_ = RunLocalObfs4Server("test")
 
-		var buffer = make([]byte, 1024)
-		bytesRead, err := conn.Read(buffer)
-		for {
-			if err != nil {
-				closeErr := conn.Close()
-				if closeErr != nil {
-					log.Errorf("could not close")
-				}
-				break
-			}
-			fmt.Println("Received", bytesRead)
-			fmt.Print(string(buffer))
-			bytesRead, err = conn.Read(buffer)
-		}
+	os.Exit(m.Run())
+}
+
+func TestObfs4(t *testing.T) {
+	clientConfig, launchErr := RunObfs4Client()
+	if launchErr != nil {
+		t.Fail()
+		return
+	}
+	//create client buffer
+	clientBuffer := make([]byte, 4)
+	//call dial on client and check error
+	clientConn, dialErr := clientConfig.Dial("127.0.0.1:1234")
+	if dialErr != nil {
+		t.Fail()
+		return
+	}
+
+	//write data from clientConn for server to read
+	_, clientWriteErr := clientConn.Write([]byte(data))
+	if clientWriteErr != nil {
+		t.Fail()
+		return
+	}
+
+	//read on client side
+	_, clientReadErr := clientConn.Read(clientBuffer)
+	if clientReadErr != nil {
+		t.Fail()
+		return
 	}
 }

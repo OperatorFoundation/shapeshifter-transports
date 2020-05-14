@@ -9,6 +9,7 @@ package Dust
 
 import (
 	"fmt"
+	"github.com/OperatorFoundation/obfs4/common/log"
 	"golang.org/x/net/proxy"
 	"net"
 	"time"
@@ -39,15 +40,6 @@ func NewDustClient(serverPublic string, dialer proxy.Dialer) *dustClient {
 	return &dustClient{serverPubkey: spub, dialer: dialer}
 }
 
-func NewDustServer(idPath string) *dustServer {
-	spriv, err := Dust.LoadServerPrivateFile(idPath)
-	if err != nil {
-		return nil
-	}
-
-	return &dustServer{serverPrivkey: spriv}
-}
-
 type dustTransportListener struct {
 	listener  *net.TCPListener
 	transport *dustServer
@@ -61,7 +53,7 @@ type Transport struct {
 }
 
 type Config struct {
-	ServerPublic string
+	ServerPublic string `json:"server-public"`
 }
 func (transport Transport) Dial() (net.Conn, error) {
 	dustTransport := NewDustClient(transport.ServerPublic, transport.Dialer)
@@ -87,7 +79,10 @@ func (transport *dustClient) Dial(address string) (net.Conn, error) {
 
 	transportConn, err := Dust.BeginRawStreamClient(conn, transport.serverPubkey)
 	if err != nil {
-		conn.Close()
+		closeErr := conn.Close()
+		if closeErr != nil {
+			log.Errorf("could not close")
+		}
 		return conn, dialErr
 	}
 
@@ -177,13 +172,6 @@ func (sconn *dustConn) SetReadDeadline(t time.Time) error {
 
 func (sconn *dustConn) SetWriteDeadline(t time.Time) error {
 	return sconn.conn.SetWriteDeadline(t)
-}
-
-func newDustClientConn(conn *Dust.RawStreamConn) (c *dustConn, err error) {
-	// Initialize a client connection.
-	c = &dustConn{conn}
-
-	return
 }
 
 func newDustServerConn(conn *Dust.RawStreamConn) (c *dustConn, err error) {

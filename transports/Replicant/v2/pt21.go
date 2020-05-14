@@ -51,6 +51,7 @@ func (listener *replicantTransportListener) Accept() (net.Conn, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	config := listener.config
 	return NewServerConnection(conn, config)
 }

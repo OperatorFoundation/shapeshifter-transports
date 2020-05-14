@@ -30,7 +30,6 @@
 // made to normalize the TLS fingerprint.
 //
 // It borrows quite liberally from the real meek-client code.
-
 package meeklite
 
 import (
@@ -52,9 +51,6 @@ import (
 )
 
 const (
-	urlArg   = "url"
-	frontArg = "front"
-
 	maxChanBacklog = 16
 
 	// Constants shamelessly stolen from meek-client.go...
@@ -73,44 +69,35 @@ var (
 	loopbackAddr = net.IPv4(127, 0, 0, 1)
 )
 
-// Transport that uses domain fronting to shapeshift the application network traffic
-type meekTransport struct {
+// MeekTransport that uses domain fronting to shapeshift the application network traffic
+type MeekTransport struct {
 	dialer proxy.Dialer
 
 	clientArgs *meekClientArgs
 }
 
-// Public initializer method to get a new meek transport
-func NewMeekTransport(url string) *meekTransport {
-	clientArgs, err := newClientArgs(url)
-	if err != nil {
-		return nil
-	}
-
-	return &meekTransport{dialer: nil, clientArgs: clientArgs}
-}
-
-func NewMeekTransportWithFront(url string, front string, dialer proxy.Dialer) *meekTransport {
+// NewMeekTransportWithFront is a public initializer method to get a new meek transport
+func NewMeekTransportWithFront(url string, front string, dialer proxy.Dialer) *MeekTransport {
 	clientArgs, err := newClientArgsWithFront(url, front)
 	if err != nil {
 		return nil
 	}
 
-	return &meekTransport{dialer: dialer, clientArgs: clientArgs}
+	return &MeekTransport{dialer: dialer, clientArgs: clientArgs}
 }
 
 // Methods that implement the base.Transport interface
 
-// Dialer for the underlying network connection
+// NetworkDialer is a dialer for the underlying network connection
 // The Dialer can be modified to change how the network connections are made.
-func (transport *meekTransport) NetworkDialer() proxy.Dialer {
+func (transport *MeekTransport) NetworkDialer() proxy.Dialer {
 	return transport.dialer
 }
 
-// Create outgoing transport connection
-func (transport *meekTransport) Dial(address string) net.Conn {
+// Dial creates outgoing transport connection
+func (transport *MeekTransport) Dial() net.Conn {
 	// FIXME - should use dialer
-	transportConn, err := newMeekClientConn(address, transport.clientArgs)
+	transportConn, err := newMeekClientConn(transport.clientArgs)
 	if err != nil {
 		return nil
 	}
@@ -118,8 +105,8 @@ func (transport *meekTransport) Dial(address string) net.Conn {
 	return transportConn
 }
 
-// The meek transport does not have a corresponding server, only a client
-func (transport *meekTransport) Listen(address string) net.Listener {
+// Listen for the meek transport does not have a corresponding server, only a client
+func (transport *MeekTransport) Listen() net.Listener {
 	return nil
 }
 
@@ -133,43 +120,30 @@ type meekClientArgs struct {
 func (ca *meekClientArgs) Network() string {
 	return "meek"
 }
-//begin optimizer code
+
+//Transport contains parameters used in Optimizer
 type Transport struct {
-	Url     *gourl.URL `json:"url"`
-	Front   string `json:"front"`
+	URL     *gourl.URL `json:"url"`
+	Front   string     `json:"front"`
 	Address string
 	Dialer  proxy.Dialer
 }
 
+//Config puts the parameters in a json compatible format
 type Config struct {
-	Url *gourl.URL `json:"url"`
-	Front string `json:"front"`
+	URL   *gourl.URL `json:"url"`
+	Front string     `json:"front"`
 }
+
+// Dial creates outgoing transport connection
 func (transport Transport) Dial() (net.Conn, error) {
-	meekTransport := NewMeekTransportWithFront(transport.Url.String(), transport.Front, transport.Dialer)
-	conn := meekTransport.Dial(transport.Address)
+	meekTransport := NewMeekTransportWithFront(transport.URL.String(), transport.Front, transport.Dialer)
+	conn := meekTransport.Dial()
 	return conn, nil
 }
-//end optimizer code
+
 func (ca *meekClientArgs) String() string {
 	return "meek" + ":" + ca.front + ":" + ca.url.String()
-}
-
-func newClientArgs(url string) (ca *meekClientArgs, err error) {
-	ca = &meekClientArgs{}
-
-	// Parse the URL argument.
-	ca.url, err = gourl.Parse(url)
-	if err != nil {
-		return nil, fmt.Errorf("malformed url: '%s'", url)
-	}
-	switch ca.url.Scheme {
-	case "http", "https":
-	default:
-		return nil, fmt.Errorf("invalid scheme: '%s'", ca.url.Scheme)
-	}
-
-	return ca, nil
 }
 
 func newClientArgsWithFront(url string, front string) (ca *meekClientArgs, err error) {
@@ -209,7 +183,7 @@ type meekConn struct {
 
 // Private initializer methods
 
-func newMeekClientConn(addr string, ca *meekClientArgs) (*meekConn, error) {
+func newMeekClientConn(ca *meekClientArgs) (*meekConn, error) {
 	id, err := newSessionID()
 	if err != nil {
 		return nil, err
@@ -242,43 +216,46 @@ func (transportConn *meekConn) NetworkConn() net.Conn {
 // End methods that implement the base.TransportConn interface
 
 // Methods implementing net.Conn
-func (c *meekConn) Read(p []byte) (n int, err error) {
+func (transportConn *meekConn) Read(p []byte) (n int, err error) {
 	// If there is data left over from the previous read,
 	// service the request using the buffered data.
-	if c.rdBuf != nil {
-		if c.rdBuf.Len() == 0 {
+	if transportConn.rdBuf != nil {
+		if transportConn.rdBuf.Len() == 0 {
 			panic("empty read buffer")
 		}
-		n, err = c.rdBuf.Read(p)
-		if c.rdBuf.Len() == 0 {
-			c.rdBuf = nil
+		n, err = transportConn.rdBuf.Read(p)
+		if transportConn.rdBuf.Len() == 0 {
+			transportConn.rdBuf = nil
 		}
 		return
 	}
+	select {
+		case <-time.After(20*time.Second):
+			return 0, nil
+		// Wait for the worker to enqueue more incoming data.
+		case b, ok := <-transportConn.workerRdChan:
+			if !ok {
+				// Close() was called and the worker's shutting down.
+				return 0, io.ErrClosedPipe
+			}
 
-	// Wait for the worker to enqueue more incoming data.
-	b, ok := <-c.workerRdChan
-	if !ok {
-		// Close() was called and the worker's shutting down.
-		return 0, io.ErrClosedPipe
-	}
-
-	// Ew, an extra copy, but who am I kidding, it's meek.
-	buf := bytes.NewBuffer(b)
-	n, err = buf.Read(p)
-	if buf.Len() > 0 {
-		// If there's data pending, stash the buffer so the next
-		// Read() call will use it to fulfuill the Read().
-		c.rdBuf = buf
+			// Ew, an extra copy, but who am I kidding, it's meek.
+			buf := bytes.NewBuffer(b)
+			n, err = buf.Read(p)
+			if buf.Len() > 0 {
+				// If there's data pending, stash the buffer so the next
+				// Read() call will use it to fulfill the Read().
+				transportConn.rdBuf = buf
+			}
 	}
 	return
 }
 
-func (c *meekConn) Write(b []byte) (n int, err error) {
+func (transportConn *meekConn) Write(b []byte) (n int, err error) {
 	// Check to see if the connection is actually open.
-	c.Lock()
-	closed := !c.workerRunning
-	c.Unlock()
+	transportConn.Lock()
+	closed := !transportConn.workerRunning
+	transportConn.Unlock()
 	if closed {
 		return 0, io.ErrClosedPipe
 	}
@@ -293,7 +270,7 @@ func (c *meekConn) Write(b []byte) (n int, err error) {
 	toWrite := len(b)
 	b2 := make([]byte, toWrite)
 	copy(b2, b)
-	if ok := c.enqueueWrite(b2); !ok {
+	if ok := transportConn.enqueueWrite(b2); !ok {
 		// Technically we did enqueue data, but the worker's
 		// got closed out from under us.
 		return 0, io.ErrClosedPipe
@@ -302,59 +279,59 @@ func (c *meekConn) Write(b []byte) (n int, err error) {
 	return len(b), nil
 }
 
-func (c *meekConn) Close() error {
+func (transportConn *meekConn) Close() error {
 	// Ensure that we do this once and only once.
-	c.Lock()
-	defer c.Unlock()
-	if !c.workerRunning {
+	transportConn.Lock()
+	defer transportConn.Unlock()
+	if !transportConn.workerRunning {
 		return nil
 	}
 
 	// Tear down the worker.
-	c.workerRunning = false
-	c.workerCloseChan <- true
+	transportConn.workerRunning = false
+	transportConn.workerCloseChan <- true
 
 	return nil
 }
 
-func (c *meekConn) LocalAddr() net.Addr {
+func (transportConn *meekConn) LocalAddr() net.Addr {
 	return &net.IPAddr{IP: loopbackAddr}
 }
 
-func (c *meekConn) RemoteAddr() net.Addr {
-	return c.args
+func (transportConn *meekConn) RemoteAddr() net.Addr {
+	return transportConn.args
 }
 
-func (c *meekConn) SetDeadline(t time.Time) error {
+func (transportConn *meekConn) SetDeadline(time.Time) error {
 	return ErrNotSupported
 }
 
-func (c *meekConn) SetReadDeadline(t time.Time) error {
+func (transportConn *meekConn) SetReadDeadline(time.Time) error {
 	return ErrNotSupported
 }
 
-func (c *meekConn) SetWriteDeadline(t time.Time) error {
+func (transportConn *meekConn) SetWriteDeadline(time.Time) error {
 	return ErrNotSupported
 }
 
 // End of methods implementing net.Conn
 
 // Private methods implementing the domain fronting cipher
-func (c *meekConn) enqueueWrite(b []byte) (ok bool) {
+func (transportConn *meekConn) enqueueWrite(b []byte) (ok bool) {
 	defer func() { recover() }()
-	c.workerWrChan <- b
+	transportConn.workerWrChan <- b
 	return true
 }
 
-func (c *meekConn) roundTrip(sndBuf []byte) (recvBuf []byte, err error) {
+func (transportConn *meekConn) roundTrip(sndBuf []byte) (recvBuf []byte, err error) {
 	var req *http.Request
 	var resp *http.Response
 
 	for retries := 0; retries < maxRetries; retries++ {
-		url := *c.args.url
+		url := *transportConn.args.url
 		host := url.Host
-		if c.args.front != "" {
-			url.Host = c.args.front
+		if transportConn.args.front != "" {
+			url.Host = transportConn.args.front
 		}
 
 		req, err = http.NewRequest("POST", url.String(), bytes.NewReader(sndBuf))
@@ -362,14 +339,14 @@ func (c *meekConn) roundTrip(sndBuf []byte) (recvBuf []byte, err error) {
 			return nil, err
 		}
 
-		if c.args.front != "" {
+		if transportConn.args.front != "" {
 			req.Host = host
 		}
 
-		req.Header.Set("X-Session-Id", c.sessionID)
+		req.Header.Set("X-Session-Id", transportConn.sessionID)
 		req.Header.Set("User-Agent", "")
 
-		resp, err = c.transport.RoundTrip(req)
+		resp, err = transportConn.transport.RoundTrip(req)
 		if err != nil {
 			return nil, err
 		}
@@ -378,11 +355,11 @@ func (c *meekConn) roundTrip(sndBuf []byte) (recvBuf []byte, err error) {
 			err = fmt.Errorf("status code was %d, not %d", resp.StatusCode, http.StatusOK)
 			if resp.StatusCode == http.StatusInternalServerError {
 				return
-			} else {
-				time.Sleep(retryDelay)
 			}
+				time.Sleep(retryDelay)
+
 		} else {
-			defer resp.Body.Close()
+			_ = resp.Body.Close()
 			recvBuf, err = ioutil.ReadAll(io.LimitReader(resp.Body, maxPayloadLength))
 			return
 		}
@@ -391,7 +368,7 @@ func (c *meekConn) roundTrip(sndBuf []byte) (recvBuf []byte, err error) {
 	return
 }
 
-func (c *meekConn) ioWorker() {
+func (transportConn *meekConn) ioWorker() {
 	interval := initPollInterval
 	var sndBuf, leftBuf []byte
 loop:
@@ -401,9 +378,9 @@ loop:
 		select {
 		case <-time.After(interval):
 			// If the poll interval has elapsed, issue a request.
-		case sndBuf = <-c.workerWrChan:
+		case sndBuf = <-transportConn.workerWrChan:
 			// If there is data pending a send, issue a request.
-		case _ = <-c.workerCloseChan:
+		case _ = <-transportConn.workerCloseChan:
 			break loop
 		}
 
@@ -413,9 +390,9 @@ loop:
 		// as the next request).
 		sndBuf = append(leftBuf, sndBuf...)
 		wrSz := len(sndBuf)
-		for len(c.workerWrChan) > 0 && wrSz < maxPayloadLength {
+		for len(transportConn.workerWrChan) > 0 && wrSz < maxPayloadLength {
 
-			b := <-c.workerWrChan
+			b := <-transportConn.workerWrChan
 			sndBuf = append(sndBuf, b...)
 			wrSz = len(sndBuf)
 		}
@@ -424,12 +401,11 @@ loop:
 		}
 
 		// Issue a request.
-		rdBuf, err := c.roundTrip(sndBuf[:wrSz])
+		rdBuf, err := transportConn.roundTrip(sndBuf[:wrSz])
 		if err != nil {
 			// Welp, something went horrifically wrong.
 			break loop
 		}
-
 
 		// Stash the remaining payload if any.
 		leftBuf = sndBuf[wrSz:] // Store the remaining data
@@ -440,7 +416,7 @@ loop:
 		// Determine the next poll interval.
 		if len(rdBuf) > 0 {
 			// Received data, enqueue the read.
-			c.workerRdChan <- rdBuf
+			transportConn.workerRdChan <- rdBuf
 
 			// And poll immediately.
 			interval = 0
@@ -463,14 +439,14 @@ loop:
 
 	// Unblock callers waiting in Read() for data that will never arrive,
 	// and callers waiting in Write() for data that will never get sent.
-	close(c.workerRdChan)
-	close(c.workerWrChan)
+	close(transportConn.workerRdChan)
+	close(transportConn.workerWrChan)
 
 	// In case the close was done on an error condition, update the state
 	// variable so that further calls to Write() will fail.
-	c.Lock()
-	defer c.Unlock()
-	c.workerRunning = false
+	transportConn.Lock()
+	defer transportConn.Unlock()
+	transportConn.workerRunning = false
 }
 
 func newSessionID() (string, error) {
@@ -487,4 +463,3 @@ func newSessionID() (string, error) {
 // Force type checks to make sure that instances conform to interfaces
 var _ net.Conn = (*meekConn)(nil)
 var _ net.Addr = (*meekClientArgs)(nil)
-

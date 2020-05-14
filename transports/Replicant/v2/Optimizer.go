@@ -5,7 +5,6 @@ import (
 	"net"
 )
 
-// FIXME
 // This makes Replicant compliant with Optimizer
 type Transport struct {
 	Config  ClientConfig
@@ -23,7 +22,7 @@ func (transport Transport) Dial() (net.Conn, error) {
 	dialConn := conn
 	transportConn, err := NewClientConnection(conn, transport.Config)
 	if err != nil {
-		dialConn.Close()
+		_ = dialConn.Close()
 		return nil, err
 	}
 

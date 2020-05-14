@@ -25,12 +25,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-// Package meeklite provides an implementation of the Meek circumvention
+// Package meekserver provides an implementation of the Meek circumvention
 // protocol.  Only a client implementation is provided, and no effort is
 // made to normalize the TLS fingerprint.
 //
 // It borrows quite liberally from the real meek-client code.
-
 package meekserver
 
 import (
@@ -44,7 +43,7 @@ import (
 	"time"
 )
 
-// Transport that uses domain fronting to shapeshift the application network traffic
+//MeekServer is a Transport that uses domain fronting to shapeshift the application network traffic
 type MeekServer struct {
 	DisableTLS   bool
 	AcmeEmail    string
@@ -52,6 +51,7 @@ type MeekServer struct {
 	CertManager  *autocert.Manager
 }
 
+//Config contains arguments formatted for a json file
 type Config struct {
 	AcmeEmail    string `json:"acme-email"`
 	AcmeHostname string `json:"acme-hostnames"`
@@ -79,16 +79,17 @@ func (listener meekListener) Accept() (net.Conn, error) {
 	defer state.lock.Unlock()
 	if state.availableSessions.Cardinality() == 0 {
 		return nil, errors.New("no connections available in accept")
-	} else {
-		sessionID := state.availableSessions.Pop()
-		sessionIDString, err := interconv.ParseString(sessionID)
-		if err != nil {
-			return nil, errors.New("could not convert sessionID to string")
-		}
-		return NewMeekServerConnection(state, sessionIDString), nil
 	}
+	sessionID := state.availableSessions.Pop()
+	sessionIDString, err := interconv.ParseString(sessionID)
+	if err != nil {
+		return nil, errors.New("could not convert sessionID to string")
+	}
+	return NewMeekServerConnection(state, sessionIDString), nil
+
 }
 
+//NewMeekServerConnection initializes the server connection
 func NewMeekServerConnection(state *State, sessionID string) net.Conn {
 	session := state.sessionMap[sessionID]
 	return meekServerConn{session, state, sessionID}
@@ -103,7 +104,6 @@ func (listener meekListener) Addr() net.Addr {
 	addrs, _ := interfaces[0].Addrs()
 	return addrs[0]
 }
-
 
 func (conn meekServerConn) Read(b []byte) (n int, err error) {
 	if len(conn.session.Or.readBuffer) == 0 || len(b) == 0 {
@@ -134,20 +134,19 @@ func (conn meekServerConn) RemoteAddr() net.Addr {
 	return nil
 }
 
-func (conn meekServerConn) SetDeadline(t time.Time) error {
+func (conn meekServerConn) SetDeadline(time.Time) error {
 	return errors.New("unimplemented")
 }
 
-func (conn meekServerConn) SetReadDeadline(t time.Time) error {
+func (conn meekServerConn) SetReadDeadline(time.Time) error {
 	return errors.New("unimplemented")
 }
 
-func (conn meekServerConn) SetWriteDeadline(t time.Time) error {
+func (conn meekServerConn) SetWriteDeadline(time.Time) error {
 	return errors.New("unimplemented")
 }
 
-// Public initializer method to get a new meek transport
-
+// NewMeekTransportServer is a public initializer method to get a new meek transport
 func NewMeekTransportServer(disableTLS bool, acmeEmail string, acmeHostnamesCommas string, stateDir string) *MeekServer {
 	var certManager *autocert.Manager
 	if disableTLS {
@@ -188,7 +187,7 @@ func NewMeekTransportServer(disableTLS bool, acmeEmail string, acmeHostnamesComm
 
 // Methods that implement the base.Transport interface
 
-// The meek transport does not have a corresponding server, only a client
+// Listen on the meek transport does not have a corresponding server, only a client
 func (transport *MeekServer) Listen(address string) net.Listener {
 	var ln net.Listener
 	var state *State

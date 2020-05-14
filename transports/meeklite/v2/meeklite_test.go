@@ -1,4 +1,7 @@
 /*
+ * Copyright (c) 2015, Yawning Angel <yawning at torproject dot org>
+ * All rights reserved.
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
@@ -22,41 +25,53 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-package main
+// Package meeklite provides an implementation of the Meek circumvention
+// protocol.  Only a client implementation is provided, and no effort is
+// made to normalize the TLS fingerprint.
+//
+// It borrows quite liberally from the real meek-client code.
+
+package meeklite
 
 import (
-	"fmt"
-	"github.com/OperatorFoundation/obfs4/common/log"
-	"net"
-
-	"github.com/OperatorFoundation/shapeshifter-transports/transports/obfs2/v2"
+	"golang.org/x/net/proxy"
+	"testing"
 )
 
-func main() {
-	var transport = obfs2.NewObfs2Transport()
-	var listener = transport.Listen("0.0.0.0:1234")
+const data = "test"
 
-	for {
-		var conn net.Conn
-		var acceptErr error
-		conn, acceptErr = listener.Accept()
-		if acceptErr != nil {
-			return
-		}
+func TestMeeklite(t *testing.T) {
+	//create a server
+	config := NewMeekTransportWithFront("https://transport-canary-meek.appspot.com/", "www.google.com", proxy.Direct)
 
-		var buffer = make([]byte, 1024)
-		bytesRead, err := conn.Read(buffer)
-		for {
-			if err != nil {
-				closeErr := conn.Close()
-				if closeErr != nil {
-					log.Errorf("could not close")
-				}
-				break
-			}
-			fmt.Println("Received", bytesRead)
-			fmt.Print(string(buffer))
-			bytesRead, err = conn.Read(buffer)
-		}
+	//create client buffer
+	clientBuffer := make([]byte, 4)
+	//call dial on client and check error
+	clientConn := config.Dial()
+	if clientConn == nil {
+		t.Fail()
+		return
+	}
+
+	//write data from clientConn for server to read
+	writeBytes, clientWriteErr := clientConn.Write([]byte(data))
+	if clientWriteErr != nil {
+		t.Fail()
+		return
+	}
+	if writeBytes <= 0 {
+		t.Fail()
+		return
+	}
+
+	//read on client side
+	readBytes, clientReadErr := clientConn.Read(clientBuffer)
+	if clientReadErr != nil {
+		t.Fail()
+		return
+	}
+	if readBytes <= 0 {
+		t.Fail()
+		return
 	}
 }
