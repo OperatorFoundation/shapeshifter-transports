@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/user"
 	"path"
+	"runtime"
 	"strings"
 )
 
@@ -16,7 +17,12 @@ func RunLocalObfs4Server(data string) bool {
 		return false
 	}
 	home := usr.HomeDir
-	fPath := path.Join(home, "shapeshifter-transports/stateDir")
+	var fPath string
+	if runtime.GOOS == "Linux" {
+		fPath = path.Join(home, "gopath/src/github.com/OperatorFoundation/shapeshifter-transports/stateDir")
+	} else {
+		fPath = path.Join(home, "shapeshifter-transports/stateDir")
+	}
 	directoryErr := os.Mkdir(fPath, 0775)
 	if directoryErr != nil {
 		if !os.IsExist(directoryErr){
@@ -69,7 +75,12 @@ func RunObfs4Client() (*Transport, error) {
 		return nil, userError
 	}
 	home := usr.HomeDir
-	fPath := path.Join(home, "shapeshifter-transports/stateDir", "obfs4_bridgeline.txt")
+	var fPath string
+	if runtime.GOOS == "Linux" {
+		fPath = path.Join(home, "gopath/src/github.com/OperatorFoundation/shapeshifter-transports/stateDir/obfs4_bridgeline.txt")
+	} else {
+		fPath = path.Join(home, "shapeshifter-transports/stateDir/obfs4_bridgeline.txt")
+	}
 	bytes, fileError := ioutil.ReadFile(fPath)
 	if fileError != nil {
 		return nil, fileError
