@@ -19,6 +19,7 @@ script:
   # - go test -v github.com/OperatorFoundation/shapeshifter-transports/transports/obfs4/v2
   - cd ../../obfs4/v2; go test -v
   - ls -l /home/travis/gopath/src/github.com/OperatorFoundation/shapeshifter-transports
+  - ls -l /home/travis/gopath/src/github.com/OperatorFoundation/shapeshifter-transports/stateDir
   - pwd
   # - go test -v github.com/OperatorFoundation/shapeshifter-transports/transports/Optimizer/v2
   - cd ../../Optimizer/v2; go test -v
