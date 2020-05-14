@@ -2,6 +2,7 @@ package optimizer
 
 import (
 	"github.com/OperatorFoundation/shapeshifter-transports/transports/meeklite/v2"
+	"github.com/OperatorFoundation/shapeshifter-transports/transports/obfs2/v2"
 	"github.com/OperatorFoundation/shapeshifter-transports/transports/obfs4/v2"
 	"github.com/OperatorFoundation/shapeshifter-transports/transports/shadow/v2"
 	"golang.org/x/net/proxy"
@@ -73,6 +74,17 @@ func TestShadowDial(t *testing.T) {
 func TestOptimizerShadowDial(t *testing.T) {
 	shadowTransport := shadow.NewTransport("1234", "CHACHA20-IETF-POLY1305", "127.0.0.1:1235")
 	transports := []Transport{&shadowTransport}
+	strategy := NewFirstStrategy(transports)
+	optimizerTransport := NewOptimizerClient(transports, strategy)
+	_, err := optimizerTransport.Dial()
+	if err != nil {
+		t.Fail()
+	}
+}
+
+func TestOptimizerObfs2Dial(t *testing.T) {
+	obfs2Transport := obfs2.OptimizerTransport{}
+	transports := []Transport{&obfs2Transport}
 	strategy := NewFirstStrategy(transports)
 	optimizerTransport := NewOptimizerClient(transports, strategy)
 	_, err := optimizerTransport.Dial()
