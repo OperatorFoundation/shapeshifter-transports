@@ -1,5 +1,8 @@
 language: go
 
+go:
+  - 1.14.x
+
 script:
   - cd transports
   #  - go test -v github.com/OperatorFoundation/shapeshifter-transports/transports/Dust/v2
