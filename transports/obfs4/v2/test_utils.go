@@ -19,7 +19,9 @@ func RunLocalObfs4Server(data string) bool {
 	fPath := path.Join(home, "shapeshifter-transports/stateDir")
 	directoryErr := os.Mkdir(fPath, 0775)
 	if directoryErr != nil {
-		return false
+		if !os.IsExist(directoryErr){
+			return false
+		}
 	}
 	serverConfig, confError := NewObfs4Server(fPath)
 	if confError != nil {
