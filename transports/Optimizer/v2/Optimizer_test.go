@@ -15,12 +15,16 @@ import (
 	"testing"
 )
 
+const data = "test"
+
 func TestMain(m *testing.M) {
 	config := shadow.NewConfig("1234", "CHACHA20-IETF-POLY1305")
 	listener := config.Listen("127.0.0.1:1235")
 	go acceptConnections(listener)
 
 	_ = obfs4.RunLocalObfs4Server("test")
+
+	RunLocalObfs2Server()
 
 	os.Exit(m.Run())
 }
@@ -83,8 +87,8 @@ func TestOptimizerShadowDial(t *testing.T) {
 }
 
 func TestOptimizerObfs2Dial(t *testing.T) {
-	obfs2Transport := obfs2.OptimizerTransport{}
-	transports := []Transport{&obfs2Transport}
+	obfs2Transport := obfs2.New("127.0.0.1:1237", proxy.Direct)
+	transports := []Transport{obfs2Transport}
 	strategy := NewFirstStrategy(transports)
 	optimizerTransport := NewOptimizerClient(transports, strategy)
 	_, err := optimizerTransport.Dial()
@@ -254,8 +258,6 @@ func TestOptimizerTransportMinimizeDialDurationDial(t *testing.T) {
 	}
 }
 
-
-
 func getObfs4CertString() (*string, error){
 	fPath := path.Join("/Users/bluesaxorcist/stateDir", "obfs4_bridgeline.txt")
 	bytes, fileError := ioutil.ReadFile(fPath)
@@ -274,4 +276,40 @@ func getObfs4CertString() (*string, error){
 	certstring := bridgePart[5:]
 
 	return &certstring, nil
+}
+func RunLocalObfs2Server() {
+	//create a server
+	config := obfs2.NewObfs2Transport()
+
+	//call listen on the server
+	serverListener := config.Listen("127.0.0.1:1237")
+	if serverListener == nil {
+		return
+	}
+
+	//Create Server connection and format it for concurrency
+	go func() {
+		//create server buffer
+		serverBuffer := make([]byte, 4)
+
+		//create serverConn
+		for {
+			serverConn, acceptErr := serverListener.Accept()
+			if acceptErr != nil {
+				return
+			}
+
+			//read on server side
+			_, serverReadErr := serverConn.Read(serverBuffer)
+			if serverReadErr != nil {
+				return
+			}
+
+			//write data from serverConn for client to read
+			_, serverWriteErr := serverConn.Write([]byte(data))
+			if serverWriteErr != nil {
+				return
+			}
+		}
+	}()
 }
