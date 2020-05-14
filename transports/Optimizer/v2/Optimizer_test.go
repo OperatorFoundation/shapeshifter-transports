@@ -10,6 +10,7 @@ import (
 	"net"
 	"net/url"
 	"os"
+	"os/user"
 	"path"
 	"strings"
 	"testing"
@@ -258,8 +259,13 @@ func TestOptimizerTransportMinimizeDialDurationDial(t *testing.T) {
 	}
 }
 
-func getObfs4CertString() (*string, error){
-	fPath := path.Join("/Users/bluesaxorcist/stateDir", "obfs4_bridgeline.txt")
+func getObfs4CertString() (*string, error) {
+	usr, userError := user.Current()
+	if userError != nil {
+		return nil, userError
+	}
+	home := usr.HomeDir
+	fPath := path.Join(home, "shapeshifter-transports/stateDir", "obfs4_bridgeline.txt")
 	bytes, fileError := ioutil.ReadFile(fPath)
 	if fileError != nil {
 		return nil, fileError
