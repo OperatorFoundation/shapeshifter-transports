@@ -8,23 +8,12 @@ env:
 
 script:
   - cd transports
-  #  - go test -v github.com/OperatorFoundation/shapeshifter-transports/transports/Dust/v2
   #- cd transports/Dust/v2; go test -v
-  #  - go test -v github.com/OperatorFoundation/shapeshifter-transports/transports/meeklite/v2
   #- cd transports/meeklite/v2; go test -v
-  #  - go test -v github.com/OperatorFoundation/shapeshifter-transports/transports/meekserver/v2
   #- cd transports/meekserver/v2; go test -v
-  #- go test -v github.com/OperatorFoundation/shapeshifter-transports/transports/obfs2/v2
   - cd obfs2/v2; go test -v
-  # - go test -v github.com/OperatorFoundation/shapeshifter-transports/transports/obfs4/v2
   - cd ../../obfs4/v2; go test -v
-  - ls -l /home/travis/gopath/src/github.com/OperatorFoundation/shapeshifter-transports
-  - ls -l /home/travis/gopath/src/github.com/OperatorFoundation/shapeshifter-transports/stateDir
-  - pwd
-  # - go test -v github.com/OperatorFoundation/shapeshifter-transports/transports/Optimizer/v2
   - cd ../../Optimizer/v2; go test -v
-  # - go test -v github.com/OperatorFoundation/shapeshifter-transports/transports/Replicant/v2
   - cd ../../Replicant/v2; go test -v
-  # - go test -v github.com/OperatorFoundation/shapeshifter-transports/transports/shadow/v2
   - cd ../../shadow/v2; go test -v
 
