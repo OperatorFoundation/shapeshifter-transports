@@ -7,10 +7,10 @@ import (
 )
 
 // Create outgoing transport connection
-func (config ClientConfig) Dial(address string) net.Conn {
+func (config ClientConfig) Dial(address string) (net.Conn, error) {
 	conn, dialErr := net.Dial("tcp", address)
 	if dialErr != nil {
-		return nil
+		return nil, dialErr
 	}
 
 	transportConn, err := NewClientConnection(conn, config)
@@ -18,25 +18,25 @@ func (config ClientConfig) Dial(address string) net.Conn {
 		if conn != nil {
 			_ = conn.Close()
 		}
-		return nil
+		return nil, err
 	}
 
-	return transportConn
+	return transportConn, nil
 }
 
 // Create listener for incoming transport connection
-func (config ServerConfig) Listen(address string) net.Listener {
+func (config ServerConfig) Listen(address string) (net.Listener, error) {
 	addr, resolveErr := pt.ResolveAddr(address)
 	if resolveErr != nil {
-		return nil
+		return nil, resolveErr
 	}
 
 	ln, err := net.ListenTCP("tcp", addr)
 	if err != nil {
-		return nil
+		return nil, err
 	}
 
-	return newReplicantTransportListener(ln, config)
+	return newReplicantTransportListener(ln, config), nil
 }
 
 func (listener *replicantTransportListener) Addr() net.Addr {

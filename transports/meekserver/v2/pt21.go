@@ -188,13 +188,13 @@ func NewMeekTransportServer(disableTLS bool, acmeEmail string, acmeHostnamesComm
 // Methods that implement the base.Transport interface
 
 // Listen on the meek transport does not have a corresponding server, only a client
-func (transport *MeekServer) Listen(address string) net.Listener {
+func (transport *MeekServer) Listen(address string) (net.Listener, error) {
 	var ln net.Listener
 	var state *State
 	var err error
 	addr, resolverr := net.ResolveTCPAddr("tcp", address)
 	if resolverr != nil {
-		return ln
+		return ln, resolverr
 	}
 	acmeAddr := net.TCPAddr{
 		IP:   addr.IP,
@@ -206,7 +206,7 @@ func (transport *MeekServer) Listen(address string) net.Listener {
 	lnHTTP01, err := net.ListenTCP("tcp", &acmeAddr)
 	if err != nil {
 		log.Printf("error opening HTTP-01 ACME listener: %s", err)
-		return nil
+		return nil, err
 	}
 	go func() {
 		log.Fatal(http.Serve(lnHTTP01, transport.CertManager.HTTPHandler(nil)))
@@ -219,7 +219,7 @@ func (transport *MeekServer) Listen(address string) net.Listener {
 	}
 	if err != nil {
 
-		return nil
+		return nil, err
 	}
-	return meekListener{server, state}
+	return meekListener{server, state}, nil
 }

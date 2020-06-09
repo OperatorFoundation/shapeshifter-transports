@@ -95,19 +95,19 @@ func (transport *MeekTransport) NetworkDialer() proxy.Dialer {
 }
 
 // Dial creates outgoing transport connection
-func (transport *MeekTransport) Dial() net.Conn {
+func (transport *MeekTransport) Dial() (net.Conn, error) {
 	// FIXME - should use dialer
 	transportConn, err := newMeekClientConn(transport.clientArgs)
 	if err != nil {
-		return nil
+		return nil, err
 	}
 
-	return transportConn
+	return transportConn, nil
 }
 
 // Listen for the meek transport does not have a corresponding server, only a client
-func (transport *MeekTransport) Listen() net.Listener {
-	return nil
+func (transport *MeekTransport) Listen() (net.Listener, error) {
+	return nil, nil
 }
 
 // End methods that implement the base.Transport interface
@@ -138,8 +138,12 @@ type Config struct {
 // Dial creates outgoing transport connection
 func (transport Transport) Dial() (net.Conn, error) {
 	meekTransport := NewMeekTransportWithFront(transport.URL.String(), transport.Front, transport.Dialer)
-	conn := meekTransport.Dial()
-	return conn, nil
+	conn, dialErr := meekTransport.Dial()
+	if dialErr != nil {
+		return nil, errors.New("failed to dial")
+	} else {
+		return conn, nil
+	}
 }
 
 func (ca *meekClientArgs) String() string {

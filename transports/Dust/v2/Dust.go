@@ -90,20 +90,20 @@ func (transport *dustClient) Dial(address string) (net.Conn, error) {
 }
 
 // Create listener for incoming transport connection
-func (transport *dustServer) Listen(address string) net.Listener {
+func (transport *dustServer) Listen(address string) (net.Listener, error) {
 	addr, resolveErr := pt.ResolveAddr(address)
 	if resolveErr != nil {
 		fmt.Println(resolveErr.Error())
-		return nil
+		return nil, resolveErr
 	}
 
 	ln, err := net.ListenTCP("tcp", addr)
 	if err != nil {
 		fmt.Println(err.Error())
-		return nil
+		return nil, err
 	}
 
-	return newDustTransportListener(ln, transport)
+	return newDustTransportListener(ln, transport), nil
 }
 
 func (listener *dustTransportListener) Addr() net.Addr {
