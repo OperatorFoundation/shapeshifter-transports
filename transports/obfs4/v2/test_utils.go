@@ -34,8 +34,8 @@ func RunLocalObfs4Server(data string) bool {
 		return false
 	}
 	//call listen on the server
-	serverListener := serverConfig.Listen("127.0.0.1:1234")
-	if serverListener == nil {
+	serverListener, listenErr := serverConfig.Listen("127.0.0.1:1234")
+	if listenErr != nil {
 		return false
 	}
 	//Create Server connection and format it for concurrency

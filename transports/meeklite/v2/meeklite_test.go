@@ -47,8 +47,8 @@ func TestMeeklite(t *testing.T) {
 	//create client buffer
 	clientBuffer := make([]byte, 4)
 	//call dial on client and check error
-	clientConn := config.Dial()
-	if clientConn == nil {
+	clientConn, connErr := config.Dial()
+	if connErr != nil {
 		t.Fail()
 		return
 	}

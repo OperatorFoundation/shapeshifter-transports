@@ -21,8 +21,8 @@ func TestMeekServerListen2(t *testing.T) {
 		t.Fail()
 		return
 	}
-	listener := meekserverTransport.Listen("127.0.0.1:8080")
-	if listener == nil {
+	_, listenErr := meekserverTransport.Listen("127.0.0.1:8080")
+	if listenErr != nil {
 		t.Fail()
 		return
 	}
