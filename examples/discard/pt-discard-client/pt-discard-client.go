@@ -27,7 +27,7 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"github.com/OperatorFoundation/shapeshifter-transports/transports/obfs2/v2"
+	obfs2"github.com/OperatorFoundation/shapeshifter-transports/transports/obfs2/v2"
 	"os"
 )
 
