@@ -229,20 +229,20 @@ func (transport OptimizerTransport) Dial() (net.Conn, error) {
 }
 
 // Listen creates listener for incoming transport connection
-func (transport *Transport) Listen(address string) net.Listener {
+func (transport *Transport) Listen(address string) (net.Listener, error) {
 	addr, resolveErr := pt.ResolveAddr(address)
 	if resolveErr != nil {
 		fmt.Println(resolveErr.Error())
-		return nil
+		return nil, resolveErr
 	}
 
 	ln, err := net.ListenTCP("tcp", addr)
 	if err != nil {
 		fmt.Println(err.Error())
-		return nil
+		return nil, err
 	}
 
-	return newObfs4TransportListener(transport.serverFactory, ln)
+	return newObfs4TransportListener(transport.serverFactory, ln), nil
 }
 
 // Close closes the transport listener.

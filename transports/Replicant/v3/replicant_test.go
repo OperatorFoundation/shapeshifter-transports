@@ -148,7 +148,7 @@ func runReplicantServer() {
 	}
 
 	go func() {
-		listener := serverConfig.Listen(addr)
+		listener, _ := serverConfig.Listen(addr)
 		serverStarted <- true
 
 		lConn, lConnError := listener.Accept()
@@ -194,7 +194,7 @@ func replicantConnection(clientConfig ClientConfig, serverConfig ServerConfig, t
 	addr += portString
 
 	go func() {
-		listener := serverConfig.Listen(addr)
+		listener, _ := serverConfig.Listen(addr)
 		serverStarted <- true
 
 		lConn, lConnError := listener.Accept()
@@ -226,8 +226,8 @@ func replicantConnection(clientConfig ClientConfig, serverConfig ServerConfig, t
 		return
 	}
 
-	cConn := clientConfig.Dial(addr)
-	if cConn == nil {
+	cConn, connErr := clientConfig.Dial(addr)
+	if connErr != nil {
 		t.Fail()
 		return
 	}

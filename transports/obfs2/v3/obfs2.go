@@ -147,20 +147,20 @@ func (transport *Transport) Dial(address string) (net.Conn, error) {
 }
 
 // Listen creates listener for incoming transport connection
-func (transport *Transport) Listen(address string) net.Listener {
+func (transport *Transport) Listen(address string) (net.Listener, error) {
 	addr, resolveErr := pt.ResolveAddr(address)
 	if resolveErr != nil {
 		fmt.Println(resolveErr.Error())
-		return nil
+		return nil, resolveErr
 	}
 
 	ln, err := net.ListenTCP("tcp", addr)
 	if err != nil {
 		fmt.Println(err.Error())
-		return nil
+		return nil, err
 	}
 
-	return newObfs2TransportListener(ln)
+	return newObfs2TransportListener(ln), nil
 }
 
 // Methods that implement the net.Conn interface

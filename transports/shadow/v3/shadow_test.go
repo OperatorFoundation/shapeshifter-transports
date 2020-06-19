@@ -35,7 +35,10 @@ const data = "test"
 
 func TestMain(m *testing.M) {
 	config :=  NewConfig("1234", "CHACHA20-IETF-POLY1305")
-	listener := config.Listen("127.0.0.1:1236")
+	listener, listenErr := config.Listen("127.0.0.1:1236")
+	if listenErr != nil {
+		return
+	}
 	go acceptConnections(listener)
 
 	os.Exit(m.Run())

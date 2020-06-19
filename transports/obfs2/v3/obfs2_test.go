@@ -127,8 +127,8 @@ func RunLocalObfs2Server() {
 	config := NewObfs2Transport()
 
 	//call listen on the server
-	serverListener := config.Listen("127.0.0.1:1237")
-	if serverListener == nil {
+	serverListener, listenErr := config.Listen("127.0.0.1:1237")
+	if listenErr != nil {
 		return
 	}
 

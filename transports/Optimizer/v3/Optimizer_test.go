@@ -21,7 +21,10 @@ const data = "test"
 
 func TestMain(m *testing.M) {
 	config := shadow.NewConfig("1234", "CHACHA20-IETF-POLY1305")
-	listener := config.Listen("127.0.0.1:1235")
+	listener, listenErr := config.Listen("127.0.0.1:1235")
+	if listenErr != nil {
+		return
+	}
 	go acceptConnections(listener)
 
 	_ = obfs4.RunLocalObfs4Server("test")
@@ -294,8 +297,8 @@ func RunLocalObfs2Server() {
 	config := obfs2.NewObfs2Transport()
 
 	//call listen on the server
-	serverListener := config.Listen("127.0.0.1:1237")
-	if serverListener == nil {
+	serverListener, listenErr := config.Listen("127.0.0.1:1237")
+	if listenErr != nil {
 		return
 	}
 

@@ -9,7 +9,6 @@ github.com/OperatorFoundation/monolith-go/monolith v1.0.4/go.mod h1:qc60ZvCt83Jn
 github.com/OperatorFoundation/shapeshifter-ipc v0.0.0-20170814234159-11746ba927e0 h1:zDYt6FDJwDSX4woVFVK2EMt7fkxU5L5qDNLUjQwA+BQ=
 github.com/OperatorFoundation/shapeshifter-ipc v0.0.0-20170814234159-11746ba927e0/go.mod h1:kB00Ak8Dgn1uZlZHLc/WsUta58Jc+n/ZhCetcPkh42Q=
 github.com/OperatorFoundation/shapeshifter-transports v2.1.5+incompatible h1:1S3doS1jE/2X0FTiJWakrZVAmknj2IqZ1XL46zBA0XM=
-github.com/OperatorFoundation/shapeshifter-transports v2.1.27+incompatible h1:fSIxaLi4g+EPDmb5Ps89wnyWnq57wBhSjV2LfdUMtlE=
 github.com/OperatorFoundation/shapeshifter-transports/transports v0.0.0-20200218224946-cac72fbc8eb3 h1:D0oWnlYienV6VqTbeGPL4YYJoqCeK6kvBOS2wMv5Brk=
 github.com/aead/chacha20 v0.0.0-20180709150244-8b13a72661da h1:KjTM2ks9d14ZYCvmHS9iAKVt9AyzRSqNU1qabPih5BY=
 github.com/aead/chacha20 v0.0.0-20180709150244-8b13a72661da/go.mod h1:eHEWzANqSiWQsof+nXEI9bUVUyV6F53Fp89EuCh2EAA=
