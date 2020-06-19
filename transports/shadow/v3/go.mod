@@ -1,4 +1,4 @@
-module github.com/OperatorFoundation/shapeshifter-transports/transports/shadow/v2
+module github.com/OperatorFoundation/shapeshifter-transports/transports/shadow/v3
 
 go 1.12
 

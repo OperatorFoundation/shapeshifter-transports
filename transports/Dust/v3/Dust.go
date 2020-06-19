@@ -10,12 +10,12 @@ package Dust
 import (
 	"fmt"
 	"github.com/OperatorFoundation/obfs4/common/log"
+	Dust "github.com/blanu/Dust/go/v2/interface"
 	"golang.org/x/net/proxy"
 	"net"
 	"time"
 
 	"github.com/OperatorFoundation/shapeshifter-ipc"
-	"github.com/blanu/Dust/go/v2/interface"
 )
 
 type dustClient struct {

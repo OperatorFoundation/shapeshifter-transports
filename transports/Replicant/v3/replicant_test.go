@@ -3,8 +3,8 @@ package replicant
 import (
 	"bytes"
 	"github.com/OperatorFoundation/monolith-go/monolith"
-	"github.com/OperatorFoundation/shapeshifter-transports/transports/Replicant/v2/polish"
-	"github.com/OperatorFoundation/shapeshifter-transports/transports/Replicant/v2/toneburst"
+	"github.com/OperatorFoundation/shapeshifter-transports/transports/Replicant/v3/polish"
+	"github.com/OperatorFoundation/shapeshifter-transports/transports/Replicant/v3/toneburst"
 	"io/ioutil"
 	"math/rand"
 	"os"

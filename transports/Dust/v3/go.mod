@@ -1,4 +1,4 @@
-module github.com/OperatorFoundation/shapeshifter-transports/transports/Dust/v2
+module github.com/OperatorFoundation/shapeshifter-transports/transports/Dust/v3
 
 go 1.12
 
