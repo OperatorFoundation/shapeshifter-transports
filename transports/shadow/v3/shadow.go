@@ -102,3 +102,18 @@ func (transport *Transport) Dial() (net.Conn, error) {
 
 	return shadowsocks.Dial("tcp", transport.Address, cipher)
 }
+
+func (transport *Transport) Listen() (net.Listener, error) {
+	cipher, err := shadowsocks.PickCipher(transport.CipherName, nil, transport.Password)
+	if err != nil {
+		log.Fatal("Failed generating ciphers:", err)
+		return nil, err
+	}
+
+	listener, listenerErr := shadowsocks.Listen("tcp", transport.Address, cipher)
+	if listenerErr != nil {
+		log.Fatal("Failed to start listener:", listenerErr)
+		return nil, listenerErr
+	}
+	return listener, nil
+}
