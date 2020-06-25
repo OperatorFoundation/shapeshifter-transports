@@ -26,6 +26,7 @@ package shadow
 
 import (
 	"fmt"
+	"github.com/op/go-logging"
 	"net"
 	"os"
 	"testing"
@@ -72,6 +73,38 @@ func TestShadow(t *testing.T) {
 	clientBuffer := make([]byte, 4)
 	//call dial on client and check error
 	clientConn, dialErr := config.Dial("127.0.0.1:1236")
+	if dialErr != nil {
+		fmt.Println("clientConn Dial error")
+		t.Fail()
+		return
+	}
+
+	//write data from clientConn for server to read
+	_, clientWriteErr := clientConn.Write([]byte(data))
+	if clientWriteErr != nil {
+		fmt.Println("client write error")
+		t.Fail()
+		return
+	}
+
+	//read on client side
+	_, clientReadErr := clientConn.Read(clientBuffer)
+	if clientReadErr != nil {
+		fmt.Println("client read error")
+		t.Fail()
+		return
+	}
+}
+
+func TestShadowTransport(t *testing.T) {
+	//create a server
+	var log = logging.MustGetLogger("shadow")
+	transport := NewTransport("1234", "CHACHA20-IETF-POLY1305", "127.0.0.1:1236", log)
+
+	//create client buffer
+	clientBuffer := make([]byte, 4)
+	//call dial on client and check error
+	clientConn, dialErr := transport.Dial()
 	if dialErr != nil {
 		fmt.Println("clientConn Dial error")
 		t.Fail()
