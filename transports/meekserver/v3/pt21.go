@@ -50,6 +50,13 @@ type MeekServer struct {
 	AcmeHostname string
 	CertManager  *autocert.Manager
 }
+//TODO I added this struct imitating MeekServer struct that has only the bare minimum parameters that the listener uses with the addition of Address
+//TODO Was this a 'pro-gamer move'?
+type Transport struct {
+	DisableTLS  bool
+	CertManager *autocert.Manager
+	Address     string
+}
 
 //Config contains arguments formatted for a json file
 type Config struct {
@@ -109,8 +116,8 @@ func (conn meekServerConn) Read(b []byte) (n int, err error) {
 	if len(conn.session.Or.readBuffer) == 0 {
 		return 0, nil
 	}
-		copy(b, conn.session.Or.readBuffer)
-		conn.session.Or.readBuffer = conn.session.Or.readBuffer[:0]
+	copy(b, conn.session.Or.readBuffer)
+	conn.session.Or.readBuffer = conn.session.Or.readBuffer[:0]
 
 	return len(b), nil
 }
@@ -193,6 +200,42 @@ func (transport *MeekServer) Listen(address string) (net.Listener, error) {
 	var state *State
 	var err error
 	addr, resolverr := net.ResolveTCPAddr("tcp", address)
+	if resolverr != nil {
+		return ln, resolverr
+	}
+	acmeAddr := net.TCPAddr{
+		IP:   addr.IP,
+		Port: 80,
+		Zone: "",
+	}
+	acmeAddr.Port = 80
+	log.Printf("starting HTTP-01 ACME listener on %s", acmeAddr.String())
+	lnHTTP01, err := net.ListenTCP("tcp", &acmeAddr)
+	if err != nil {
+		log.Printf("error opening HTTP-01 ACME listener: %s", err)
+		return nil, err
+	}
+	go func() {
+		log.Fatal(http.Serve(lnHTTP01, transport.CertManager.HTTPHandler(nil)))
+	}()
+	var server *http.Server
+	if transport.DisableTLS {
+		server, state, err = startServer(addr)
+	} else {
+		server, state, err = startServerTLS(addr, transport.CertManager.GetCertificate)
+	}
+	if err != nil {
+
+		return nil, err
+	}
+	return meekListener{server, state}, nil
+}
+
+func (transport *Transport) Listen() (net.Listener, error) {
+	var ln net.Listener
+	var state *State
+	var err error
+	addr, resolverr := net.ResolveTCPAddr("tcp", transport.Address)
 	if resolverr != nil {
 		return ln, resolverr
 	}

@@ -245,6 +245,22 @@ func (transport *Transport) Listen(address string) (net.Listener, error) {
 	return newObfs4TransportListener(transport.serverFactory, ln), nil
 }
 
+func (transport *OptimizerTransport) Listen() (net.Listener, error) {
+	addr, resolveErr := pt.ResolveAddr(transport.Address)
+	if resolveErr != nil {
+		fmt.Println(resolveErr.Error())
+		return nil, resolveErr
+	}
+
+	ln, err := net.ListenTCP("tcp", addr)
+	if err != nil {
+		fmt.Println(err.Error())
+		return nil, err
+	}
+//TODO Do we need to write a function to imitate newObfs4TransportListener or add another parameter to OptimizerTransport?
+	return ln, nil
+}
+
 // Close closes the transport listener.
 func (transport *Transport) Close() error {
 	return nil

@@ -88,6 +88,22 @@ func (transport OptimizerTransport) Dial() (net.Conn, error) {
 	return transportConn, nil
 }
 
+func (transport OptimizerTransport) Listen() (net.Listener, error) {
+	addr, resolveErr := pt.ResolveAddr(transport.Address)
+	if resolveErr != nil {
+		fmt.Println(resolveErr.Error())
+		return nil, resolveErr
+	}
+
+	ln, err := net.ListenTCP("tcp", addr)
+	if err != nil {
+		fmt.Println(err.Error())
+		return nil, err
+	}
+
+	return newObfs2TransportListener(ln), nil
+}
+
 // Transport is the obfs2 implementation of the base.Transport interface.
 type Transport struct {
 	dialer proxy.Dialer

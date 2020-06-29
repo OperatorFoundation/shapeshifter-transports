@@ -64,6 +64,22 @@ func (transport Transport) Dial() (net.Conn, error) {
 		return conn, nil
 	}
 }
+
+func (transport Transport) Listen() (net.Listener, error) {
+	addr, resolveErr := pt.ResolveAddr(transport.Address)
+	if resolveErr != nil {
+		fmt.Println(resolveErr.Error())
+		return nil, resolveErr
+	}
+
+	ln, err := net.ListenTCP("tcp", addr)
+	if err != nil {
+		fmt.Println(err.Error())
+		return nil, err
+	}
+//TODO do we need to write an initializer function that imitates newDustTransportListener or add a parameter to Transport?
+	return ln, nil
+}
 //end optimizer code
 
 func newDustTransportListener(listener *net.TCPListener, transport *dustServer) *dustTransportListener {
