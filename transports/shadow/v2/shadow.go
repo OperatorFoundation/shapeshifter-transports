@@ -26,10 +26,10 @@
 package shadow
 
 import (
+	"github.com/op/go-logging"
+	shadowsocks "github.com/shadowsocks/go-shadowsocks2/core"
 	"log"
 	"net"
-
-	shadowsocks "github.com/shadowsocks/go-shadowsocks2/core"
 )
 
 //Config contains the necessary command like arguments to run shadow
@@ -43,6 +43,7 @@ type Transport struct {
 	Password   string
 	CipherName string
 	Address    string
+	log *logging.Logger
 }
 
 //NewConfig is used to create a config for testing
@@ -54,11 +55,12 @@ func NewConfig(password string, cipherName string) Config {
 }
 
 //NewTransport is used for creating a transport for Optimizer
-func NewTransport(password string, cipherName string, address string) Transport {
+func NewTransport(password string, cipherName string, address string, log *logging.Logger) Transport {
 	return Transport{
 		Password:   password,
 		CipherName: cipherName,
 		Address:    address,
+		log: 		log,
 	}
 }
 
@@ -97,7 +99,7 @@ func (config Config) Dial(address string) (net.Conn, error) {
 func (transport *Transport) Dial() (net.Conn, error) {
 	cipher, err := shadowsocks.PickCipher(transport.CipherName, nil, transport.Password)
 	if err != nil {
-		log.Fatal("Failed generating ciphers:", err)
+		transport.log.Fatalf("Failed generating ciphers: %s", err)
 	}
 
 	return shadowsocks.Dial("tcp", transport.Address, cipher)
