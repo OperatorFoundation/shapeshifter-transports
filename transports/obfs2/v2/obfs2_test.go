@@ -40,11 +40,94 @@ import (
 const data = "test"
 
 func TestMain(m *testing.M) {
+	RunLocalObfs2Server()
+	os.Exit(m.Run())
+}
+
+func TestObfs2(t *testing.T) {
+	config := NewObfs2Transport()
+	//create client buffer
+	clientBuffer := make([]byte, 4)
+	//call dial on client and check error
+	clientConn, dialErr := config.Dial("127.0.0.1:1237")
+	if dialErr != nil {
+		t.Fail()
+		return
+	}
+
+	//write data from clientConn for server to read
+	_, clientWriteErr := clientConn.Write([]byte(data))
+	if clientWriteErr != nil {
+		t.Fail()
+		return
+	}
+
+	//read on client side
+	_, clientReadErr := clientConn.Read(clientBuffer)
+	if clientReadErr != nil {
+		t.Fail()
+		return
+	}
+}
+
+func TestObfs2WithDialer(t *testing.T) {
+	config := NewObfs2TransportWithDialer(proxy.Direct)
+	//create client buffer
+	clientBuffer := make([]byte, 4)
+	//call dial on client and check error
+	clientConn, dialErr := config.Dial("127.0.0.1:1237")
+	if dialErr != nil {
+		t.Fail()
+		return
+	}
+
+	//write data from clientConn for server to read
+	_, clientWriteErr := clientConn.Write([]byte(data))
+	if clientWriteErr != nil {
+		t.Fail()
+		return
+	}
+
+	//read on client side
+	_, clientReadErr := clientConn.Read(clientBuffer)
+	if clientReadErr != nil {
+		t.Fail()
+		return
+	}
+}
+
+func TestObfs2OptimizerTransportWithDialer(t *testing.T) {
+	config := New("127.0.0.1:1237", proxy.Direct)
+	//create client buffer
+	clientBuffer := make([]byte, 4)
+	//call dial on client and check error
+	clientConn, dialErr := config.Dial()
+	if dialErr != nil {
+		t.Fail()
+		return
+	}
+
+	//write data from clientConn for server to read
+	_, clientWriteErr := clientConn.Write([]byte(data))
+	if clientWriteErr != nil {
+		t.Fail()
+		return
+	}
+
+	//read on client side
+	_, clientReadErr := clientConn.Read(clientBuffer)
+	if clientReadErr != nil {
+		t.Fail()
+		return
+	}
+}
+
+func RunLocalObfs2Server() {
 	//create a server
 	config := NewObfs2Transport()
 
 	//call listen on the server
-	serverListener := config.Listen("127.0.0.1:1234")
+	serverListener := config.Listen("127.0.0.1:1237")
 	if serverListener == nil {
 		return
 	}
@@ -74,84 +157,4 @@ func TestMain(m *testing.M) {
 			}
 		}
 	}()
-
-	os.Exit(m.Run())
-}
-
-func TestObfs2(t *testing.T) {
-	config := NewObfs2Transport()
-	//create client buffer
-	clientBuffer := make([]byte, 4)
-	//call dial on client and check error
-	clientConn, dialErr := config.Dial("127.0.0.1:1234")
-	if dialErr != nil {
-		t.Fail()
-		return
-	}
-
-	//write data from clientConn for server to read
-	_, clientWriteErr := clientConn.Write([]byte(data))
-	if clientWriteErr != nil {
-		t.Fail()
-		return
-	}
-
-	//read on client side
-	_, clientReadErr := clientConn.Read(clientBuffer)
-	if clientReadErr != nil {
-		t.Fail()
-		return
-	}
-}
-
-func TestObfs2WithDialer(t *testing.T) {
-	config := NewObfs2TransportWithDialer(proxy.Direct)
-	//create client buffer
-	clientBuffer := make([]byte, 4)
-	//call dial on client and check error
-	clientConn, dialErr := config.Dial("127.0.0.1:1234")
-	if dialErr != nil {
-		t.Fail()
-		return
-	}
-
-	//write data from clientConn for server to read
-	_, clientWriteErr := clientConn.Write([]byte(data))
-	if clientWriteErr != nil {
-		t.Fail()
-		return
-	}
-
-	//read on client side
-	_, clientReadErr := clientConn.Read(clientBuffer)
-	if clientReadErr != nil {
-		t.Fail()
-		return
-	}
-}
-
-func TestObfs2OptimizerTransportWithDialer(t *testing.T) {
-	config := New("127.0.0.1:1234", proxy.Direct)
-	//create client buffer
-	clientBuffer := make([]byte, 4)
-	//call dial on client and check error
-	clientConn, dialErr := config.Dial()
-	if dialErr != nil {
-		t.Fail()
-		return
-	}
-
-	//write data from clientConn for server to read
-	_, clientWriteErr := clientConn.Write([]byte(data))
-	if clientWriteErr != nil {
-		t.Fail()
-		return
-	}
-
-	//read on client side
-	_, clientReadErr := clientConn.Read(clientBuffer)
-	if clientReadErr != nil {
-		t.Fail()
-		return
-	}
 }

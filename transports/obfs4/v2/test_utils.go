@@ -2,14 +2,34 @@ package obfs4
 
 import (
 	"io/ioutil"
+	"os"
+	"os/user"
 	"path"
+	"runtime"
 	"strings"
 )
 
 //RunLocalObfs4Server runs the server side in the background for the test
 func RunLocalObfs4Server(data string) bool {
 	//create a server
-	serverConfig, confError := NewObfs4Server("/Users/bluesaxorcist/stateDir")
+	usr, userError := user.Current()
+	if userError != nil {
+		return false
+	}
+	home := usr.HomeDir
+	var fPath string
+	if runtime.GOOS == "darwin" {
+		fPath = path.Join(home, "shapeshifter-transports/stateDir")
+	} else {
+		fPath = path.Join(home, "gopath/src/github.com/OperatorFoundation/shapeshifter-transports/stateDir")
+	}
+	directoryErr := os.Mkdir(fPath, 0775)
+	if directoryErr != nil {
+		if !os.IsExist(directoryErr){
+			return false
+		}
+	}
+	serverConfig, confError := NewObfs4Server(fPath)
 	if confError != nil {
 		return false
 	}
@@ -50,7 +70,17 @@ func RunLocalObfs4Server(data string) bool {
 
 //RunObfs4Client runs the client side in the background for the test
 func RunObfs4Client() (*Transport, error) {
-	fPath := path.Join("/Users/bluesaxorcist/stateDir", "obfs4_bridgeline.txt")
+	usr, userError := user.Current()
+	if userError != nil {
+		return nil, userError
+	}
+	home := usr.HomeDir
+	var fPath string
+	if runtime.GOOS == "darwin" {
+		fPath = path.Join(home, "shapeshifter-transports/stateDir/obfs4_bridgeline.txt")
+	} else {
+		fPath = path.Join(home, "gopath/src/github.com/OperatorFoundation/shapeshifter-transports/stateDir/obfs4_bridgeline.txt")
+	}
 	bytes, fileError := ioutil.ReadFile(fPath)
 	if fileError != nil {
 		return nil, fileError

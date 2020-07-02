@@ -2,6 +2,7 @@ package optimizer
 
 import (
 	"github.com/OperatorFoundation/shapeshifter-transports/transports/meeklite/v2"
+	"github.com/OperatorFoundation/shapeshifter-transports/transports/obfs2/v2"
 	"github.com/OperatorFoundation/shapeshifter-transports/transports/obfs4/v2"
 	"github.com/OperatorFoundation/shapeshifter-transports/transports/shadow/v2"
 	"golang.org/x/net/proxy"
@@ -9,10 +10,14 @@ import (
 	"net"
 	"net/url"
 	"os"
+	"os/user"
 	"path"
+	"runtime"
 	"strings"
 	"testing"
 )
+
+const data = "test"
 
 func TestMain(m *testing.M) {
 	config := shadow.NewConfig("1234", "CHACHA20-IETF-POLY1305")
@@ -20,6 +25,8 @@ func TestMain(m *testing.M) {
 	go acceptConnections(listener)
 
 	_ = obfs4.RunLocalObfs4Server("test")
+
+	RunLocalObfs2Server()
 
 	os.Exit(m.Run())
 }
@@ -73,6 +80,17 @@ func TestShadowDial(t *testing.T) {
 func TestOptimizerShadowDial(t *testing.T) {
 	shadowTransport := shadow.NewTransport("1234", "CHACHA20-IETF-POLY1305", "127.0.0.1:1235")
 	transports := []Transport{&shadowTransport}
+	strategy := NewFirstStrategy(transports)
+	optimizerTransport := NewOptimizerClient(transports, strategy)
+	_, err := optimizerTransport.Dial()
+	if err != nil {
+		t.Fail()
+	}
+}
+
+func TestOptimizerObfs2Dial(t *testing.T) {
+	obfs2Transport := obfs2.New("127.0.0.1:1237", proxy.Direct)
+	transports := []Transport{obfs2Transport}
 	strategy := NewFirstStrategy(transports)
 	optimizerTransport := NewOptimizerClient(transports, strategy)
 	_, err := optimizerTransport.Dial()
@@ -242,10 +260,18 @@ func TestOptimizerTransportMinimizeDialDurationDial(t *testing.T) {
 	}
 }
 
-
-
-func getObfs4CertString() (*string, error){
-	fPath := path.Join("/Users/bluesaxorcist/stateDir", "obfs4_bridgeline.txt")
+func getObfs4CertString() (*string, error) {
+	usr, userError := user.Current()
+	if userError != nil {
+		return nil, userError
+	}
+	home := usr.HomeDir
+	var fPath string
+	if runtime.GOOS == "darwin" {
+		fPath = path.Join(home, "shapeshifter-transports/stateDir/obfs4_bridgeline.txt")
+	} else {
+		fPath = path.Join(home, "gopath/src/github.com/OperatorFoundation/shapeshifter-transports/stateDir/obfs4_bridgeline.txt")
+	}
 	bytes, fileError := ioutil.ReadFile(fPath)
 	if fileError != nil {
 		return nil, fileError
@@ -262,4 +288,40 @@ func getObfs4CertString() (*string, error){
 	certstring := bridgePart[5:]
 
 	return &certstring, nil
+}
+func RunLocalObfs2Server() {
+	//create a server
+	config := obfs2.NewObfs2Transport()
+
+	//call listen on the server
+	serverListener := config.Listen("127.0.0.1:1237")
+	if serverListener == nil {
+		return
+	}
+
+	//Create Server connection and format it for concurrency
+	go func() {
+		//create server buffer
+		serverBuffer := make([]byte, 4)
+
+		//create serverConn
+		for {
+			serverConn, acceptErr := serverListener.Accept()
+			if acceptErr != nil {
+				return
+			}
+
+			//read on server side
+			_, serverReadErr := serverConn.Read(serverBuffer)
+			if serverReadErr != nil {
+				return
+			}
+
+			//write data from serverConn for client to read
+			_, serverWriteErr := serverConn.Write([]byte(data))
+			if serverWriteErr != nil {
+				return
+			}
+		}
+	}()
 }
