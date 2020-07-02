@@ -39,7 +39,7 @@ import (
 	"github.com/OperatorFoundation/obfs4/common/ntor"
 	"github.com/OperatorFoundation/obfs4/common/probdist"
 	"github.com/OperatorFoundation/obfs4/common/replayfilter"
-	"github.com/OperatorFoundation/shapeshifter-ipc"
+	"github.com/OperatorFoundation/shapeshifter-ipc/v2"
 	"github.com/OperatorFoundation/shapeshifter-transports/transports/obfs4/v2/framing"
 	"golang.org/x/net/proxy"
 	"math/rand"
@@ -89,7 +89,7 @@ type Transport struct {
 
 //ServerFactory contains arguments for server side
 type ServerFactory struct {
-	args *pt.Args
+	args map[string]string
 
 	nodeID       *ntor.NodeID
 	identityKey  *ntor.Keypair
@@ -112,8 +112,8 @@ type ClientArgs struct {
 
 //NewObfs4Server initializes the obfs4 server side
 func NewObfs4Server(stateDir string) (*Transport, error) {
-	args := make(pt.Args)
-	st, err := serverStateFromArgs(stateDir, &args)
+	args := make(map[string]string)
+	st, err := serverStateFromArgs(stateDir, args)
 	if err != nil {
 		return nil, err
 	}
@@ -129,10 +129,10 @@ func NewObfs4Server(stateDir string) (*Transport, error) {
 	}
 
 	// Store the arguments that should appear in our descriptor for the clients.
-	ptArgs := pt.Args{}
-	ptArgs.Add(certArg, st.cert.String())
+	ptArgs := make(map[string]string)
+	ptArgs[certArg] = st.cert.String()
 	log.Infof("certstring %s", certArg)
-	ptArgs.Add(iatArg, strconv.Itoa(st.iatMode))
+	ptArgs[iatArg] = strconv.Itoa(st.iatMode)
 
 	// Initialize the replay filter.
 	filter, err := replayfilter.New(replayTTL)
@@ -147,7 +147,7 @@ func NewObfs4Server(stateDir string) (*Transport, error) {
 	}
 	rng := rand.New(hashDrbg)
 
-	sf := &ServerFactory{&ptArgs, st.nodeID, st.identityKey, st.drbgSeed, iatSeed, st.iatMode, filter, rng.Intn(maxCloseDelayBytes), rng.Intn(maxCloseDelay)}
+	sf := &ServerFactory{ptArgs, st.nodeID, st.identityKey, st.drbgSeed, iatSeed, st.iatMode, filter, rng.Intn(maxCloseDelayBytes), rng.Intn(maxCloseDelay)}
 
 	return &Transport{dialer: nil, serverFactory: sf, clientArgs: nil}, nil
 }

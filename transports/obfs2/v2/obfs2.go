@@ -44,7 +44,7 @@ import (
 	"golang.org/x/net/proxy"
 
 	"github.com/OperatorFoundation/obfs4/common/csrand"
-	"github.com/OperatorFoundation/shapeshifter-ipc"
+	"github.com/OperatorFoundation/shapeshifter-ipc/v2"
 )
 
 const (
