@@ -106,13 +106,13 @@ func (listener meekListener) Addr() net.Addr {
 }
 
 func (conn meekServerConn) Read(b []byte) (n int, err error) {
-	if len(conn.session.Or.readBuffer) == 0 {
+	if len(conn.session.Or.readBuffer) == 0 || len(b) == 0 {
 		return 0, nil
+	} else {
+		copyLength := copy(b, conn.session.Or.readBuffer)
+		conn.session.Or.readBuffer = conn.session.Or.readBuffer[copyLength:]
+		return copyLength, nil
 	}
-		copy(b, conn.session.Or.readBuffer)
-		conn.session.Or.readBuffer = conn.session.Or.readBuffer[:0]
-
-	return len(b), nil
 }
 
 func (conn meekServerConn) Write(b []byte) (n int, err error) {
