@@ -80,6 +80,13 @@ type fakeConn struct {
 	writeBuffer []byte
 }
 
+func New(disableTLS bool, certManager *autocert.Manager, address string) Transport {
+	return Transport{
+		DisableTLS: disableTLS,
+		CertManager: certManager,
+		Address: address,
+	}
+}
 func (listener meekListener) Accept() (net.Conn, error) {
 	state := listener.state
 	state.lock.Lock()

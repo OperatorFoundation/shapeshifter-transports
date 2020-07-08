@@ -111,7 +111,7 @@ type ClientArgs struct {
 }
 
 //NewObfs4Server initializes the obfs4 server side
-func NewObfs4Server(stateDir string) (*Transport, error) {
+func NewObfs4Server(stateDir string) (*ServerFactory, error) {
 	args := make(pt.Args)
 	st, err := serverStateFromArgs(stateDir, &args)
 	if err != nil {
@@ -149,7 +149,7 @@ func NewObfs4Server(stateDir string) (*Transport, error) {
 
 	sf := &ServerFactory{&ptArgs, st.nodeID, st.identityKey, st.drbgSeed, iatSeed, st.iatMode, filter, rng.Intn(maxCloseDelayBytes), rng.Intn(maxCloseDelay)}
 
-	return &Transport{dialer: nil, serverFactory: sf, clientArgs: nil}, nil
+	return sf, nil
 }
 
 //NewObfs4Client initializes the obfs4 client side
@@ -175,7 +175,7 @@ func NewObfs4Client(certString string, iatMode int, dialer proxy.Dialer) (*Trans
 	if dialer == nil {
 		return &Transport{dialer: proxy.Direct, serverFactory: nil, clientArgs: &ClientArgs{nodeID, publicKey, sessionKey, iatMode}}, nil
 	}
-		return &Transport{dialer: dialer, serverFactory: nil, clientArgs: &ClientArgs{nodeID, publicKey, sessionKey, iatMode}}, nil
+	return &Transport{dialer: dialer, serverFactory: nil, clientArgs: &ClientArgs{nodeID, publicKey, sessionKey, iatMode}}, nil
 
 }
 
@@ -200,13 +200,17 @@ func (transport *Transport) Dial(address string) (net.Conn, error) {
 	return transportConn, nil
 }
 
-
-//OptimizerTransport contains parameters to be used in Optimizer
-type OptimizerTransport struct {
+//TransportClient contains parameters to be used in Optimizer
+type TransportClient struct {
 	CertString string
 	IatMode    int
 	Address    string
 	Dialer     proxy.Dialer
+}
+
+type TransportServer struct {
+	ServerFactory *ServerFactory
+	Address       string
 }
 
 //Config contains arguments formatted for a json file
@@ -215,8 +219,30 @@ type Config struct {
 	IatMode    string `json:"iat-mode"`
 }
 
+func NewClient(certString string, iatMode int, address string, dialer proxy.Dialer) TransportClient {
+	return TransportClient{
+		CertString: certString,
+		IatMode:    iatMode,
+		Address:    address,
+		Dialer:     dialer,
+	}
+}
+
+func NewServer(stateDir string, address string) (*TransportServer, error) {
+	sf, sFError := NewObfs4Server(stateDir)
+
+	if sFError != nil {
+		return nil, sFError
+	}
+	transport := &TransportServer{
+		ServerFactory: sf,
+		Address:       address,
+	}
+	return transport, nil
+}
+
 // Dial creates outgoing transport connection
-func (transport OptimizerTransport) Dial() (net.Conn, error) {
+func (transport TransportClient) Dial() (net.Conn, error) {
 	Obfs4Transport, err := NewObfs4Client(transport.CertString, transport.IatMode, transport.Dialer)
 	if err != nil {
 		return nil, err
@@ -245,7 +271,7 @@ func (transport *Transport) Listen(address string) (net.Listener, error) {
 	return newObfs4TransportListener(transport.serverFactory, ln), nil
 }
 
-func (transport *OptimizerTransport) Listen() (net.Listener, error) {
+func (transport *TransportServer) Listen() (net.Listener, error) {
 	addr, resolveErr := pt.ResolveAddr(transport.Address)
 	if resolveErr != nil {
 		fmt.Println(resolveErr.Error())
@@ -257,8 +283,8 @@ func (transport *OptimizerTransport) Listen() (net.Listener, error) {
 		fmt.Println(err.Error())
 		return nil, err
 	}
-//TODO Do we need to write a function to imitate newObfs4TransportListener or add another parameter to OptimizerTransport?
-	return ln, nil
+
+	return newObfs4TransportListener(transport.ServerFactory, ln), nil
 }
 
 // Close closes the transport listener.

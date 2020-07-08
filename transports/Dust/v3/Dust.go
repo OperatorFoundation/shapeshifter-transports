@@ -50,11 +50,22 @@ type Transport struct {
 	ServerPublic string
 	Address      string
 	Dialer       proxy.Dialer
+	ServerConfig *dustServer
 }
 
 type Config struct {
 	ServerPublic string `json:"server-public"`
 }
+
+func New(serverPublic string, address string, dialer proxy.Dialer, serverConfig *dustServer) Transport {
+	return Transport{
+		ServerPublic: serverPublic,
+		Address:      address,
+		Dialer:       dialer,
+		ServerConfig: serverConfig,
+	}
+}
+
 func (transport Transport) Dial() (net.Conn, error) {
 	dustTransport := NewDustClient(transport.ServerPublic, transport.Dialer)
 	conn, err := dustTransport.Dial(transport.Address)
@@ -77,8 +88,8 @@ func (transport Transport) Listen() (net.Listener, error) {
 		fmt.Println(err.Error())
 		return nil, err
 	}
-//TODO do we need to write an initializer function that imitates newDustTransportListener or add a parameter to Transport?
-	return ln, nil
+
+	return newDustTransportListener(ln, transport.ServerConfig), nil
 }
 //end optimizer code
 

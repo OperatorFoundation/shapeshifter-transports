@@ -7,16 +7,35 @@ import (
 )
 
 // This makes Replicant compliant with Optimizer
-type Transport struct {
+type TransportClient struct {
 	Config  ClientConfig
-	Sconfig ServerConfig
-	//TODO was adding Sconfig the right move?  after running the tests, nothing in the initial code was broken or failing
-	//TODO Do we need to add a test for the dial and listen that take nothing?
 	Address string
 	Dialer  proxy.Dialer
 }
 
-func (transport Transport) Dial() (net.Conn, error) {
+type TransportServer struct {
+	Config ServerConfig
+	Address string
+	Dialer  proxy.Dialer
+}
+
+func NewClient(config ClientConfig, address string, dialer proxy.Dialer) TransportClient {
+	return TransportClient{
+		Config: config,
+		Address: address,
+		Dialer: dialer,
+	}
+}
+
+func NewServer(config ServerConfig, address string, dialer proxy.Dialer) TransportServer {
+	return TransportServer{
+		Config: config,
+		Address: address,
+		Dialer: dialer,
+	}
+}
+
+func (transport TransportClient) Dial() (net.Conn, error) {
 	conn, dialErr := transport.Dialer.Dial("tcp", transport.Address)
 	if dialErr != nil {
 		return nil, dialErr
@@ -32,7 +51,7 @@ func (transport Transport) Dial() (net.Conn, error) {
 	return transportConn, nil
 	}
 
-func (transport Transport) Listen() (net.Listener, error) {
+func (transport TransportServer) Listen() (net.Listener, error) {
 	addr, resolveErr := pt.ResolveAddr(transport.Address)
 	if resolveErr != nil {
 		return nil, resolveErr
@@ -43,7 +62,7 @@ func (transport Transport) Listen() (net.Listener, error) {
 		return nil, err
 	}
 
-	return newReplicantTransportListener(ln, transport.Sconfig), nil
+	return newReplicantTransportListener(ln, transport.Config), nil
 }
 	//replicantTransport := New(transport.Config, transport.Dialer)
 	//conn := replicantTransport.Dial(transport.Address)

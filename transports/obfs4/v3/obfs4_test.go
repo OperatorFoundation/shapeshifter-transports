@@ -73,3 +73,4 @@ func TestObfs4(t *testing.T) {
 		return
 	}
 }
+
