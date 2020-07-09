@@ -111,7 +111,7 @@ type ClientArgs struct {
 }
 
 //NewObfs4Server initializes the obfs4 server side
-func NewObfs4Server(stateDir string) (*ServerFactory, error) {
+func NewObfs4Server(stateDir string) (*Transport, error) {
 	args := make(map[string]string)
 	st, err := serverStateFromArgs(stateDir, args)
 	if err != nil {
@@ -149,7 +149,7 @@ func NewObfs4Server(stateDir string) (*ServerFactory, error) {
 
 	sf := &ServerFactory{ptArgs, st.nodeID, st.identityKey, st.drbgSeed, iatSeed, st.iatMode, filter, rng.Intn(maxCloseDelayBytes), rng.Intn(maxCloseDelay)}
 
-	return sf, nil
+	return &Transport{dialer: nil, serverFactory: sf, clientArgs: nil}, nil
 }
 
 //NewObfs4Client initializes the obfs4 client side
@@ -219,27 +219,28 @@ type Config struct {
 	IatMode    string `json:"iat-mode"`
 }
 
-func NewClient(certString string, iatMode int, address string, dialer proxy.Dialer) TransportClient {
-	return TransportClient{
-		CertString: certString,
-		IatMode:    iatMode,
-		Address:    address,
-		Dialer:     dialer,
-	}
-}
-
-func NewServer(stateDir string, address string) (*TransportServer, error) {
-	sf, sFError := NewObfs4Server(stateDir)
-
-	if sFError != nil {
-		return nil, sFError
-	}
-	transport := &TransportServer{
-		ServerFactory: sf,
-		Address:       address,
-	}
-	return transport, nil
-}
+//TODO i dont remember if these are used here but they arent in the dev branch and NewServer expects the wrong thing
+//func NewClient(certString string, iatMode int, address string, dialer proxy.Dialer) TransportClient {
+//	return TransportClient{
+//		CertString: certString,
+//		IatMode:    iatMode,
+//		Address:    address,
+//		Dialer:     dialer,
+//	}
+//}
+//
+//func NewServer(stateDir string, address string) (*TransportServer, error) {
+//	sf, sFError := NewObfs4Server(stateDir)
+//
+//	if sFError != nil {
+//		return nil, sFError
+//	}
+//	transport := &TransportServer{
+//		ServerFactory: sf,
+//		Address:       address,
+//	}
+//	return transport, nil
+//}
 
 // Dial creates outgoing transport connection
 func (transport TransportClient) Dial() (net.Conn, error) {
