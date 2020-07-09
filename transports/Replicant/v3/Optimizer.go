@@ -1,7 +1,7 @@
 package replicant
 
 import (
-	pt "github.com/OperatorFoundation/shapeshifter-ipc"
+	pt "github.com/OperatorFoundation/shapeshifter-ipc/v2"
 	"golang.org/x/net/proxy"
 	"net"
 )

@@ -14,7 +14,7 @@ import (
 	"net"
 	"time"
 
-	"github.com/OperatorFoundation/shapeshifter-ipc"
+	"github.com/OperatorFoundation/shapeshifter-ipc/v2"
 	"github.com/blanu/Dust/go/v2/interface"
 )
 
