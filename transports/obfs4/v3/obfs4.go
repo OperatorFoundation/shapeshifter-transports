@@ -223,19 +223,60 @@ func NewClient(certString string, iatMode int, address string, dialer proxy.Dial
 	return TransportClient{CertString: certString, IatMode: iatMode, Address: address, Dialer: dialer}, nil
 }
 
-//func NewServer(stateDir string, address string) (*TransportServer, error) {
-//	sf, sFError := NewObfs4Server(stateDir)
-//
-//	if sFError != nil {
-//		return nil, sFError
-//	}
-//	transport := &TransportServer{
-////TODO since sf is type *Transport, how do we make it into a type *ServerFactory
-//		ServerFactory: sf,
-//		Address:       address,
-//	}
-//	return transport, nil
-//}
+func NewServer(stateDir string, address string) (*TransportServer, error) {
+	sf, sFError := NewObfs4ServerFactory(stateDir)
+
+	if sFError != nil {
+		return nil, sFError
+	}
+	transport := &TransportServer{
+		ServerFactory: sf,
+		Address:       address,
+	}
+	return transport, nil
+}
+
+//NewObfs4Server initializes the obfs4 server side
+func NewObfs4ServerFactory(stateDir string) (*ServerFactory, error) {
+	args := make(map[string]string)
+	st, err := serverStateFromArgs(stateDir, args)
+	if err != nil {
+		return nil, err
+	}
+
+	var iatSeed *drbg.Seed
+	if st.iatMode != iatNone {
+		iatSeedSrc := sha256.Sum256(st.drbgSeed.Bytes()[:])
+		var err error
+		iatSeed, err = drbg.SeedFromBytes(iatSeedSrc[:])
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// Store the arguments that should appear in our descriptor for the clients.
+	ptArgs := make(map[string]string)
+	ptArgs[certArg] = st.cert.String()
+	log.Infof("certstring %s", certArg)
+	ptArgs[iatArg] = strconv.Itoa(st.iatMode)
+
+	// Initialize the replay filter.
+	filter, err := replayfilter.New(replayTTL)
+	if err != nil {
+		return nil, err
+	}
+
+	// Initialize the close thresholds for failed connections.
+	hashDrbg, err := drbg.NewHashDrbg(st.drbgSeed)
+	if err != nil {
+		return nil, err
+	}
+	rng := rand.New(hashDrbg)
+
+	sf := &ServerFactory{ptArgs, st.nodeID, st.identityKey, st.drbgSeed, iatSeed, st.iatMode, filter, rng.Intn(maxCloseDelayBytes), rng.Intn(maxCloseDelay)}
+
+	return sf, nil
+}
 
 // Dial creates outgoing transport connection
 func (transport TransportClient) Dial() (net.Conn, error) {

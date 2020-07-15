@@ -50,12 +50,11 @@ type MeekServer struct {
 	AcmeHostname string
 	CertManager  *autocert.Manager
 }
-//TODO I added this struct imitating MeekServer struct that has only the bare minimum parameters that the listener uses with the addition of Address
-//TODO Was this a 'pro-gamer move'?
+
 type Transport struct {
-	DisableTLS  bool
-	CertManager *autocert.Manager
-	Address     string
+	DisableTLS   bool
+	CertManager  *autocert.Manager
+	Address      string
 }
 
 //Config contains arguments formatted for a json file
@@ -80,11 +79,48 @@ type fakeConn struct {
 	writeBuffer []byte
 }
 
-func New(disableTLS bool, certManager *autocert.Manager, address string) Transport {
-	return Transport{
-		DisableTLS: disableTLS,
-		CertManager: certManager,
-		Address: address,
+func New(disableTLS bool, acmeHostnamesCommas string, acmeEmail string, address string, stateDir string) (*Transport, error) {
+	var certManager *autocert.Manager
+	if disableTLS {
+		if acmeEmail != "" || acmeHostnamesCommas != "" {
+			return nil, errors.New("acmeEmail and acmeHostnames must be empty when disableTLS is enabled")
+		}
+		return nil, errors.New("disableTLS mode is not yet supported")
+	} else {
+		if acmeEmail == "" || acmeHostnamesCommas == "" {
+			return nil, errors.New("acmeEmail and acmeHostnames must be empty when disableTLS is disabled")
+		}
+		if acmeHostnamesCommas != "" {
+			acmeHostnames := strings.Split(acmeHostnamesCommas, ",")
+			log.Printf("ACME hostnames: %q", acmeHostnames)
+
+			// The ACME HTTP-01 responder only works when it is running on
+			// port 80.
+			// https://github.com/ietf-wg-acme/acme/blob/master/draft-ietf-acme-acme.md#http-challenge
+
+			var cache autocert.Cache
+			cacheDir, err := getCertificateCacheDir(stateDir)
+			if err == nil {
+				log.Printf("caching ACME certificates in directory %q", cacheDir)
+				cache = autocert.DirCache(cacheDir)
+			} else {
+				log.Printf("disabling ACME certificate cache: %s", err)
+			}
+
+			certManager = &autocert.Manager{
+				Prompt:     autocert.AcceptTOS,
+				HostPolicy: autocert.HostWhitelist(acmeHostnames...),
+				Email:      acmeEmail,
+				Cache:      cache,
+			}
+			return &Transport{
+				DisableTLS:  disableTLS,
+				CertManager: certManager,
+				Address:     address,
+			}, nil
+		} else {
+			return nil, errors.New("must set acmeEmail")
+		}
 	}
 }
 func (listener meekListener) Accept() (net.Conn, error) {
