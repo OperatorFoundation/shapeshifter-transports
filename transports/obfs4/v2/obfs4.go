@@ -41,6 +41,7 @@ import (
 	"github.com/OperatorFoundation/obfs4/common/replayfilter"
 	"github.com/OperatorFoundation/shapeshifter-ipc/v2"
 	"github.com/OperatorFoundation/shapeshifter-transports/transports/obfs4/v2/framing"
+	"github.com/op/go-logging"
 	"golang.org/x/net/proxy"
 	"math/rand"
 	"net"
@@ -85,6 +86,7 @@ type Transport struct {
 
 	serverFactory *ServerFactory
 	clientArgs    *ClientArgs
+	log           *logging.Logger
 }
 
 //ServerFactory contains arguments for server side
