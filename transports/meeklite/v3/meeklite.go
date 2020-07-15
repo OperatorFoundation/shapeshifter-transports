@@ -135,6 +135,9 @@ type Config struct {
 	Front string     `json:"front"`
 }
 
+func NewMeekFactoryTransportWithFront(url *gourl.URL, front string, address string, dialer proxy.Dialer) *Transport {
+	return &Transport{url, front, address,dialer}
+}
 // Dial creates outgoing transport connection
 func (transport Transport) Dial() (net.Conn, error) {
 	meekTransport := NewMeekTransportWithFront(transport.URL.String(), transport.Front, transport.Dialer)

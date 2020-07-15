@@ -219,16 +219,10 @@ type Config struct {
 	IatMode    string `json:"iat-mode"`
 }
 
-//TODO i dont remember if these are used here but they arent in the dev branch and NewServer expects the wrong thing
-//func NewClient(certString string, iatMode int, address string, dialer proxy.Dialer) TransportClient {
-//	return TransportClient{
-//		CertString: certString,
-//		IatMode:    iatMode,
-//		Address:    address,
-//		Dialer:     dialer,
-//	}
-//}
-//
+func NewClient(certString string, iatMode int, address string, dialer proxy.Dialer) (TransportClient, error) {
+	return TransportClient{CertString: certString, IatMode: iatMode, Address: address, Dialer: dialer}, nil
+}
+
 //func NewServer(stateDir string, address string) (*TransportServer, error) {
 //	sf, sFError := NewObfs4Server(stateDir)
 //
@@ -236,6 +230,7 @@ type Config struct {
 //		return nil, sFError
 //	}
 //	transport := &TransportServer{
+////TODO since sf is type *Transport, how do we make it into a type *ServerFactory
 //		ServerFactory: sf,
 //		Address:       address,
 //	}

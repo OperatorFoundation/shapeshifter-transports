@@ -121,7 +121,7 @@ func TestOptimizerObfs4Transport_Dial(t *testing.T) {
 		t.Fail()
 		return
 	}
-	obfs4Transport := obfs4.OptimizerTransport{
+	obfs4Transport := obfs4.TransportClient{
 		CertString: *certstring,
 		IatMode:    0,
 		Address:    "127.0.0.1:1234",
@@ -142,7 +142,7 @@ func TestOptimizerTransportFirstDial(t *testing.T) {
 		t.Fail()
 		return
 	}
-	obfs4Transport := obfs4.OptimizerTransport{
+	obfs4Transport := obfs4.TransportClient{
 		CertString: *certstring,
 		IatMode:    0,
 		Address:    "127.0.0.1:1234",
@@ -166,7 +166,7 @@ func TestOptimizerTransportRandomDial(t *testing.T) {
 		t.Fail()
 		return
 	}
-	obfs4Transport := obfs4.OptimizerTransport{
+	obfs4Transport := obfs4.TransportClient{
 		CertString: *certstring,
 		IatMode:    0,
 		Address:    "127.0.0.1:1234",
@@ -192,7 +192,7 @@ func TestOptimizerTransportRotateDial(t *testing.T) {
 		t.Fail()
 		return
 	}
-	obfs4Transport := obfs4.OptimizerTransport{
+	obfs4Transport := obfs4.TransportClient{
 		CertString: *certstring,
 		IatMode:    0,
 		Address:    "127.0.0.1:1234",
@@ -218,7 +218,7 @@ func TestOptimizerTransportTrackDial(t *testing.T) {
 		t.Fail()
 		return
 	}
-	obfs4Transport := obfs4.OptimizerTransport{
+	obfs4Transport := obfs4.TransportClient{
 		CertString: *certstring,
 		IatMode:    0,
 		Address:    "127.0.0.1:1234",
@@ -244,7 +244,7 @@ func TestOptimizerTransportMinimizeDialDurationDial(t *testing.T) {
 		t.Fail()
 		return
 	}
-	obfs4Transport := obfs4.OptimizerTransport{
+	obfs4Transport := obfs4.TransportClient{
 		CertString: *certstring,
 		IatMode:    0,
 		Address:    "127.0.0.1:1234",
