@@ -5,7 +5,7 @@ import (
 	"github.com/OperatorFoundation/shapeshifter-transports/transports/obfs2/v2"
 	"github.com/OperatorFoundation/shapeshifter-transports/transports/obfs4/v2"
 	"github.com/OperatorFoundation/shapeshifter-transports/transports/shadow/v2"
-	"github.com/op/go-logging"
+
 	"golang.org/x/net/proxy"
 	"io/ioutil"
 	"net"
@@ -79,7 +79,7 @@ func TestShadowDial(t *testing.T) {
 }
 
 func TestOptimizerShadowDial(t *testing.T) {
-	shadowTransport := shadow.NewTransport("1234", "CHACHA20-IETF-POLY1305", "127.0.0.1:1235", &logging.Logger{})
+	shadowTransport := shadow.NewTransport("1234", "CHACHA20-IETF-POLY1305", "127.0.0.1:1235")
 	transports := []Transport{&shadowTransport}
 	strategy := NewFirstStrategy(transports)
 	optimizerTransport := NewOptimizerClient(transports, strategy)
@@ -90,7 +90,7 @@ func TestOptimizerShadowDial(t *testing.T) {
 }
 
 func TestOptimizerObfs2Dial(t *testing.T) {
-	obfs2Transport := obfs2.New("127.0.0.1:1237", proxy.Direct, &logging.Logger{})
+	obfs2Transport := obfs2.New("127.0.0.1:1237", proxy.Direct)
 	transports := []Transport{obfs2Transport}
 	strategy := NewFirstStrategy(transports)
 	optimizerTransport := NewOptimizerClient(transports, strategy)
@@ -145,7 +145,7 @@ func TestOptimizerTransportFirstDial(t *testing.T) {
 		IatMode:    0,
 		Address:    "127.0.0.1:1234",
 		Dialer:     dialer}
-	shadowTransport := shadow.NewTransport("1234", "CHACHA20-IETF-POLY1305", "127.0.0.1:1235", &logging.Logger{})
+	shadowTransport := shadow.NewTransport("1234", "CHACHA20-IETF-POLY1305", "127.0.0.1:1235")
 	transports := []Transport{obfs4Transport, &shadowTransport}
 	strategy := NewFirstStrategy(transports)
 	optimizerTransport := NewOptimizerClient(transports, strategy)
@@ -170,7 +170,7 @@ func TestOptimizerTransportRandomDial(t *testing.T) {
 		Address:    "127.0.0.1:1234",
 		Dialer:     dialer,
 	}
-	shadowTransport := shadow.NewTransport("1234", "CHACHA20-IETF-POLY1305", "127.0.0.1:1235", &logging.Logger{})
+	shadowTransport := shadow.NewTransport("1234", "CHACHA20-IETF-POLY1305", "127.0.0.1:1235")
 	transports := []Transport{obfs4Transport, &shadowTransport}
 	strategy := NewRandomStrategy(transports)
 	optimizerTransport := NewOptimizerClient(transports, strategy)
@@ -196,7 +196,7 @@ func TestOptimizerTransportRotateDial(t *testing.T) {
 		Address:    "127.0.0.1:1234",
 		Dialer:     dialer,
 }
-	shadowTransport := shadow.NewTransport("1234", "CHACHA20-IETF-POLY1305", "127.0.0.1:1235", &logging.Logger{})
+	shadowTransport := shadow.NewTransport("1234", "CHACHA20-IETF-POLY1305", "127.0.0.1:1235")
 	transports := []Transport{obfs4Transport, &shadowTransport}
 	strategy := NewRotateStrategy(transports)
 	optimizerTransport := NewOptimizerClient(transports, strategy)
@@ -222,7 +222,7 @@ func TestOptimizerTransportTrackDial(t *testing.T) {
 		Address:    "127.0.0.1:1234",
 		Dialer:     dialer,
 }
-	shadowTransport := shadow.NewTransport("1234", "CHACHA20-IETF-POLY1305", "127.0.0.1:1235", &logging.Logger{})
+	shadowTransport := shadow.NewTransport("1234", "CHACHA20-IETF-POLY1305", "127.0.0.1:1235")
 	transports := []Transport{obfs4Transport, &shadowTransport}
 	strategy := NewTrackStrategy(transports)
 	optimizerTransport := NewOptimizerClient(transports, strategy)
@@ -248,7 +248,7 @@ func TestOptimizerTransportMinimizeDialDurationDial(t *testing.T) {
 		Address:    "127.0.0.1:1234",
 		Dialer:     dialer,
 	}
-	shadowTransport := shadow.NewTransport("1234", "CHACHA20-IETF-POLY1305", "127.0.0.1:1235", &logging.Logger{})
+	shadowTransport := shadow.NewTransport("1234", "CHACHA20-IETF-POLY1305", "127.0.0.1:1235")
 	transports := []Transport{obfs4Transport, &shadowTransport}
 	strategy := NewMinimizeDialDuration(transports)
 	optimizerTransport := NewOptimizerClient(transports, strategy)

@@ -32,7 +32,6 @@
 package obfs2
 
 import (
-	"github.com/op/go-logging"
 	"golang.org/x/net/proxy"
 	"os"
 	"testing"
@@ -98,8 +97,7 @@ func TestObfs2WithDialer(t *testing.T) {
 }
 
 func TestObfs2OptimizerTransportWithDialer(t *testing.T) {
-	var log = logging.MustGetLogger("obfs2")
-	config := New("127.0.0.1:1237", proxy.Direct, log)
+	config := New("127.0.0.1:1237", proxy.Direct)
 	//create client buffer
 	clientBuffer := make([]byte, 4)
 	//call dial on client and check error
