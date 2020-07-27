@@ -9,6 +9,7 @@ package Dust
 
 
 import (
+	"github.com/op/go-logging"
 	"golang.org/x/net/proxy"
 	"testing"
 )
@@ -86,12 +87,13 @@ func TestDust(t *testing.T) {
 
 func TestDustV3(t *testing.T) {
 	//create a server
+	var log = logging.MustGetLogger("dust")
 	serverConfig := dustServer{
 		serverPrivkey: nil,
 		dialer:        nil,
 	}
 
-	transport := New("", "127.0.0.1:1234", proxy.Direct, &serverConfig)
+	transport := New("", "127.0.0.1:1234", proxy.Direct, &serverConfig, log)
 	//call listen on the server
 	serverListener, listenErr := transport.Listen()
 	if listenErr != nil {

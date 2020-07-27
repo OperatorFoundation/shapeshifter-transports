@@ -36,6 +36,7 @@ import (
 	"crypto/sha256"
 	"encoding/binary"
 	"fmt"
+	"github.com/op/go-logging"
 
 	"io"
 	"net"
@@ -66,6 +67,7 @@ const (
 type OptimizerTransport struct {
 	Address string
 	Dialer  proxy.Dialer
+	log     *logging.Logger
 }
 
 //Dial connects to a specified address.
@@ -110,10 +112,11 @@ type Transport struct {
 }
 
 //New initializes obfs2 for Optimizer
-func New(address string, dialer proxy.Dialer) *OptimizerTransport {
+func New(address string, dialer proxy.Dialer, log *logging.Logger) *OptimizerTransport {
 	result := OptimizerTransport{
 		Address: address,
 		Dialer:  dialer,
+		log: log,
 	}
 	return &result
 }

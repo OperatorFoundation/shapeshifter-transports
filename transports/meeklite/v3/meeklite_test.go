@@ -34,6 +34,7 @@
 package meeklite
 
 import (
+	"github.com/op/go-logging"
 	"golang.org/x/net/proxy"
 	gourl "net/url"
 	"testing"
@@ -78,6 +79,7 @@ func TestMeeklite(t *testing.T) {
 }
 
 func TestFactoryMeeklite(t *testing.T) {
+	var log = logging.MustGetLogger("meeklite")
 	//create a server
 	urlString := "https://transport-canary-meek.appspot.com/"
 	Url, err := gourl.Parse(urlString)
@@ -86,7 +88,7 @@ func TestFactoryMeeklite(t *testing.T) {
 		return
 	}
 
-	config := NewMeekFactoryTransportWithFront(Url, "www.google.com", "", proxy.Direct)
+	config := NewMeekFactoryTransportWithFront(Url, "www.google.com", "", proxy.Direct, log)
 
 	//create client buffer
 	clientBuffer := make([]byte, 4)

@@ -39,6 +39,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"github.com/op/go-logging"
 	"golang.org/x/net/proxy"
 	"io"
 	"io/ioutil"
@@ -127,6 +128,7 @@ type Transport struct {
 	Front   string     `json:"front"`
 	Address string
 	Dialer  proxy.Dialer
+	log     *logging.Logger
 }
 
 //Config puts the parameters in a json compatible format
@@ -135,8 +137,8 @@ type Config struct {
 	Front string     `json:"front"`
 }
 
-func NewMeekFactoryTransportWithFront(url *gourl.URL, front string, address string, dialer proxy.Dialer) *Transport {
-	return &Transport{url, front, address,dialer}
+func NewMeekFactoryTransportWithFront(url *gourl.URL, front string, address string, dialer proxy.Dialer, log *logging.Logger) *Transport {
+	return &Transport{url, front, address,dialer, log}
 }
 // Dial creates outgoing transport connection
 func (transport Transport) Dial() (net.Conn, error) {

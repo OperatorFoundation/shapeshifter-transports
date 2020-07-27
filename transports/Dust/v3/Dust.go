@@ -10,6 +10,9 @@ package Dust
 import (
 	"fmt"
 	"github.com/OperatorFoundation/obfs4/common/log"
+
+	//"github.com/OperatorFoundation/obfs4/common/log"
+	"github.com/op/go-logging"
 	"golang.org/x/net/proxy"
 	"net"
 	"time"
@@ -51,18 +54,20 @@ type Transport struct {
 	Address      string
 	Dialer       proxy.Dialer
 	ServerConfig *dustServer
+	Log          *logging.Logger
 }
 
 type Config struct {
 	ServerPublic string `json:"server-public"`
 }
 
-func New(serverPublic string, address string, dialer proxy.Dialer, serverConfig *dustServer) Transport {
+func New(serverPublic string, address string, dialer proxy.Dialer, serverConfig *dustServer, log *logging.Logger) Transport {
 	return Transport{
 		ServerPublic: serverPublic,
 		Address:      address,
 		Dialer:       dialer,
 		ServerConfig: serverConfig,
+		Log:          log,
 	}
 }
 
