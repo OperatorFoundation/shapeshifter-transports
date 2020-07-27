@@ -41,16 +41,20 @@ type ServerConfig struct {
 	Polish    polish.ServerConfig
 }
 
+type ClientJSONConfig struct {
+	Config string `json:"config"`
+	Address string `json:"address"`
+}
+
+type ServerJSONInnerConfig struct {
+	Config string `json:"config"`
+}
+
+type ServerJSONOuterConfig struct {
+	Replicant ServerJSONInnerConfig
+}
+
 func (config ServerConfig) Marshal() (string, error) {
-
-	type ServerJSONInnerConfig struct {
-		Config string `json:"config"`
-	}
-
-	type ServerJSONOuterConfig struct {
-		Replicant ServerJSONInnerConfig
-	}
-
 	configString, configStringError := config.Encode()
 	if configStringError != nil {
 		return "", configStringError
@@ -68,11 +72,6 @@ func (config ServerConfig) Marshal() (string, error) {
 }
 
 func (config ClientConfig) Marshal() (string, error) {
-
-	type ClientJSONConfig struct {
-		Config string `json:"config"`
-		Address string `json:"address"`
-	}
 
 	configString, configStringError := config.Encode()
 	if configStringError != nil {
