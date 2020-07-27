@@ -1,6 +1,7 @@
 package obfs4
 
 import (
+	"github.com/op/go-logging"
 	"golang.org/x/net/proxy"
 	"io/ioutil"
 	"os"
@@ -26,7 +27,7 @@ func RunLocalObfs4Server(data string) bool {
 	}
 	directoryErr := os.Mkdir(fPath, 0775)
 	if directoryErr != nil {
-		if !os.IsExist(directoryErr){
+		if !os.IsExist(directoryErr) {
 			return false
 		}
 	}
@@ -71,6 +72,7 @@ func RunLocalObfs4Server(data string) bool {
 
 func RunLocalObfs4ServerFactory(data string) bool {
 	//create a server
+	log := MakeLog()
 	usr, userError := user.Current()
 	if userError != nil {
 		return false
@@ -84,11 +86,11 @@ func RunLocalObfs4ServerFactory(data string) bool {
 	}
 	directoryErr := os.Mkdir(fPath, 0775)
 	if directoryErr != nil {
-		if !os.IsExist(directoryErr){
+		if !os.IsExist(directoryErr) {
 			return false
 		}
 	}
-	serverConfig, confError := NewServer(fPath, "127.0.0.1:2234")
+	serverConfig, confError := NewServer(fPath, "127.0.0.1:2234", log)
 	if confError != nil {
 		return false
 	}
@@ -161,6 +163,7 @@ func RunObfs4Client() (*Transport, error) {
 
 //RunObfs4Client runs the client side in the background for the test
 func RunObfs4ClientFactory() (*TransportClient, error) {
+	log := MakeLog()
 	usr, userError := user.Current()
 	if userError != nil {
 		return nil, userError
@@ -187,6 +190,15 @@ func RunObfs4ClientFactory() (*TransportClient, error) {
 	bridgePart := bridgeParts1[5]
 	certstring := bridgePart[5:]
 	//println(certstring)
-	clientConfig, confError := NewClient(certstring, 0, "127.0.0.1:2234", proxy.Direct)
+	clientConfig, confError := NewClient(certstring, 0, "127.0.0.1:2234", proxy.Direct, log)
 	return &clientConfig, confError
+}
+
+func MakeLog() *logging.Logger {
+	var log = logging.MustGetLogger("obfs4")
+	backend := logging.NewLogBackend(os.Stderr, "", 0)
+	backendLeveled := logging.AddModuleLevel(backend)
+	backendLeveled.SetLevel(logging.DEBUG, "")
+	log.SetBackend(backendLeveled)
+	return log
 }

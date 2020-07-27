@@ -35,12 +35,13 @@ import (
 	"flag"
 	"fmt"
 	"github.com/OperatorFoundation/obfs4/common/drbg"
-	"github.com/OperatorFoundation/obfs4/common/log"
+	common"github.com/OperatorFoundation/obfs4/common/log"
 	"github.com/OperatorFoundation/obfs4/common/ntor"
 	"github.com/OperatorFoundation/obfs4/common/probdist"
 	"github.com/OperatorFoundation/obfs4/common/replayfilter"
 	"github.com/OperatorFoundation/shapeshifter-ipc/v2"
 	"github.com/OperatorFoundation/shapeshifter-transports/transports/obfs4/v3/framing"
+	"github.com/op/go-logging"
 	"golang.org/x/net/proxy"
 	"math/rand"
 	"net"
@@ -131,7 +132,7 @@ func NewObfs4Server(stateDir string) (*Transport, error) {
 	// Store the arguments that should appear in our descriptor for the clients.
 	ptArgs := make(map[string]string)
 	ptArgs[certArg] = st.cert.String()
-	log.Infof("certstring %s", certArg)
+	common.Infof("certstring %s", certArg)
 	ptArgs[iatArg] = strconv.Itoa(st.iatMode)
 
 	// Initialize the replay filter.
@@ -192,7 +193,7 @@ func (transport *Transport) Dial(address string) (net.Conn, error) {
 	if err != nil {
 		closeErr := dialConn.Close()
 		if closeErr != nil {
-			log.Errorf("could not close")
+			common.Errorf("could not close")
 		}
 		return nil, err
 	}
@@ -206,11 +207,13 @@ type TransportClient struct {
 	IatMode    int
 	Address    string
 	Dialer     proxy.Dialer
+	log        *logging.Logger
 }
 
 type TransportServer struct {
 	ServerFactory *ServerFactory
 	Address       string
+	log           *logging.Logger
 }
 
 //Config contains arguments formatted for a json file
@@ -219,12 +222,12 @@ type Config struct {
 	IatMode    string `json:"iat-mode"`
 }
 
-func NewClient(certString string, iatMode int, address string, dialer proxy.Dialer) (TransportClient, error) {
-	return TransportClient{CertString: certString, IatMode: iatMode, Address: address, Dialer: dialer}, nil
+func NewClient(certString string, iatMode int, address string, dialer proxy.Dialer, log *logging.Logger) (TransportClient, error) {
+	return TransportClient{CertString: certString, IatMode: iatMode, Address: address, Dialer: dialer, log: log}, nil
 }
 
-func NewServer(stateDir string, address string) (*TransportServer, error) {
-	sf, sFError := NewObfs4ServerFactory(stateDir)
+func NewServer(stateDir string, address string, log *logging.Logger) (*TransportServer, error) {
+	sf, sFError := NewObfs4ServerFactory(stateDir, log)
 
 	if sFError != nil {
 		return nil, sFError
@@ -232,12 +235,13 @@ func NewServer(stateDir string, address string) (*TransportServer, error) {
 	transport := &TransportServer{
 		ServerFactory: sf,
 		Address:       address,
+		log:           log,
 	}
 	return transport, nil
 }
 
 //NewObfs4Server initializes the obfs4 server side
-func NewObfs4ServerFactory(stateDir string) (*ServerFactory, error) {
+func NewObfs4ServerFactory(stateDir string, log *logging.Logger) (*ServerFactory, error) {
 	args := make(map[string]string)
 	st, err := serverStateFromArgs(stateDir, args)
 	if err != nil {
@@ -311,13 +315,13 @@ func (transport *Transport) Listen(address string) (net.Listener, error) {
 func (transport *TransportServer) Listen() (net.Listener, error) {
 	addr, resolveErr := pt.ResolveAddr(transport.Address)
 	if resolveErr != nil {
-		fmt.Println(resolveErr.Error())
+		transport.log.Error(resolveErr.Error())
 		return nil, resolveErr
 	}
 
 	ln, err := net.ListenTCP("tcp", addr)
 	if err != nil {
-		fmt.Println(err.Error())
+		transport.log.Error(err.Error())
 		return nil, err
 	}
 
