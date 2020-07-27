@@ -26,7 +26,7 @@ package shadow
 
 import (
 	"fmt"
-	"github.com/op/go-logging"
+	"github.com/kataras/golog"
 	"net"
 	"os"
 	"testing"
@@ -100,7 +100,7 @@ func TestShadow(t *testing.T) {
 }
 func TestShadowFactory(t *testing.T) {
 	//create a server
-	var log = logging.MustGetLogger("shadow")
+	var log = golog.MustGetLogger("shadow")
 	transport := NewTransport("1234", "CHACHA20-IETF-POLY1305", "127.0.0.1:1236", log)
 
 	//create client buffer

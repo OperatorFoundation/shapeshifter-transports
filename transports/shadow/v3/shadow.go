@@ -26,7 +26,7 @@
 package shadow
 
 import (
-	"github.com/op/go-logging"
+	"github.com/kataras/golog"
 	"log"
 	"net"
 
@@ -44,7 +44,7 @@ type Transport struct {
 	Password   string
 	CipherName string
 	Address    string
-	Log        *logging.Logger
+	Log        *golog.Logger
 }
 
 //NewConfig is used to create a config for testing
@@ -56,7 +56,7 @@ func NewConfig(password string, cipherName string) Config {
 }
 
 //NewTransport is used for creating a transport for Optimizer
-func NewTransport(password string, cipherName string, address string, log *logging.Logger) Transport {
+func NewTransport(password string, cipherName string, address string, log *golog.Logger) Transport {
 	return Transport{
 		Password:   password,
 		CipherName: cipherName,
@@ -69,7 +69,7 @@ func NewTransport(password string, cipherName string, address string, log *loggi
 func (config Config) Listen(address string) (net.Listener, error) {
 	cipher, err := shadowsocks.PickCipher(config.CipherName, nil, config.Password)
 	if err != nil {
-		log.Fatal("Failed generating ciphers:", err)
+		golog.Errorf("Failed generating ciphers:", err)
 		return nil, err
 	}
 

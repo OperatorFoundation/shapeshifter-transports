@@ -26,7 +26,7 @@ package replicant
 
 import (
 	pt "github.com/OperatorFoundation/shapeshifter-ipc/v2"
-	"github.com/op/go-logging"
+	"github.com/kataras/golog"
 	"golang.org/x/net/proxy"
 	"net"
 )
@@ -36,17 +36,17 @@ type TransportClient struct {
 	Config  ClientConfig
 	Address string
 	Dialer  proxy.Dialer
-	Log     *logging.Logger
+	Log     *golog.Logger
 }
 
 type TransportServer struct {
 	Config ServerConfig
 	Address string
 	Dialer  proxy.Dialer
-	Log     *logging.Logger
+	Log     *golog.Logger
 }
 
-func NewClient(config ClientConfig, address string, dialer proxy.Dialer, log *logging.Logger) TransportClient {
+func NewClient(config ClientConfig, address string, dialer proxy.Dialer, log *golog.Logger) TransportClient {
 	return TransportClient{
 		Config: config,
 		Address: address,
@@ -55,7 +55,7 @@ func NewClient(config ClientConfig, address string, dialer proxy.Dialer, log *lo
 	}
 }
 
-func NewServer(config ServerConfig, address string, dialer proxy.Dialer, log *logging.Logger) TransportServer {
+func NewServer(config ServerConfig, address string, dialer proxy.Dialer, log *golog.Logger) TransportServer {
 	return TransportServer{
 		Config: config,
 		Address: address,

@@ -62,7 +62,7 @@ package meekserver
 import (
 	"errors"
 	interconv "github.com/mufti1/interconv/package"
-	"github.com/op/go-logging"
+	"github.com/kataras/golog"
 	"golang.org/x/crypto/acme/autocert"
 	"log"
 	"net"
@@ -83,7 +83,7 @@ type Transport struct {
 	DisableTLS   bool
 	CertManager  *autocert.Manager
 	Address      string
-	log          *logging.Logger
+	log          *golog.Logger
 }
 
 //Config contains arguments formatted for a json file
@@ -108,7 +108,7 @@ type fakeConn struct {
 	writeBuffer []byte
 }
 
-func New(disableTLS bool, acmeHostnamesCommas string, acmeEmail string, address string, stateDir string, Log *logging.Logger) (*Transport, error) {
+func New(disableTLS bool, acmeHostnamesCommas string, acmeEmail string, address string, stateDir string, Log *golog.Logger) (*Transport, error) {
 	var certManager *autocert.Manager
 	if disableTLS {
 		if acmeEmail != "" || acmeHostnamesCommas != "" {

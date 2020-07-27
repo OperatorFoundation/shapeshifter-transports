@@ -5,7 +5,7 @@ import (
 	"github.com/OperatorFoundation/monolith-go/monolith"
 	"github.com/OperatorFoundation/shapeshifter-transports/transports/Replicant/v3/polish"
 	"github.com/OperatorFoundation/shapeshifter-transports/transports/Replicant/v3/toneburst"
-	"github.com/op/go-logging"
+	"github.com/kataras/golog"
 	"golang.org/x/net/proxy"
 	"io/ioutil"
 	"math/rand"
@@ -184,7 +184,7 @@ func runReplicantServer() {
 }
 
 func runReplicantFactoryServer() {
-	var log = logging.MustGetLogger("replicant")
+	var log = golog.MustGetLogger("replicant")
 	serverStarted := make(chan bool)
 	addr := "127.0.0.1:3001"
 
@@ -304,7 +304,7 @@ func replicantConnection(clientConfig ClientConfig, serverConfig ServerConfig, t
 
 func replicantFactoryConnection(clientConfig ClientConfig, serverConfig ServerConfig, t *testing.T) {
 	serverStarted := make(chan bool)
-	var log = logging.MustGetLogger("replicant")
+	var log = golog.MustGetLogger("replicant")
 	// Get a random port
 	rand.Seed(time.Now().UnixNano())
 	min := 1025

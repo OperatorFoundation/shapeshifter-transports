@@ -34,7 +34,7 @@
 package meeklite
 
 import (
-	"github.com/op/go-logging"
+	"github.com/kataras/golog"
 	"golang.org/x/net/proxy"
 	gourl "net/url"
 	"testing"
@@ -79,7 +79,7 @@ func TestMeeklite(t *testing.T) {
 }
 
 func TestFactoryMeeklite(t *testing.T) {
-	var log = logging.MustGetLogger("meeklite")
+	var log = golog.MustGetLogger("meeklite")
 	//create a server
 	urlString := "https://transport-canary-meek.appspot.com/"
 	Url, err := gourl.Parse(urlString)

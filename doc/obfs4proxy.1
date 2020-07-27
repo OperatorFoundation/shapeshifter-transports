@@ -24,15 +24,15 @@ Display usage information and exit.
 \fB\-\-version\fR
 Display version information and exit.
 .TP
-\fB\-\-enableLogging\fR
-Enable logging.
+\fB\-\-enablegolog\fR
+Enable golog.
 .TP
 \fB\-\-logLevel\fR=\fIlevel\fR
 Specify the maximum log severity to log out of "\fBERROR\fR", "\fBWARN\fR",
 "\fBINFO\fR", and "\fBDEBUG\fR".
 .TP
-\fB\-\-unsafeLogging\fR
-Disable the IP address scrubber when logging, storing personally identifiable
+\fB\-\-unsafegolog\fR
+Disable the IP address scrubber when golog, storing personally identifiable
 information in the logs.
 .TP
 \fB\-\-obfs4\-distBias\fR
@@ -45,7 +45,7 @@ Pluggable Transport Specification.
 .PP
 \fIDataDirectory\fR\fB/pt_state/obfs4proxy.log\fR
 .RS 4
-The log file, assuming logging is enabled.
+The log file, assuming golog is enabled.
 .RE
 .PP
 \fIDataDirectory\fR\fB/pt_state/obfs4_state.json\fR

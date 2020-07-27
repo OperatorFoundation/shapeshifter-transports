@@ -9,7 +9,7 @@ package Dust
 
 
 import (
-	"github.com/op/go-logging"
+	"github.com/kataras/golog"
 	"golang.org/x/net/proxy"
 	"testing"
 )
@@ -87,7 +87,7 @@ func TestDust(t *testing.T) {
 
 func TestDustV3(t *testing.T) {
 	//create a server
-	var log = logging.MustGetLogger("dust")
+	var log = golog.MustGetLogger("dust")
 	serverConfig := dustServer{
 		serverPrivkey: nil,
 		dialer:        nil,

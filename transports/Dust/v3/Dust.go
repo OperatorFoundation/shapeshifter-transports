@@ -26,10 +26,7 @@ package Dust
 
 import (
 	"fmt"
-	"github.com/OperatorFoundation/obfs4/common/log"
-
-	//"github.com/OperatorFoundation/obfs4/common/log"
-	"github.com/op/go-logging"
+	"github.com/kataras/golog"
 	"golang.org/x/net/proxy"
 	"net"
 	"time"
@@ -71,14 +68,14 @@ type Transport struct {
 	Address      string
 	Dialer       proxy.Dialer
 	ServerConfig *dustServer
-	Log          *logging.Logger
+	Log          *golog.Logger
 }
 
 type Config struct {
 	ServerPublic string `json:"server-public"`
 }
 
-func New(serverPublic string, address string, dialer proxy.Dialer, serverConfig *dustServer, log *logging.Logger) Transport {
+func New(serverPublic string, address string, dialer proxy.Dialer, serverConfig *dustServer, log *golog.Logger) Transport {
 	return Transport{
 		ServerPublic: serverPublic,
 		Address:      address,
@@ -130,7 +127,7 @@ func (transport *dustClient) Dial(address string) (net.Conn, error) {
 	if err != nil {
 		closeErr := conn.Close()
 		if closeErr != nil {
-			log.Errorf("could not close")
+			golog.Error("could not close")
 		}
 		return conn, dialErr
 	}
