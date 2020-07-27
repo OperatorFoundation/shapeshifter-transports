@@ -33,6 +33,7 @@ import (
 type ClientConfig struct {
 	Toneburst toneburst.Config
 	Polish    polish.ClientConfig
+	Address   string
 }
 
 type ServerConfig struct {
@@ -70,6 +71,7 @@ func (config ClientConfig) Marshal() (string, error) {
 
 	type ClientJSONConfig struct {
 		Config string `json:"config"`
+		Address string `json:"address"`
 	}
 
 	configString, configStringError := config.Encode()

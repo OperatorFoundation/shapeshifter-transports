@@ -26,7 +26,6 @@ package replicant
 
 import (
 	pt "github.com/OperatorFoundation/shapeshifter-ipc/v2"
-	"github.com/kataras/golog"
 	"golang.org/x/net/proxy"
 	"net"
 )
@@ -36,31 +35,27 @@ type TransportClient struct {
 	Config  ClientConfig
 	Address string
 	Dialer  proxy.Dialer
-	Log     *golog.Logger
 }
 
 type TransportServer struct {
-	Config ServerConfig
+	Config  ServerConfig
 	Address string
 	Dialer  proxy.Dialer
-	Log     *golog.Logger
 }
 
-func NewClient(config ClientConfig, address string, dialer proxy.Dialer, log *golog.Logger) TransportClient {
+func NewClient(config ClientConfig, dialer proxy.Dialer) TransportClient {
 	return TransportClient{
-		Config: config,
-		Address: address,
-		Dialer: dialer,
-		Log:    log,
+		Config:  config,
+		Address: config.Address,
+		Dialer:  dialer,
 	}
 }
 
-func NewServer(config ServerConfig, address string, dialer proxy.Dialer, log *golog.Logger) TransportServer {
+func NewServer(config ServerConfig, address string, dialer proxy.Dialer) TransportServer {
 	return TransportServer{
-		Config: config,
+		Config:  config,
 		Address: address,
-		Dialer: dialer,
-		Log:	log,
+		Dialer:  dialer,
 	}
 }
 
@@ -78,7 +73,7 @@ func (transport TransportClient) Dial() (net.Conn, error) {
 	}
 
 	return transportConn, nil
-	}
+}
 
 func (transport TransportServer) Listen() (net.Listener, error) {
 	addr, resolveErr := pt.ResolveAddr(transport.Address)
@@ -93,14 +88,13 @@ func (transport TransportServer) Listen() (net.Listener, error) {
 
 	return newReplicantTransportListener(ln, transport.Config), nil
 }
-	//replicantTransport := New(transport.Config, transport.Dialer)
-	//conn := replicantTransport.Dial(transport.Address)
-	//conn, err:= replicantTransport.Dial(transport.Address), errors.New("connection failed")
-	//if err != nil {
-	//	return nil, err
-	//} else {
-	//	return conn, nil
-	//}
-	//return conn, nil
 
-
+//replicantTransport := New(transport.Config, transport.Dialer)
+//conn := replicantTransport.Dial(transport.Address)
+//conn, err:= replicantTransport.Dial(transport.Address), errors.New("connection failed")
+//if err != nil {
+//	return nil, err
+//} else {
+//	return conn, nil
+//}
+//return conn, nil
