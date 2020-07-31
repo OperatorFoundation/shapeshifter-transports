@@ -20,7 +20,7 @@ import (
 const data = "test"
 
 func TestMain(m *testing.M) {
-	config := shadow.NewConfig("1234", "CHACHA20-IETF-POLY1305")
+	config := shadow.NewServerConfig("1234", "CHACHA20-IETF-POLY1305")
 	listener, listenErr := config.Listen("127.0.0.1:1235")
 	if listenErr != nil {
 		return
@@ -49,7 +49,7 @@ func TestMeekliteDial(t *testing.T) {
 	if parseErr != nil {
 		t.Fail()
 	}
-	meekliteTransport := meeklite.Transport{URL: URL, Front: "a0.awsstatic.com", Address: "127.0.0.1:1235" }
+	meekliteTransport := meeklite.Transport{URL: URL, Front: "a0.awsstatic.com"}
 	_, err := meekliteTransport.Dial()
 	if err != nil {
 		t.Fail()
@@ -62,7 +62,7 @@ func TestOptimizerMeekliteDial(t *testing.T) {
 	if parseErr != nil {
 		t.Fail()
 	}
-	meekliteTransport := meeklite.Transport{URL: URL, Front: "a0.awsstatic.com", Address: "127.0.0.1:1235" }
+	meekliteTransport := meeklite.Transport{URL: URL, Front: "a0.awsstatic.com"}
 	transports := []TransportDialer{meekliteTransport}
 	strategy := NewFirstStrategy(transports)
 	optimizerTransport := NewOptimizerClient(transports, strategy)
