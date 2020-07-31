@@ -26,9 +26,16 @@ package replicant
 
 import (
 	pt "github.com/OperatorFoundation/shapeshifter-ipc/v2"
+	"github.com/kataras/golog"
 	"net"
+	"os"
 	"time"
 )
+
+func MakeLog() {
+	golog.SetLevel("debug")
+	golog.SetOutput(os.Stderr)
+}
 
 // Create outgoing transport connection
 func (config ClientConfig) Dial(address string) (net.Conn, error) {

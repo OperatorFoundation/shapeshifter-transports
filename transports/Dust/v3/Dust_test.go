@@ -7,9 +7,7 @@ package Dust
 
 // Package Dust provides a PT 2.1 Go API wrapper around the Dust transport
 
-
 import (
-	"github.com/kataras/golog"
 	"golang.org/x/net/proxy"
 	"testing"
 )
@@ -17,11 +15,14 @@ import (
 const data = "test"
 
 func TestDust(t *testing.T) {
+
+	MakeLog()
 	//create a server
 	serverConfig := dustServer{
 		serverPrivkey: nil,
 		dialer:        nil,
 	}
+
 	clientConfig := dustClient{
 		serverPubkey: nil,
 		dialer:       nil,
@@ -86,14 +87,16 @@ func TestDust(t *testing.T) {
 }
 
 func TestDustV3(t *testing.T) {
+
+	MakeLog()
+
 	//create a server
-	var log = golog.MustGetLogger("dust")
 	serverConfig := dustServer{
 		serverPrivkey: nil,
 		dialer:        nil,
 	}
 
-	transport := New("", "127.0.0.1:1234", proxy.Direct, &serverConfig, log)
+	transport := New("", "127.0.0.1:1234", proxy.Direct, &serverConfig)
 	//call listen on the server
 	serverListener, listenErr := transport.Listen()
 	if listenErr != nil {

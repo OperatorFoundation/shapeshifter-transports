@@ -36,7 +36,6 @@ import (
 	"crypto/sha256"
 	"encoding/binary"
 	"fmt"
-	"github.com/kataras/golog"
 	"io"
 	"net"
 	"time"
@@ -66,7 +65,6 @@ const (
 type OptimizerTransport struct {
 	Address string
 	Dialer  proxy.Dialer
-	Log     *golog.Logger
 }
 
 //Dial connects to a specified address.
@@ -92,27 +90,25 @@ func (transport OptimizerTransport) Dial() (net.Conn, error) {
 // Transport is the obfs2 implementation of the base.Transport interface.
 type Transport struct {
 	dialer proxy.Dialer
-	log     golog.Logger
 }
 
 //New initializes obfs2 for Optimizer
-func New(address string, dialer proxy.Dialer, log *golog.Logger) *OptimizerTransport {
+func New(address string, dialer proxy.Dialer) *OptimizerTransport {
 	result := OptimizerTransport{
 		Address: address,
 		Dialer:  dialer,
-		Log:  log,
 	}
 	return &result
 }
 
 //NewObfs2Transport is the initializer for obfs2 without a dialer
 func NewObfs2Transport() *Transport {
-	return &Transport{dialer: nil, log: golog.Logger{}}
+	return &Transport{dialer: nil}
 }
 
 //NewObfs2Transport is the initializer for obfs2 with a dialer
 func NewObfs2TransportWithDialer(dialer proxy.Dialer) *Transport {
-	return &Transport{dialer: dialer, log: golog.Logger{}}
+	return &Transport{dialer: dialer}
 }
 
 //obfs2TransportListener defines a TCP network listener.

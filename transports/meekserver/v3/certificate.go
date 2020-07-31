@@ -33,7 +33,7 @@ package meekserver
 
 import (
 	"crypto/tls"
-	"log"
+	"github.com/kataras/golog"
 	"os"
 	"sync"
 	"time"
@@ -126,7 +126,7 @@ func (ctx *certContext) GetCertificate(*tls.ClientHelloInfo) (*tls.Certificate, 
 		now := time.Now()
 		if now.After(ctx.lastWarnAt.Add(certLoadErrorRateLimit)) {
 			ctx.lastWarnAt = now
-			log.Printf("failed to reload certificate: %v", err)
+			golog.Infof("failed to reload certificate: %v", err)
 		}
 	}
 

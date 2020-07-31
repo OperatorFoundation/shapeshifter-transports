@@ -46,6 +46,7 @@ import (
 	"net"
 	"net/http"
 	gourl "net/url"
+	"os"
 	"runtime"
 	"sync"
 	"time"
@@ -69,6 +70,11 @@ var (
 
 	loopbackAddr = net.IPv4(127, 0, 0, 1)
 )
+
+func MakeLog() {
+	golog.SetLevel("debug")
+	golog.SetOutput(os.Stderr)
+}
 
 // MeekTransport that uses domain fronting to shapeshift the application network traffic
 type MeekTransport struct {
@@ -124,22 +130,22 @@ func (ca *meekClientArgs) Network() string {
 
 //Transport contains parameters used in Optimizer
 type Transport struct {
-	URL     *gourl.URL `json:"url"`
-	Front   string     `json:"front"`
-	Address string
-	Dialer  proxy.Dialer
-	log     *golog.Logger
+	URL    *gourl.URL
+	Front  string
+	Dialer proxy.Dialer
 }
 
 //Config puts the parameters in a json compatible format
 type Config struct {
-	URL   *gourl.URL `json:"url"`
-	Front string     `json:"front"`
+	URL     *gourl.URL `json:"url"`
+	Front   string     `json:"front"`
+	Address string     `json:"address"`
 }
 
-func NewMeekFactoryTransportWithFront(url *gourl.URL, front string, address string, dialer proxy.Dialer, log *golog.Logger) *Transport {
-	return &Transport{url, front, address,dialer, log}
+func NewMeekFactoryTransportWithFront(url *gourl.URL, front string, dialer proxy.Dialer) *Transport {
+	return &Transport{url, front, dialer}
 }
+
 // Dial creates outgoing transport connection
 func (transport Transport) Dial() (net.Conn, error) {
 	meekTransport := NewMeekTransportWithFront(transport.URL.String(), transport.Front, transport.Dialer)
@@ -239,23 +245,23 @@ func (transportConn *meekConn) Read(p []byte) (n int, err error) {
 		return
 	}
 	select {
-		case <-time.After(20*time.Second):
-			return 0, nil
-		// Wait for the worker to enqueue more incoming data.
-		case b, ok := <-transportConn.workerRdChan:
-			if !ok {
-				// Close() was called and the worker's shutting down.
-				return 0, io.ErrClosedPipe
-			}
+	case <-time.After(20 * time.Second):
+		return 0, nil
+	// Wait for the worker to enqueue more incoming data.
+	case b, ok := <-transportConn.workerRdChan:
+		if !ok {
+			// Close() was called and the worker's shutting down.
+			return 0, io.ErrClosedPipe
+		}
 
-			// Ew, an extra copy, but who am I kidding, it's meek.
-			buf := bytes.NewBuffer(b)
-			n, err = buf.Read(p)
-			if buf.Len() > 0 {
-				// If there's data pending, stash the buffer so the next
-				// Read() call will use it to fulfill the Read().
-				transportConn.rdBuf = buf
-			}
+		// Ew, an extra copy, but who am I kidding, it's meek.
+		buf := bytes.NewBuffer(b)
+		n, err = buf.Read(p)
+		if buf.Len() > 0 {
+			// If there's data pending, stash the buffer so the next
+			// Read() call will use it to fulfill the Read().
+			transportConn.rdBuf = buf
+		}
 	}
 	return
 }
@@ -365,7 +371,7 @@ func (transportConn *meekConn) roundTrip(sndBuf []byte) (recvBuf []byte, err err
 			if resp.StatusCode == http.StatusInternalServerError {
 				return
 			}
-				time.Sleep(retryDelay)
+			time.Sleep(retryDelay)
 
 		} else {
 			_ = resp.Body.Close()

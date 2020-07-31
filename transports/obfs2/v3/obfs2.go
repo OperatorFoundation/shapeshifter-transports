@@ -37,9 +37,9 @@ import (
 	"encoding/binary"
 	"fmt"
 	"github.com/kataras/golog"
-
 	"io"
 	"net"
+	"os"
 	"time"
 
 	"golang.org/x/net/proxy"
@@ -63,11 +63,19 @@ const (
 	hsLen              = 4 + 4
 )
 
+func MakeLog() {
+	golog.SetLevel("debug")
+	golog.SetOutput(os.Stderr)
+}
+
 //OptimizerTransport contains params needed for Optimizer
 type OptimizerTransport struct {
 	Address string
 	Dialer  proxy.Dialer
-	log     *golog.Logger
+}
+
+type Config struct {
+	Address string `json:"address"`
 }
 
 //Dial connects to a specified address.
@@ -112,11 +120,10 @@ type Transport struct {
 }
 
 //New initializes obfs2 for Optimizer
-func New(address string, dialer proxy.Dialer, log *golog.Logger) *OptimizerTransport {
+func New(address string, dialer proxy.Dialer) *OptimizerTransport {
 	result := OptimizerTransport{
 		Address: address,
 		Dialer:  dialer,
-		log: log,
 	}
 	return &result
 }

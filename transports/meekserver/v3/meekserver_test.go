@@ -1,7 +1,6 @@
 package meekserver
 
 import (
-	"github.com/kataras/golog"
 	"testing"
 )
 
@@ -29,10 +28,10 @@ func TestMeekServerListen(t *testing.T) {
 }
 
 func TestMeekServerFactoryListen(t *testing.T) {
-	var log = golog.MustGetLogger("meekserver")
+MakeLog()
 	acmeEmail := "brandon@operatorfoundation.org"
 	acmeHostNames := "operatorrss.com"
-	meekserverTransport, newError := New(false, acmeHostNames, acmeEmail,"127.0.0.1:8080", "state", log)
+	meekserverTransport, newError := New(false, acmeHostNames, acmeEmail,"127.0.0.1:8080", "state")
 	if newError != nil {
 		t.Fail()
 		return

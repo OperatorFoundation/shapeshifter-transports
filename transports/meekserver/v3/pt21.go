@@ -61,15 +61,20 @@ package meekserver
 
 import (
 	"errors"
-	interconv "github.com/mufti1/interconv/package"
 	"github.com/kataras/golog"
+	interconv "github.com/mufti1/interconv/package"
 	"golang.org/x/crypto/acme/autocert"
-	"log"
 	"net"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 )
+
+func MakeLog() {
+	golog.SetLevel("debug")
+	golog.SetOutput(os.Stderr)
+}
 
 //MeekServer is a Transport that uses domain fronting to shapeshift the application network traffic
 type MeekServer struct {
@@ -83,7 +88,6 @@ type Transport struct {
 	DisableTLS   bool
 	CertManager  *autocert.Manager
 	Address      string
-	log          *golog.Logger
 }
 
 //Config contains arguments formatted for a json file
@@ -108,7 +112,7 @@ type fakeConn struct {
 	writeBuffer []byte
 }
 
-func New(disableTLS bool, acmeHostnamesCommas string, acmeEmail string, address string, stateDir string, Log *golog.Logger) (*Transport, error) {
+func New(disableTLS bool, acmeHostnamesCommas string, acmeEmail string, address string, stateDir string) (*Transport, error) {
 	var certManager *autocert.Manager
 	if disableTLS {
 		if acmeEmail != "" || acmeHostnamesCommas != "" {
@@ -121,7 +125,7 @@ func New(disableTLS bool, acmeHostnamesCommas string, acmeEmail string, address 
 		}
 		if acmeHostnamesCommas != "" {
 			acmeHostnames := strings.Split(acmeHostnamesCommas, ",")
-			log.Printf("ACME hostnames: %q", acmeHostnames)
+			golog.Infof("ACME hostnames: %q", acmeHostnames)
 
 			// The ACME HTTP-01 responder only works when it is running on
 			// port 80.
@@ -130,10 +134,10 @@ func New(disableTLS bool, acmeHostnamesCommas string, acmeEmail string, address 
 			var cache autocert.Cache
 			cacheDir, err := getCertificateCacheDir(stateDir)
 			if err == nil {
-				log.Printf("caching ACME certificates in directory %q", cacheDir)
+				golog.Infof("caching ACME certificates in directory %q", cacheDir)
 				cache = autocert.DirCache(cacheDir)
 			} else {
-				log.Printf("disabling ACME certificate cache: %s", err)
+				golog.Infof("disabling ACME certificate cache: %s", err)
 			}
 
 			certManager = &autocert.Manager{
@@ -146,7 +150,6 @@ func New(disableTLS bool, acmeHostnamesCommas string, acmeEmail string, address 
 				DisableTLS:  disableTLS,
 				CertManager: certManager,
 				Address:     address,
-				log:         Log,
 			}, nil
 		} else {
 			return nil, errors.New("must set acmeEmail")
@@ -239,7 +242,7 @@ func NewMeekTransportServer(disableTLS bool, acmeEmail string, acmeHostnamesComm
 		}
 		if acmeHostnamesCommas != "" {
 			acmeHostnames := strings.Split(acmeHostnamesCommas, ",")
-			log.Printf("ACME hostnames: %q", acmeHostnames)
+			golog.Infof("ACME hostnames: %q", acmeHostnames)
 
 			// The ACME HTTP-01 responder only works when it is running on
 			// port 80.
@@ -248,10 +251,10 @@ func NewMeekTransportServer(disableTLS bool, acmeEmail string, acmeHostnamesComm
 			var cache autocert.Cache
 			cacheDir, err := getCertificateCacheDir(stateDir)
 			if err == nil {
-				log.Printf("caching ACME certificates in directory %q", cacheDir)
+				golog.Infof("caching ACME certificates in directory %q", cacheDir)
 				cache = autocert.DirCache(cacheDir)
 			} else {
-				log.Printf("disabling ACME certificate cache: %s", err)
+				golog.Infof("disabling ACME certificate cache: %s", err)
 			}
 
 			certManager = &autocert.Manager{
@@ -282,14 +285,14 @@ func (transport *MeekServer) Listen(address string) (net.Listener, error) {
 		Zone: "",
 	}
 	acmeAddr.Port = 80
-	log.Printf("starting HTTP-01 ACME listener on %s", acmeAddr.String())
+	golog.Infof("starting HTTP-01 ACME listener on %s", acmeAddr.String())
 	lnHTTP01, err := net.ListenTCP("tcp", &acmeAddr)
 	if err != nil {
-		log.Printf("error opening HTTP-01 ACME listener: %s", err)
+		golog.Infof("error opening HTTP-01 ACME listener: %s", err)
 		return nil, err
 	}
 	go func() {
-		log.Fatal(http.Serve(lnHTTP01, transport.CertManager.HTTPHandler(nil)))
+		golog.Fatal(http.Serve(lnHTTP01, transport.CertManager.HTTPHandler(nil)))
 	}()
 	var server *http.Server
 	if transport.DisableTLS {
@@ -318,14 +321,14 @@ func (transport *Transport) Listen() (net.Listener, error) {
 		Zone: "",
 	}
 	acmeAddr.Port = 80
-	log.Printf("starting HTTP-01 ACME listener on %s", acmeAddr.String())
+	golog.Infof("starting HTTP-01 ACME listener on %s", acmeAddr.String())
 	lnHTTP01, err := net.ListenTCP("tcp", &acmeAddr)
 	if err != nil {
-		log.Printf("error opening HTTP-01 ACME listener: %s", err)
+		golog.Infof("error opening HTTP-01 ACME listener: %s", err)
 		return nil, err
 	}
 	go func() {
-		log.Fatal(http.Serve(lnHTTP01, transport.CertManager.HTTPHandler(nil)))
+		golog.Fatal(http.Serve(lnHTTP01, transport.CertManager.HTTPHandler(nil)))
 	}()
 	var server *http.Server
 	if transport.DisableTLS {

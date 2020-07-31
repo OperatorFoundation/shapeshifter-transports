@@ -43,7 +43,6 @@ type ServerConfig struct {
 
 type ClientJSONConfig struct {
 	Config string `json:"config"`
-	Address string `json:"address"`
 }
 
 type ServerJSONInnerConfig struct {

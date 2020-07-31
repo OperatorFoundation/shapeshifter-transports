@@ -49,8 +49,8 @@ package meekserver
 import (
 	"crypto/tls"
 	"fmt"
+	"github.com/kataras/golog"
 	"io"
-	"log"
 	"net"
 	"net/http"
 	"path"
@@ -246,14 +246,14 @@ func (state *State) Post(w http.ResponseWriter, req *http.Request) {
 
 	session, err := state.GetSession(sessionID)
 	if err != nil {
-		log.Print(err)
+		golog.Error(err)
 		httpInternalServerError(w)
 		return
 	}
 
 	err = transact(session, w, req)
 	if err != nil {
-		log.Print(err)
+		golog.Error(err)
 		state.CloseSession(sessionID)
 		return
 	}
@@ -345,10 +345,10 @@ func initServer(addr *net.TCPAddr,
 
 func startServer(addr *net.TCPAddr) (*http.Server, *State, error) {
 	return initServer(addr, nil, func(server *http.Server, errChan chan<- error) {
-		log.Printf("listening with plain HTTP on %s", addr)
+		golog.Errorf("listening with plain HTTP on %s", addr)
 		err := server.ListenAndServe()
 		if err != nil {
-			log.Printf("Error in ListenAndServe: %s", err)
+			golog.Errorf("Error in ListenAndServe: %s", err)
 		}
 		errChan <- err
 	})
@@ -356,10 +356,10 @@ func startServer(addr *net.TCPAddr) (*http.Server, *State, error) {
 
 func startServerTLS(addr *net.TCPAddr, getCertificate func(*tls.ClientHelloInfo) (*tls.Certificate, error)) (*http.Server, *State, error) {
 	return initServer(addr, getCertificate, func(server *http.Server, errChan chan<- error) {
-		log.Printf("listening with HTTPS on %s", addr)
+		golog.Errorf("listening with HTTPS on %s", addr)
 		err := server.ListenAndServeTLS("", "")
 		if err != nil {
-			log.Printf("Error in ListenAndServeTLS: %s", err)
+			golog.Errorf("Error in ListenAndServeTLS: %s", err)
 		}
 		errChan <- err
 	})

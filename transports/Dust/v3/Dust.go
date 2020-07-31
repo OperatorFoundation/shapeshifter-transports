@@ -29,15 +29,22 @@ import (
 	"github.com/kataras/golog"
 	"golang.org/x/net/proxy"
 	"net"
+	"os"
 	"time"
 
 	"github.com/OperatorFoundation/shapeshifter-ipc/v2"
 	"github.com/blanu/Dust/go/v2/interface"
 )
 
+func MakeLog() {
+	golog.SetLevel("debug")
+	golog.SetOutput(os.Stderr)
+}
+
 type dustClient struct {
 	serverPubkey *Dust.ServerPublic
 	dialer       proxy.Dialer
+	Address      string `json:"address"`
 }
 
 type dustServer struct {
@@ -45,16 +52,16 @@ type dustServer struct {
 	dialer        proxy.Dialer
 }
 
-func NewDustClient(serverPublic string, dialer proxy.Dialer) *dustClient {
+func NewDustClient(serverPublic string, dialer proxy.Dialer, address string) *dustClient {
 	unparsed := make(map[string]string)
-	unparsed["p"]=serverPublic
+	unparsed["p"] = serverPublic
 
 	spub, err := Dust.ParseServerPublic(unparsed)
 	if err != nil {
 		return nil
 	}
 
-	return &dustClient{serverPubkey: spub, dialer: dialer}
+	return &dustClient{serverPubkey: spub, dialer: dialer, Address: address}
 }
 
 type dustTransportListener struct {
@@ -68,25 +75,24 @@ type Transport struct {
 	Address      string
 	Dialer       proxy.Dialer
 	ServerConfig *dustServer
-	Log          *golog.Logger
 }
 
 type Config struct {
 	ServerPublic string `json:"server-public"`
+	Address      string `json:"address"`
 }
 
-func New(serverPublic string, address string, dialer proxy.Dialer, serverConfig *dustServer, log *golog.Logger) Transport {
+func New(serverPublic string, address string, dialer proxy.Dialer, serverConfig *dustServer) Transport {
 	return Transport{
 		ServerPublic: serverPublic,
 		Address:      address,
 		Dialer:       dialer,
 		ServerConfig: serverConfig,
-		Log:          log,
 	}
 }
 
 func (transport Transport) Dial() (net.Conn, error) {
-	dustTransport := NewDustClient(transport.ServerPublic, transport.Dialer)
+	dustTransport := NewDustClient(transport.ServerPublic, transport.Dialer, transport.Address)
 	conn, err := dustTransport.Dial(transport.Address)
 	if err != nil {
 		return nil, err
@@ -110,6 +116,7 @@ func (transport Transport) Listen() (net.Listener, error) {
 
 	return newDustTransportListener(ln, transport.ServerConfig), nil
 }
+
 //end optimizer code
 
 func newDustTransportListener(listener *net.TCPListener, transport *dustServer) *dustTransportListener {

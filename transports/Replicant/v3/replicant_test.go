@@ -5,7 +5,6 @@ import (
 	"github.com/OperatorFoundation/monolith-go/monolith"
 	"github.com/OperatorFoundation/shapeshifter-transports/transports/Replicant/v3/polish"
 	"github.com/OperatorFoundation/shapeshifter-transports/transports/Replicant/v3/toneburst"
-	"github.com/kataras/golog"
 	"golang.org/x/net/proxy"
 	"io/ioutil"
 	"math/rand"
@@ -184,7 +183,7 @@ func runReplicantServer() {
 }
 
 func runReplicantFactoryServer() {
-	var log = golog.MustGetLogger("replicant")
+	MakeLog()
 	serverStarted := make(chan bool)
 	addr := "127.0.0.1:3001"
 
@@ -193,7 +192,7 @@ func runReplicantFactoryServer() {
 		Polish:    nil,
 	}
 
-	server := NewServer(serverConfig, addr, proxy.Direct, log)
+	server := NewServer(serverConfig, addr, proxy.Direct)
 
 	go func() {
 		listener, listenError := server.Listen()
@@ -304,7 +303,7 @@ func replicantConnection(clientConfig ClientConfig, serverConfig ServerConfig, t
 
 func replicantFactoryConnection(clientConfig ClientConfig, serverConfig ServerConfig, t *testing.T) {
 	serverStarted := make(chan bool)
-	var log = golog.MustGetLogger("replicant")
+	MakeLog()
 	// Get a random port
 	rand.Seed(time.Now().UnixNano())
 	min := 1025
@@ -315,7 +314,7 @@ func replicantFactoryConnection(clientConfig ClientConfig, serverConfig ServerCo
 	addr += portString
 
 	go func() {
-		server := NewServer(serverConfig, addr, proxy.Direct, log)
+		server := NewServer(serverConfig, addr, proxy.Direct)
 		listener, listenError := server.Listen()
 		if listenError != nil {
 			return
@@ -350,7 +349,7 @@ func replicantFactoryConnection(clientConfig ClientConfig, serverConfig ServerCo
 		t.Fail()
 		return
 	}
-	client := NewClient(clientConfig, addr, proxy.Direct, log)
+	client := NewClient(clientConfig, proxy.Direct)
 	cConn, connErr := client.Dial()
 	if connErr != nil {
 		t.Fail()

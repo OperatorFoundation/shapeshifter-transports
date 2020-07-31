@@ -204,7 +204,7 @@ func (transport *Transport) Dial(address string) (net.Conn, error) {
 type TransportClient struct {
 	CertString string
 	IatMode    int
-	Address    string
+	Address    string `json:"address"`
 	Dialer     proxy.Dialer
 }
 
@@ -217,6 +217,7 @@ type TransportServer struct {
 type Config struct {
 	CertString string `json:"cert"`
 	IatMode    string `json:"iat-mode"`
+	Address    string `json:"address"`
 }
 
 func NewClient(certString string, iatMode int, address string, dialer proxy.Dialer) (TransportClient, error) {
