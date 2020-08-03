@@ -49,7 +49,6 @@ type ClientConfig struct {
 type ServerConfig struct {
 	Password   string `json:"password"`
 	CipherName string `json:"cipherName"`
-	Address    string `json:"address"`
 }
 
 //Transport contains the arguments to be used with Optimizer
