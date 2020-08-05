@@ -5,6 +5,7 @@ import (
 	"github.com/OperatorFoundation/monolith-go/monolith"
 	"github.com/OperatorFoundation/shapeshifter-transports/transports/Replicant/v3/polish"
 	"github.com/OperatorFoundation/shapeshifter-transports/transports/Replicant/v3/toneburst"
+	"github.com/kataras/golog"
 	"golang.org/x/net/proxy"
 	"io/ioutil"
 	"math/rand"
@@ -135,6 +136,7 @@ func TestMonotoneRandomEnumerated(t *testing.T) {
 	replicantConnection(clientConfig, serverConfig, t)
 }
 
+//TODO this test looks identical to the test above apart from naming
 func TestFactoryMonotoneRandomEnumerated(t *testing.T) {
 	clientConfig := createMonotoneClientConfigRandomEnumeratedItems()
 	serverConfig := createMonotoneServerConfigRandomEnumeratedItems()
@@ -1090,4 +1092,9 @@ func createSampleConfigs() (*ClientConfig, *ServerConfig) {
 	}
 
 	return &clientConfig, &serverConfig
+}
+
+func MakeLog() {
+	golog.SetLevel("debug")
+	golog.SetOutput(os.Stderr)
 }

@@ -29,17 +29,11 @@ import (
 	"github.com/kataras/golog"
 	"golang.org/x/net/proxy"
 	"net"
-	"os"
 	"time"
 
 	"github.com/OperatorFoundation/shapeshifter-ipc/v2"
 	"github.com/blanu/Dust/go/v2/interface"
 )
-
-func MakeLog() {
-	golog.SetLevel("debug")
-	golog.SetOutput(os.Stderr)
-}
 
 type dustClient struct {
 	serverPubkey *Dust.ServerPublic

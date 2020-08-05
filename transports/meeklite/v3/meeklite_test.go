@@ -34,8 +34,10 @@
 package meeklite
 
 import (
+	"github.com/kataras/golog"
 	"golang.org/x/net/proxy"
 	gourl "net/url"
+	"os"
 	"testing"
 )
 
@@ -120,4 +122,9 @@ func TestFactoryMeeklite(t *testing.T) {
 		t.Fail()
 		return
 	}
+}
+
+func MakeLog() {
+	golog.SetLevel("debug")
+	golog.SetOutput(os.Stderr)
 }

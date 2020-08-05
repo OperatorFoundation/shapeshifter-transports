@@ -8,7 +8,9 @@ package Dust
 // Package Dust provides a PT 2.1 Go API wrapper around the Dust transport
 
 import (
+	"github.com/kataras/golog"
 	"golang.org/x/net/proxy"
+	"os"
 	"testing"
 )
 
@@ -153,4 +155,9 @@ func TestDustV3(t *testing.T) {
 		t.Fail()
 		return
 	}
+}
+
+func MakeLog() {
+	golog.SetLevel("debug")
+	golog.SetOutput(os.Stderr)
 }

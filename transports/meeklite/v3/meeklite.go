@@ -39,14 +39,12 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"github.com/kataras/golog"
 	"golang.org/x/net/proxy"
 	"io"
 	"io/ioutil"
 	"net"
 	"net/http"
 	gourl "net/url"
-	"os"
 	"runtime"
 	"sync"
 	"time"
@@ -70,11 +68,6 @@ var (
 
 	loopbackAddr = net.IPv4(127, 0, 0, 1)
 )
-
-func MakeLog() {
-	golog.SetLevel("debug")
-	golog.SetOutput(os.Stderr)
-}
 
 // MeekTransport that uses domain fronting to shapeshift the application network traffic
 type MeekTransport struct {

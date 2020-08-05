@@ -36,10 +36,8 @@ import (
 	"crypto/sha256"
 	"encoding/binary"
 	"fmt"
-	"github.com/kataras/golog"
 	"io"
 	"net"
-	"os"
 	"time"
 
 	"golang.org/x/net/proxy"
@@ -62,11 +60,6 @@ const (
 	seedLen            = 16
 	hsLen              = 4 + 4
 )
-
-func MakeLog() {
-	golog.SetLevel("debug")
-	golog.SetOutput(os.Stderr)
-}
 
 //OptimizerTransport contains params needed for Optimizer
 type OptimizerTransport struct {

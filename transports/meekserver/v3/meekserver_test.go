@@ -1,6 +1,8 @@
 package meekserver
 
 import (
+	"github.com/kataras/golog"
+	"os"
 	"testing"
 )
 
@@ -41,4 +43,9 @@ MakeLog()
 		t.Fail()
 		return
 	}
+}
+
+func MakeLog() {
+	golog.SetLevel("debug")
+	golog.SetOutput(os.Stderr)
 }

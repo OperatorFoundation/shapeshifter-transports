@@ -27,17 +27,10 @@ package shadow
 
 import (
 	"github.com/kataras/golog"
+	shadowsocks "github.com/shadowsocks/go-shadowsocks2/core"
 	"log"
 	"net"
-	"os"
-
-	shadowsocks "github.com/shadowsocks/go-shadowsocks2/core"
 )
-
-func MakeLog() {
-	golog.SetLevel("debug")
-	golog.SetOutput(os.Stderr)
-}
 
 //Config contains the necessary command like arguments to run shadow
 type ClientConfig struct {

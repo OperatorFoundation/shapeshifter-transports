@@ -66,15 +66,9 @@ import (
 	"golang.org/x/crypto/acme/autocert"
 	"net"
 	"net/http"
-	"os"
 	"strings"
 	"time"
 )
-
-func MakeLog() {
-	golog.SetLevel("debug")
-	golog.SetOutput(os.Stderr)
-}
 
 //MeekServer is a Transport that uses domain fronting to shapeshift the application network traffic
 type MeekServer struct {

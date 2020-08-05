@@ -32,6 +32,7 @@
 package obfs2
 
 import (
+	"github.com/kataras/golog"
 	"golang.org/x/net/proxy"
 	"os"
 	"testing"
@@ -158,4 +159,9 @@ func RunLocalObfs2Server() {
 			}
 		}
 	}()
+}
+
+func MakeLog() {
+	golog.SetLevel("debug")
+	golog.SetOutput(os.Stderr)
 }

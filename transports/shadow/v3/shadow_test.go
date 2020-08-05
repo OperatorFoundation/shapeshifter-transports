@@ -26,6 +26,7 @@ package shadow
 
 import (
 	"fmt"
+	"github.com/kataras/golog"
 	"net"
 	"os"
 	"testing"
@@ -127,4 +128,9 @@ func TestShadowFactory(t *testing.T) {
 		t.Fail()
 		return
 	}
+}
+
+func MakeLog() {
+	golog.SetLevel("debug")
+	golog.SetOutput(os.Stderr)
 }
