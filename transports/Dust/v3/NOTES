@@ -1,0 +1,30 @@
+#+TITLE: Working notes on Dust Go implementation
+Updated: [2015-04-13 Mon]
+
+* Tasks
+** Dust2 juggling
+*** Reimplement close/interrupt support for newly juggled crypting layer API
+** General
+*** Adjust Huffman coder to be able to use restricted symbol set
+*** Implementation documentation pass started [2015-04-11 Sat]
+- [ ] buf
+- [ ] huffman
+- [ ] prim1
+- [ ] proc
+- [ ] skein
+- [ ] v2/crypting
+- [ ] v2/shaping
+- [ ] v2/engine
+*** Use 'byte' terminology consistently
+*** Use consistent error terminology
+*** Pull license for 'dist' package
+** Mostly optional
+*** Refactor CLI parts
+
+* (metadata)
+
+Local variables:
+mode: org
+mode: auto-fill
+fill-column: 110
+End:
