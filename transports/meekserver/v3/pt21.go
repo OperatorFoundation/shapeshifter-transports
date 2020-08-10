@@ -24,6 +24,33 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ * Copyright (c) 2014, Yawning Angel <yawning at torproject dot org>
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ *  * Redistributions of source code must retain the above copyright notice,
+ *    this list of conditions and the following disclaimer.
+ *
+ *  * Redistributions in binary form must reproduce the above copyright notice,
+ *    this list of conditions and the following disclaimer in the documentation
+ *    and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
 
 // Package meekserver provides an implementation of the Meek circumvention
 // protocol.  Only a client implementation is provided, and no effort is
@@ -34,9 +61,9 @@ package meekserver
 
 import (
 	"errors"
+	"github.com/kataras/golog"
 	interconv "github.com/mufti1/interconv/package"
 	"golang.org/x/crypto/acme/autocert"
-	"log"
 	"net"
 	"net/http"
 	"strings"
@@ -49,6 +76,12 @@ type MeekServer struct {
 	AcmeEmail    string
 	AcmeHostname string
 	CertManager  *autocert.Manager
+}
+
+type Transport struct {
+	DisableTLS   bool
+	CertManager  *autocert.Manager
+	Address      string
 }
 
 //Config contains arguments formatted for a json file
@@ -73,6 +106,50 @@ type fakeConn struct {
 	writeBuffer []byte
 }
 
+func New(disableTLS bool, acmeHostnamesCommas string, acmeEmail string, address string, stateDir string) (*Transport, error) {
+	var certManager *autocert.Manager
+	if disableTLS {
+		if acmeEmail != "" || acmeHostnamesCommas != "" {
+			return nil, errors.New("acmeEmail and acmeHostnames must be empty when disableTLS is enabled")
+		}
+		return nil, errors.New("disableTLS mode is not yet supported")
+	} else {
+		if acmeEmail == "" || acmeHostnamesCommas == "" {
+			return nil, errors.New("acmeEmail and acmeHostnames must be empty when disableTLS is disabled")
+		}
+		if acmeHostnamesCommas != "" {
+			acmeHostnames := strings.Split(acmeHostnamesCommas, ",")
+			golog.Infof("ACME hostnames: %q", acmeHostnames)
+
+			// The ACME HTTP-01 responder only works when it is running on
+			// port 80.
+			// https://github.com/ietf-wg-acme/acme/blob/master/draft-ietf-acme-acme.md#http-challenge
+
+			var cache autocert.Cache
+			cacheDir, err := getCertificateCacheDir(stateDir)
+			if err == nil {
+				golog.Infof("caching ACME certificates in directory %q", cacheDir)
+				cache = autocert.DirCache(cacheDir)
+			} else {
+				golog.Infof("disabling ACME certificate cache: %s", err)
+			}
+
+			certManager = &autocert.Manager{
+				Prompt:     autocert.AcceptTOS,
+				HostPolicy: autocert.HostWhitelist(acmeHostnames...),
+				Email:      acmeEmail,
+				Cache:      cache,
+			}
+			return &Transport{
+				DisableTLS:  disableTLS,
+				CertManager: certManager,
+				Address:     address,
+			}, nil
+		} else {
+			return nil, errors.New("must set acmeEmail")
+		}
+	}
+}
 func (listener meekListener) Accept() (net.Conn, error) {
 	state := listener.state
 	state.lock.Lock()
@@ -106,13 +183,13 @@ func (listener meekListener) Addr() net.Addr {
 }
 
 func (conn meekServerConn) Read(b []byte) (n int, err error) {
-	if len(conn.session.Or.readBuffer) == 0 || len(b) == 0 {
+	if len(conn.session.Or.readBuffer) == 0 {
 		return 0, nil
-	} else {
-		copyLength := copy(b, conn.session.Or.readBuffer)
-		conn.session.Or.readBuffer = conn.session.Or.readBuffer[copyLength:]
-		return copyLength, nil
 	}
+	copy(b, conn.session.Or.readBuffer)
+	conn.session.Or.readBuffer = conn.session.Or.readBuffer[:0]
+
+	return len(b), nil
 }
 
 func (conn meekServerConn) Write(b []byte) (n int, err error) {
@@ -159,7 +236,7 @@ func NewMeekTransportServer(disableTLS bool, acmeEmail string, acmeHostnamesComm
 		}
 		if acmeHostnamesCommas != "" {
 			acmeHostnames := strings.Split(acmeHostnamesCommas, ",")
-			log.Printf("ACME hostnames: %q", acmeHostnames)
+			golog.Infof("ACME hostnames: %q", acmeHostnames)
 
 			// The ACME HTTP-01 responder only works when it is running on
 			// port 80.
@@ -168,10 +245,10 @@ func NewMeekTransportServer(disableTLS bool, acmeEmail string, acmeHostnamesComm
 			var cache autocert.Cache
 			cacheDir, err := getCertificateCacheDir(stateDir)
 			if err == nil {
-				log.Printf("caching ACME certificates in directory %q", cacheDir)
+				golog.Infof("caching ACME certificates in directory %q", cacheDir)
 				cache = autocert.DirCache(cacheDir)
 			} else {
-				log.Printf("disabling ACME certificate cache: %s", err)
+				golog.Infof("disabling ACME certificate cache: %s", err)
 			}
 
 			certManager = &autocert.Manager{
@@ -188,13 +265,13 @@ func NewMeekTransportServer(disableTLS bool, acmeEmail string, acmeHostnamesComm
 // Methods that implement the base.Transport interface
 
 // Listen on the meek transport does not have a corresponding server, only a client
-func (transport *MeekServer) Listen(address string) net.Listener {
+func (transport *MeekServer) Listen(address string) (net.Listener, error) {
 	var ln net.Listener
 	var state *State
 	var err error
 	addr, resolverr := net.ResolveTCPAddr("tcp", address)
 	if resolverr != nil {
-		return ln
+		return ln, resolverr
 	}
 	acmeAddr := net.TCPAddr{
 		IP:   addr.IP,
@@ -202,14 +279,14 @@ func (transport *MeekServer) Listen(address string) net.Listener {
 		Zone: "",
 	}
 	acmeAddr.Port = 80
-	log.Printf("starting HTTP-01 ACME listener on %s", acmeAddr.String())
+	golog.Infof("starting HTTP-01 ACME listener on %s", acmeAddr.String())
 	lnHTTP01, err := net.ListenTCP("tcp", &acmeAddr)
 	if err != nil {
-		log.Printf("error opening HTTP-01 ACME listener: %s", err)
-		return nil
+		golog.Infof("error opening HTTP-01 ACME listener: %s", err)
+		return nil, err
 	}
 	go func() {
-		log.Fatal(http.Serve(lnHTTP01, transport.CertManager.HTTPHandler(nil)))
+		golog.Fatal(http.Serve(lnHTTP01, transport.CertManager.HTTPHandler(nil)))
 	}()
 	var server *http.Server
 	if transport.DisableTLS {
@@ -219,7 +296,43 @@ func (transport *MeekServer) Listen(address string) net.Listener {
 	}
 	if err != nil {
 
-		return nil
+		return nil, err
 	}
-	return meekListener{server, state}
+	return meekListener{server, state}, nil
+}
+
+func (transport *Transport) Listen() (net.Listener, error) {
+	var ln net.Listener
+	var state *State
+	var err error
+	addr, resolverr := net.ResolveTCPAddr("tcp", transport.Address)
+	if resolverr != nil {
+		return ln, resolverr
+	}
+	acmeAddr := net.TCPAddr{
+		IP:   addr.IP,
+		Port: 80,
+		Zone: "",
+	}
+	acmeAddr.Port = 80
+	golog.Infof("starting HTTP-01 ACME listener on %s", acmeAddr.String())
+	lnHTTP01, err := net.ListenTCP("tcp", &acmeAddr)
+	if err != nil {
+		golog.Infof("error opening HTTP-01 ACME listener: %s", err)
+		return nil, err
+	}
+	go func() {
+		golog.Fatal(http.Serve(lnHTTP01, transport.CertManager.HTTPHandler(nil)))
+	}()
+	var server *http.Server
+	if transport.DisableTLS {
+		server, state, err = startServer(addr)
+	} else {
+		server, state, err = startServerTLS(addr, transport.CertManager.GetCertificate)
+	}
+	if err != nil {
+
+		return nil, err
+	}
+	return meekListener{server, state}, nil
 }

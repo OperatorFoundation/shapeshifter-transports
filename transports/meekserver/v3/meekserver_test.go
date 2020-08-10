@@ -1,6 +1,8 @@
 package meekserver
 
 import (
+	"github.com/kataras/golog"
+	"os"
 	"testing"
 )
 
@@ -12,8 +14,7 @@ import (
 //		t.Fail()
 //	}
 //}
-
-func TestMeekServerListen2(t *testing.T) {
+func TestMeekServerListen(t *testing.T) {
 	acmeEmail := "brandon@operatorfoundation.org"
 	keyFileName := "operatorrss.com"
 	meekserverTransport := NewMeekTransportServer(false, acmeEmail, keyFileName, "state")
@@ -21,9 +22,30 @@ func TestMeekServerListen2(t *testing.T) {
 		t.Fail()
 		return
 	}
-	listener := meekserverTransport.Listen("127.0.0.1:8080")
-	if listener == nil {
+	_, listenErr := meekserverTransport.Listen("127.0.0.1:8080")
+	if listenErr != nil {
 		t.Fail()
 		return
 	}
+}
+
+func TestMeekServerFactoryListen(t *testing.T) {
+MakeLog()
+	acmeEmail := "brandon@operatorfoundation.org"
+	acmeHostNames := "operatorrss.com"
+	meekserverTransport, newError := New(false, acmeHostNames, acmeEmail,"127.0.0.1:8080", "state")
+	if newError != nil {
+		t.Fail()
+		return
+	}
+	_, listenErr := meekserverTransport.Listen()
+	if listenErr != nil {
+		t.Fail()
+		return
+	}
+}
+
+func MakeLog() {
+	golog.SetLevel("debug")
+	golog.SetOutput(os.Stderr)
 }

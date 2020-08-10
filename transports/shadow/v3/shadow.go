@@ -26,13 +26,20 @@
 package shadow
 
 import (
+	"github.com/kataras/golog"
 	shadowsocks "github.com/shadowsocks/go-shadowsocks2/core"
 	"log"
 	"net"
 )
 
 //Config contains the necessary command like arguments to run shadow
-type Config struct {
+type ClientConfig struct {
+	Password   string `json:"password"`
+	CipherName string `json:"cipherName"`
+	Address    string `json:"address"`
+}
+
+type ServerConfig struct {
 	Password   string `json:"password"`
 	CipherName string `json:"cipherName"`
 }
@@ -45,8 +52,16 @@ type Transport struct {
 }
 
 //NewConfig is used to create a config for testing
-func NewConfig(password string, cipherName string) Config {
-	return Config{
+func NewClientConfig(password string, cipherName string, address string) ClientConfig {
+	return ClientConfig{
+		Password:   password,
+		CipherName: cipherName,
+		Address:    address,
+	}
+}
+
+func NewServerConfig(password string, cipherName string) ServerConfig {
+	return ServerConfig{
 		Password:   password,
 		CipherName: cipherName,
 	}
@@ -58,28 +73,27 @@ func NewTransport(password string, cipherName string, address string) Transport 
 		Password:   password,
 		CipherName: cipherName,
 		Address:    address,
-
 	}
 }
 
 //Listen checks for a working connection
-func (config Config) Listen(address string) net.Listener {
+func (config ServerConfig) Listen(address string) (net.Listener, error) {
 	cipher, err := shadowsocks.PickCipher(config.CipherName, nil, config.Password)
 	if err != nil {
-		log.Fatal("Failed generating ciphers:", err)
-		return nil
+		golog.Errorf("Failed generating ciphers:", err)
+		return nil, err
 	}
 
 	listener, listenerErr := shadowsocks.Listen("tcp", address, cipher)
 	if listenerErr != nil {
 		log.Fatal("Failed to start listener:", listenerErr)
-		return nil
+		return nil, listenerErr
 	}
-	return listener
+	return listener, nil
 }
 
 //Dial connects to the address on the named network
-func (config Config) Dial(address string) (net.Conn, error) {
+func (config ClientConfig) Dial(address string) (net.Conn, error) {
 	cipher, err := shadowsocks.PickCipher(config.CipherName, nil, config.Password)
 	if err != nil {
 		log.Fatal("Failed generating ciphers:", err)
@@ -97,8 +111,23 @@ func (config Config) Dial(address string) (net.Conn, error) {
 func (transport *Transport) Dial() (net.Conn, error) {
 	cipher, err := shadowsocks.PickCipher(transport.CipherName, nil, transport.Password)
 	if err != nil {
-		log.Fatalf("Failed generating ciphers: %s", err)
+		log.Fatal("Failed generating ciphers:", err)
 	}
 
 	return shadowsocks.Dial("tcp", transport.Address, cipher)
+}
+
+func (transport *Transport) Listen() (net.Listener, error) {
+	cipher, err := shadowsocks.PickCipher(transport.CipherName, nil, transport.Password)
+	if err != nil {
+		log.Fatal("Failed generating ciphers:", err)
+		return nil, err
+	}
+
+	listener, listenerErr := shadowsocks.Listen("tcp", transport.Address, cipher)
+	if listenerErr != nil {
+		log.Fatal("Failed to start listener:", listenerErr)
+		return nil, listenerErr
+	}
+	return listener, nil
 }

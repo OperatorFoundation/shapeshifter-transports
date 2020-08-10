@@ -34,21 +34,25 @@
 package meeklite
 
 import (
+	"github.com/kataras/golog"
 	"golang.org/x/net/proxy"
+	gourl "net/url"
+	"os"
 	"testing"
 )
 
 const data = "test"
 
 func TestMeeklite(t *testing.T) {
+	MakeLog()
 	//create a server
 	config := NewMeekTransportWithFront("https://transport-canary-meek.appspot.com/", "www.google.com", proxy.Direct)
 
 	//create client buffer
 	clientBuffer := make([]byte, 4)
 	//call dial on client and check error
-	clientConn := config.Dial()
-	if clientConn == nil {
+	clientConn, connErr := config.Dial()
+	if connErr != nil {
 		t.Fail()
 		return
 	}
@@ -74,4 +78,53 @@ func TestMeeklite(t *testing.T) {
 		t.Fail()
 		return
 	}
+}
+
+func TestFactoryMeeklite(t *testing.T) {
+	MakeLog()
+	//create a server
+	urlString := "https://transport-canary-meek.appspot.com/"
+	Url, err := gourl.Parse(urlString)
+	if err != nil {
+		t.Fail()
+		return
+	}
+
+	config := NewMeekFactoryTransportWithFront(Url, "www.google.com", proxy.Direct)
+
+	//create client buffer
+	clientBuffer := make([]byte, 4)
+	//call dial on client and check error
+	clientConn, connErr := config.Dial()
+	if connErr != nil {
+		t.Fail()
+		return
+	}
+
+	//write data from clientConn for server to read
+	writeBytes, clientWriteErr := clientConn.Write([]byte(data))
+	if clientWriteErr != nil {
+		t.Fail()
+		return
+	}
+	if writeBytes <= 0 {
+		t.Fail()
+		return
+	}
+
+	//read on client side
+	readBytes, clientReadErr := clientConn.Read(clientBuffer)
+	if clientReadErr != nil {
+		t.Fail()
+		return
+	}
+	if readBytes <= 0 {
+		t.Fail()
+		return
+	}
+}
+
+func MakeLog() {
+	golog.SetLevel("debug")
+	golog.SetOutput(os.Stderr)
 }

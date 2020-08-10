@@ -39,7 +39,7 @@ const data = "test"
 
 func TestMain(m *testing.M) {
 	_ = RunLocalObfs4Server("test")
-
+	_ = RunLocalObfs4ServerFactory("test")
 	os.Exit(m.Run())
 }
 
@@ -54,6 +54,37 @@ func TestObfs4(t *testing.T) {
 	clientBuffer := make([]byte, 4)
 	//call dial on client and check error
 	clientConn, dialErr := clientConfig.Dial("127.0.0.1:1234")
+	if dialErr != nil {
+		t.Fail()
+		return
+	}
+
+	//write data from clientConn for server to read
+	_, clientWriteErr := clientConn.Write([]byte(data))
+	if clientWriteErr != nil {
+		t.Fail()
+		return
+	}
+
+	//read on client side
+	_, clientReadErr := clientConn.Read(clientBuffer)
+	if clientReadErr != nil {
+		t.Fail()
+		return
+	}
+}
+
+func TestObfs4Factory(t *testing.T) {
+	print(runtime.GOOS)
+	clientConfig, launchErr := RunObfs4ClientFactory()
+	if launchErr != nil {
+		t.Fail()
+		return
+	}
+	//create client buffer
+	clientBuffer := make([]byte, 4)
+	//call dial on client and check error
+	clientConn, dialErr := clientConfig.Dial()
 	if dialErr != nil {
 		t.Fail()
 		return

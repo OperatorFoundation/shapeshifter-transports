@@ -26,13 +26,14 @@ package replicant
 
 import (
 	"encoding/json"
-	"github.com/OperatorFoundation/shapeshifter-transports/transports/Replicant/v2/polish"
-	"github.com/OperatorFoundation/shapeshifter-transports/transports/Replicant/v2/toneburst"
+	"github.com/OperatorFoundation/shapeshifter-transports/transports/Replicant/v3/polish"
+	"github.com/OperatorFoundation/shapeshifter-transports/transports/Replicant/v3/toneburst"
 )
 
 type ClientConfig struct {
 	Toneburst toneburst.Config
 	Polish    polish.ClientConfig
+	Address   string
 }
 
 type ServerConfig struct {
@@ -40,16 +41,19 @@ type ServerConfig struct {
 	Polish    polish.ServerConfig
 }
 
+type ClientJSONConfig struct {
+	Config string `json:"config"`
+}
+
+type ServerJSONInnerConfig struct {
+	Config string `json:"config"`
+}
+
+type ServerJSONOuterConfig struct {
+	Replicant ServerJSONInnerConfig
+}
+
 func (config ServerConfig) Marshal() (string, error) {
-
-	type ServerJSONInnerConfig struct {
-		Config string `json:"config"`
-	}
-
-	type ServerJSONOuterConfig struct {
-		Replicant ServerJSONInnerConfig
-	}
-
 	configString, configStringError := config.Encode()
 	if configStringError != nil {
 		return "", configStringError
@@ -67,10 +71,6 @@ func (config ServerConfig) Marshal() (string, error) {
 }
 
 func (config ClientConfig) Marshal() (string, error) {
-
-	type ClientJSONConfig struct {
-		Config string `json:"config"`
-	}
 
 	configString, configStringError := config.Encode()
 	if configStringError != nil {
