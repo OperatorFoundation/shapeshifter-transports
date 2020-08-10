@@ -33,23 +33,19 @@ import (
 
 const timeoutInSeconds = 60
 
-//TransportDialer is a program that transforms network traffic
-type TransportDialer interface {
+//Transport is a program that transforms network traffic
+type Transport interface {
 	Dial() (net.Conn, error)
-}
-
-type TransportListener interface {
-	Listen() (net.Listener, error)
 }
 
 //Client contains the two parameters needed to use Optimizer.
 type Client struct {
-	Transports []TransportDialer
+	Transports []Transport
 	Strategy   Strategy
 }
 
 //NewOptimizerClient is the initializer
-func NewOptimizerClient(Transports []TransportDialer, Strategy Strategy) *Client {
+func NewOptimizerClient(Transports []Transport, Strategy Strategy) *Client {
 	return &Client{Transports, Strategy}
 }
 
@@ -77,63 +73,63 @@ func (OptT *Client) Dial() (net.Conn, error) {
 
 //Strategy is the method used to choose a transport
 type Strategy interface {
-	Choose() TransportDialer
-	Report(transport TransportDialer, success bool, durationElapsed float64)
+	Choose() Transport
+	Report(transport Transport, success bool, durationElapsed float64)
 }
 
 //FirstStrategy returns the first strategy in the array
 type FirstStrategy struct {
-	transports []TransportDialer
+	transports []Transport
 }
 
 //NewFirstStrategy initializes FirstStrategy
-func NewFirstStrategy(transports []TransportDialer) Strategy {
+func NewFirstStrategy(transports []Transport) Strategy {
 	return &FirstStrategy{transports}
 }
 
 //Choose selects a transport in the array
-func (strategy *FirstStrategy) Choose() TransportDialer {
+func (strategy *FirstStrategy) Choose() Transport {
 	return strategy.transports[0]
 }
 
 //Report returns if the transport was successful and how long the connection took
-func (strategy *FirstStrategy) Report(TransportDialer, bool, float64) {
+func (strategy *FirstStrategy) Report(Transport, bool, float64) {
 
 }
 
 //NewRandomStrategy initializes RandomStrategy
-func NewRandomStrategy(transports []TransportDialer) Strategy {
+func NewRandomStrategy(transports []Transport) Strategy {
 	return &RandomStrategy{transports}
 }
 
 //RandomStrategy returns a transport at random
 type RandomStrategy struct {
-	transports []TransportDialer
+	transports []Transport
 }
 
 //Choose selects a transport in the array
-func (strategy *RandomStrategy) Choose() TransportDialer {
+func (strategy *RandomStrategy) Choose() Transport {
 	return strategy.transports[0]
 }
 
 //Report returns if the transport was successful and how long the connection took
-func (strategy *RandomStrategy) Report(TransportDialer, bool, float64) {
+func (strategy *RandomStrategy) Report(Transport, bool, float64) {
 
 }
 
 //NewRotateStrategy initializes RotateStrategy
-func NewRotateStrategy(transports []TransportDialer) Strategy {
+func NewRotateStrategy(transports []Transport) Strategy {
 	return &RotateStrategy{transports, 1}
 }
 
 //RotateStrategy cycles through the list of transports, using a different one each time
 type RotateStrategy struct {
-	transports []TransportDialer
+	transports []Transport
 	index      int
 }
 
 //Choose selects a transport in the array
-func (strategy *RotateStrategy) Choose() TransportDialer {
+func (strategy *RotateStrategy) Choose() Transport {
 	transport := strategy.transports[strategy.index]
 	strategy.index++
 	if strategy.index >= len(strategy.transports) {
@@ -143,7 +139,7 @@ func (strategy *RotateStrategy) Choose() TransportDialer {
 }
 
 //Report returns if the transport was successful and how long the connection took
-func (strategy *RotateStrategy) Report(TransportDialer, bool, float64) {
+func (strategy *RotateStrategy) Report(Transport, bool, float64) {
 
 }
 
@@ -151,19 +147,19 @@ func (strategy *RotateStrategy) Report(TransportDialer, bool, float64) {
 //choose the best option
 type TrackStrategy struct {
 	index     int
-	trackMap  map[TransportDialer]int
-	transport []TransportDialer
+	trackMap  map[Transport]int
+	transport []Transport
 }
 
 //NewTrackStrategy initializes TrackStrategy
-func NewTrackStrategy(transport []TransportDialer) Strategy {
-	track := TrackStrategy{0, map[TransportDialer]int{}, transport}
-	track.trackMap = make(map[TransportDialer]int)
+func NewTrackStrategy(transport []Transport) Strategy {
+	track := TrackStrategy{0, map[Transport]int{}, transport}
+	track.trackMap = make(map[Transport]int)
 	return &track
 }
 
 //Choose selects a transport in the array
-func (strategy *TrackStrategy) Choose() TransportDialer {
+func (strategy *TrackStrategy) Choose() Transport {
 	transport := strategy.transport[strategy.index]
 	score := strategy.findScore(strategy.transport)
 	startIndex := strategy.index
@@ -181,7 +177,7 @@ func (strategy *TrackStrategy) Choose() TransportDialer {
 }
 
 //findScore is used to find the score given to each transport based on performance
-func (strategy *TrackStrategy) findScore(transports []TransportDialer) int {
+func (strategy *TrackStrategy) findScore(transports []Transport) int {
 	transport := transports[strategy.index]
 	score, ok := strategy.trackMap[transport]
 	if ok {
@@ -192,7 +188,7 @@ func (strategy *TrackStrategy) findScore(transports []TransportDialer) int {
 }
 
 //incrementIndex is used to cycle through the transport index
-func (strategy *TrackStrategy) incrementIndex(transports []TransportDialer) {
+func (strategy *TrackStrategy) incrementIndex(transports []Transport) {
 	strategy.index++
 	if strategy.index >= len(transports) {
 		strategy.index = 0
@@ -200,7 +196,7 @@ func (strategy *TrackStrategy) incrementIndex(transports []TransportDialer) {
 }
 
 //Report returns if the transport was successful and how long the connection took
-func (strategy *TrackStrategy) Report(transport TransportDialer, success bool, _ float64) {
+func (strategy *TrackStrategy) Report(transport Transport, success bool, _ float64) {
 	if success {
 		strategy.trackMap[transport] = 1
 	} else {
@@ -211,19 +207,19 @@ func (strategy *TrackStrategy) Report(transport TransportDialer, success bool, _
 //minimizeDialDuration is used to find the transport with the fastest response time
 type minimizeDialDuration struct {
 	index      int
-	trackMap   map[TransportDialer]float64
-	transports []TransportDialer
+	trackMap   map[Transport]float64
+	transports []Transport
 }
 
 //NewMinimizeDialDuration initializes minimizeDialDuration
-func NewMinimizeDialDuration(transport []TransportDialer) Strategy {
-	duration := minimizeDialDuration{0, map[TransportDialer]float64{}, transport}
-	duration.trackMap = make(map[TransportDialer]float64)
+func NewMinimizeDialDuration(transport []Transport) Strategy {
+	duration := minimizeDialDuration{0, map[Transport]float64{}, transport}
+	duration.trackMap = make(map[Transport]float64)
 	return &duration
 }
 
 //Choose selects a transport in the array
-func (strategy *minimizeDialDuration) Choose() TransportDialer {
+func (strategy *minimizeDialDuration) Choose() Transport {
 	transport := strategy.transports[strategy.index]
 	score := strategy.findScore(strategy.transports)
 	startIndex := strategy.index
@@ -247,7 +243,7 @@ func (strategy *minimizeDialDuration) Choose() TransportDialer {
 }
 
 //incrementIndex is used to cycle through the transport index
-func (strategy *minimizeDialDuration) incrementIndex(transports []TransportDialer) {
+func (strategy *minimizeDialDuration) incrementIndex(transports []Transport) {
 	strategy.index++
 	if strategy.index >= len(transports) {
 		strategy.index = 0
@@ -255,7 +251,7 @@ func (strategy *minimizeDialDuration) incrementIndex(transports []TransportDiale
 }
 
 //findScore is used to find the score given to each transport based on performance
-func (strategy *minimizeDialDuration) findScore(transports []TransportDialer) float64 {
+func (strategy *minimizeDialDuration) findScore(transports []Transport) float64 {
 	transport := transports[strategy.index]
 	score, ok := strategy.trackMap[transport]
 	if ok {
@@ -266,7 +262,7 @@ func (strategy *minimizeDialDuration) findScore(transports []TransportDialer) fl
 }
 
 //Report returns if the transport was successful and how long the connection took
-func (strategy *minimizeDialDuration) Report(transport TransportDialer, success bool, durationElapsed float64) {
+func (strategy *minimizeDialDuration) Report(transport Transport, success bool, durationElapsed float64) {
 	if success {
 		if durationElapsed < 60 {
 			strategy.trackMap[transport] = durationElapsed
@@ -279,9 +275,9 @@ func (strategy *minimizeDialDuration) Report(transport TransportDialer, success 
 }
 
 //minDuration assigns a value to the response time
-func (strategy *minimizeDialDuration) minDuration() TransportDialer {
+func (strategy *minimizeDialDuration) minDuration() Transport {
 	min := 61.0
-	var transport TransportDialer = nil
+	var transport Transport = nil
 	for key, value := range strategy.trackMap {
 		if value < min {
 			min = value

@@ -1,30 +1,3 @@
-/*
- * Copyright (c) 2014, Yawning Angel <yawning at torproject dot org>
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
- *
- *  * Redistributions of source code must retain the above copyright notice,
- *    this list of conditions and the following disclaimer.
- *
- *  * Redistributions in binary form must reproduce the above copyright notice,
- *    this list of conditions and the following disclaimer in the documentation
- *    and/or other materials provided with the distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
- */
-
 // Package meekserver is the server transport plugin for the meek pluggable transport.
 // It acts as an HTTP server, keeps track of session ids, and forwards received
 // data to a local OR port.
@@ -49,8 +22,8 @@ package meekserver
 import (
 	"crypto/tls"
 	"fmt"
-	"github.com/kataras/golog"
 	"io"
+	"log"
 	"net"
 	"net/http"
 	"path"
@@ -189,7 +162,7 @@ func (a scrubbedAddr) String() string {
 	return "[scrubbed]"
 }
 
-// Replace the Addr in a net.OpError with "[scrubbed]" for golog.
+// Replace the Addr in a net.OpError with "[scrubbed]" for logging.
 func scrubError(err error) error {
 	if operr, ok := err.(*net.OpError); ok {
 		// net.OpError contains Op, Net, Addr, and a subsidiary Err. The
@@ -246,14 +219,14 @@ func (state *State) Post(w http.ResponseWriter, req *http.Request) {
 
 	session, err := state.GetSession(sessionID)
 	if err != nil {
-		golog.Error(err)
+		log.Print(err)
 		httpInternalServerError(w)
 		return
 	}
 
 	err = transact(session, w, req)
 	if err != nil {
-		golog.Error(err)
+		log.Print(err)
 		state.CloseSession(sessionID)
 		return
 	}
@@ -345,10 +318,10 @@ func initServer(addr *net.TCPAddr,
 
 func startServer(addr *net.TCPAddr) (*http.Server, *State, error) {
 	return initServer(addr, nil, func(server *http.Server, errChan chan<- error) {
-		golog.Errorf("listening with plain HTTP on %s", addr)
+		log.Printf("listening with plain HTTP on %s", addr)
 		err := server.ListenAndServe()
 		if err != nil {
-			golog.Errorf("Error in ListenAndServe: %s", err)
+			log.Printf("Error in ListenAndServe: %s", err)
 		}
 		errChan <- err
 	})
@@ -356,10 +329,10 @@ func startServer(addr *net.TCPAddr) (*http.Server, *State, error) {
 
 func startServerTLS(addr *net.TCPAddr, getCertificate func(*tls.ClientHelloInfo) (*tls.Certificate, error)) (*http.Server, *State, error) {
 	return initServer(addr, getCertificate, func(server *http.Server, errChan chan<- error) {
-		golog.Errorf("listening with HTTPS on %s", addr)
+		log.Printf("listening with HTTPS on %s", addr)
 		err := server.ListenAndServeTLS("", "")
 		if err != nil {
-			golog.Errorf("Error in ListenAndServeTLS: %s", err)
+			log.Printf("Error in ListenAndServeTLS: %s", err)
 		}
 		errChan <- err
 	})

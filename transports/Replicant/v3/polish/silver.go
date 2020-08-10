@@ -175,8 +175,6 @@ func NewSilverClient(config SilverPolishClientConfig) (Connection, error) {
 }
 
 func X963KDF(sharedKeySeed []byte, ephemeralPublicKey []byte) []byte {
-
-	//FIXME: Is this a correct X963 KDF
 	length := 32
 	output := make([]byte, 0)
 	outlen := 0

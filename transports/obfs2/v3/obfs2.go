@@ -36,14 +36,16 @@ import (
 	"crypto/sha256"
 	"encoding/binary"
 	"fmt"
+	"log"
+
 	"io"
 	"net"
 	"time"
 
-	"golang.org/x/net/proxy"
-
 	"github.com/OperatorFoundation/obfs4/common/csrand"
 	"github.com/OperatorFoundation/shapeshifter-ipc/v2"
+
+	"golang.org/x/net/proxy"
 )
 
 const (
@@ -67,10 +69,6 @@ type OptimizerTransport struct {
 	Dialer  proxy.Dialer
 }
 
-type Config struct {
-	Address string `json:"address"`
-}
-
 //Dial connects to a specified address.
 //this dial function is made to be Optimizer compatible
 func (transport OptimizerTransport) Dial() (net.Conn, error) {
@@ -85,31 +83,17 @@ func (transport OptimizerTransport) Dial() (net.Conn, error) {
 	transportConn, err := newObfs2ClientConn(conn)
 	if err != nil {
 		_ = dialConn.Close()
+		log.Fatalf("dial connection failed")
 		return nil, err
 	}
 
 	return transportConn, nil
 }
 
-func (transport OptimizerTransport) Listen() (net.Listener, error) {
-	addr, resolveErr := pt.ResolveAddr(transport.Address)
-	if resolveErr != nil {
-		fmt.Println(resolveErr.Error())
-		return nil, resolveErr
-	}
-
-	ln, err := net.ListenTCP("tcp", addr)
-	if err != nil {
-		fmt.Println(err.Error())
-		return nil, err
-	}
-
-	return newObfs2TransportListener(ln), nil
-}
-
 // Transport is the obfs2 implementation of the base.Transport interface.
 type Transport struct {
 	dialer proxy.Dialer
+
 }
 
 //New initializes obfs2 for Optimizer
@@ -166,20 +150,20 @@ func (transport *Transport) Dial(address string) (net.Conn, error) {
 }
 
 // Listen creates listener for incoming transport connection
-func (transport *Transport) Listen(address string) (net.Listener, error) {
+func (transport *Transport) Listen(address string) net.Listener {
 	addr, resolveErr := pt.ResolveAddr(address)
 	if resolveErr != nil {
 		fmt.Println(resolveErr.Error())
-		return nil, resolveErr
+		return nil
 	}
 
 	ln, err := net.ListenTCP("tcp", addr)
 	if err != nil {
 		fmt.Println(err.Error())
-		return nil, err
+		return nil
 	}
 
-	return newObfs2TransportListener(ln), nil
+	return newObfs2TransportListener(ln)
 }
 
 // Methods that implement the net.Conn interface

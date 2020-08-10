@@ -1,29 +1,29 @@
 /*
- * Copyright (c) 2014, Yawning Angel <yawning at torproject dot org>
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
- *
- *  * Redistributions of source code must retain the above copyright notice,
- *    this list of conditions and the following disclaimer.
- *
- *  * Redistributions in binary form must reproduce the above copyright notice,
- *    this list of conditions and the following disclaimer in the documentation
- *    and/or other materials provided with the distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
- */
+* Copyright (c) 2014, Yawning Angel <yawning at torproject dot org>
+* All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification, are permitted provided that the following conditions are met:
+*
+*  * Redistributions of source code must retain the above copyright notice,
+*    this list of conditions and the following disclaimer.
+*
+*  * Redistributions in binary form must reproduce the above copyright notice,
+*    this list of conditions and the following disclaimer in the documentation
+*    and/or other materials provided with the distribution.
+*
+* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+* AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+* IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+* ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+* LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+* CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+* SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+* INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+* CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+* ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+* POSSIBILITY OF SUCH DAMAGE.
+*/
 
 // Package obfs4 provides an implementation of the Tor Project's obfs4
 // obfuscation protocol.
@@ -35,12 +35,12 @@ import (
 	"flag"
 	"fmt"
 	"github.com/OperatorFoundation/obfs4/common/drbg"
+	"github.com/OperatorFoundation/obfs4/common/log"
 	"github.com/OperatorFoundation/obfs4/common/ntor"
 	"github.com/OperatorFoundation/obfs4/common/probdist"
 	"github.com/OperatorFoundation/obfs4/common/replayfilter"
 	"github.com/OperatorFoundation/shapeshifter-ipc/v2"
-	"github.com/OperatorFoundation/shapeshifter-transports/transports/obfs4/v3/framing"
-	"github.com/kataras/golog"
+	"github.com/OperatorFoundation/shapeshifter-transports/transports/obfs4/v2/framing"
 	"golang.org/x/net/proxy"
 	"math/rand"
 	"net"
@@ -131,7 +131,7 @@ func NewObfs4Server(stateDir string) (*Transport, error) {
 	// Store the arguments that should appear in our descriptor for the clients.
 	ptArgs := make(map[string]string)
 	ptArgs[certArg] = st.cert.String()
-	golog.Infof("certstring %s", certArg)
+	log.Infof("certstring %s", certArg)
 	ptArgs[iatArg] = strconv.Itoa(st.iatMode)
 
 	// Initialize the replay filter.
@@ -175,7 +175,7 @@ func NewObfs4Client(certString string, iatMode int, dialer proxy.Dialer) (*Trans
 	if dialer == nil {
 		return &Transport{dialer: proxy.Direct, serverFactory: nil, clientArgs: &ClientArgs{nodeID, publicKey, sessionKey, iatMode}}, nil
 	}
-	return &Transport{dialer: dialer, serverFactory: nil, clientArgs: &ClientArgs{nodeID, publicKey, sessionKey, iatMode}}, nil
+		return &Transport{dialer: dialer, serverFactory: nil, clientArgs: &ClientArgs{nodeID, publicKey, sessionKey, iatMode}}, nil
 
 }
 
@@ -192,7 +192,7 @@ func (transport *Transport) Dial(address string) (net.Conn, error) {
 	if err != nil {
 		closeErr := dialConn.Close()
 		if closeErr != nil {
-			golog.Errorf("could not close")
+			log.Errorf("could not close")
 		}
 		return nil, err
 	}
@@ -200,87 +200,23 @@ func (transport *Transport) Dial(address string) (net.Conn, error) {
 	return transportConn, nil
 }
 
-//TransportClient contains parameters to be used in Optimizer
-type TransportClient struct {
+
+//OptimizerTransport contains parameters to be used in Optimizer
+type OptimizerTransport struct {
 	CertString string
 	IatMode    int
-	Address    string `json:"address"`
+	Address    string
 	Dialer     proxy.Dialer
-}
-
-type TransportServer struct {
-	ServerFactory *ServerFactory
-	Address       string
 }
 
 //Config contains arguments formatted for a json file
 type Config struct {
 	CertString string `json:"cert"`
 	IatMode    string `json:"iat-mode"`
-	Address    string `json:"address"`
-}
-
-func NewClient(certString string, iatMode int, address string, dialer proxy.Dialer) (TransportClient, error) {
-	return TransportClient{CertString: certString, IatMode: iatMode, Address: address, Dialer: dialer}, nil
-}
-
-func NewServer(stateDir string, address string) (*TransportServer, error) {
-	sf, sFError := NewObfs4ServerFactory(stateDir)
-
-	if sFError != nil {
-		return nil, sFError
-	}
-	transport := &TransportServer{
-		ServerFactory: sf,
-		Address:       address,
-	}
-	return transport, nil
-}
-
-//NewObfs4Server initializes the obfs4 server side
-func NewObfs4ServerFactory(stateDir string) (*ServerFactory, error) {
-	args := make(map[string]string)
-	st, err := serverStateFromArgs(stateDir, args)
-	if err != nil {
-		return nil, err
-	}
-
-	var iatSeed *drbg.Seed
-	if st.iatMode != iatNone {
-		iatSeedSrc := sha256.Sum256(st.drbgSeed.Bytes()[:])
-		var err error
-		iatSeed, err = drbg.SeedFromBytes(iatSeedSrc[:])
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	// Store the arguments that should appear in our descriptor for the clients.
-	ptArgs := make(map[string]string)
-	ptArgs[certArg] = st.cert.String()
-	golog.Infof("certstring %s", certArg)
-	ptArgs[iatArg] = strconv.Itoa(st.iatMode)
-
-	// Initialize the replay filter.
-	filter, err := replayfilter.New(replayTTL)
-	if err != nil {
-		return nil, err
-	}
-
-	// Initialize the close thresholds for failed connections.
-	hashDrbg, err := drbg.NewHashDrbg(st.drbgSeed)
-	if err != nil {
-		return nil, err
-	}
-	rng := rand.New(hashDrbg)
-
-	sf := &ServerFactory{ptArgs, st.nodeID, st.identityKey, st.drbgSeed, iatSeed, st.iatMode, filter, rng.Intn(maxCloseDelayBytes), rng.Intn(maxCloseDelay)}
-
-	return sf, nil
 }
 
 // Dial creates outgoing transport connection
-func (transport TransportClient) Dial() (net.Conn, error) {
+func (transport OptimizerTransport) Dial() (net.Conn, error) {
 	Obfs4Transport, err := NewObfs4Client(transport.CertString, transport.IatMode, transport.Dialer)
 	if err != nil {
 		return nil, err
@@ -293,36 +229,20 @@ func (transport TransportClient) Dial() (net.Conn, error) {
 }
 
 // Listen creates listener for incoming transport connection
-func (transport *Transport) Listen(address string) (net.Listener, error) {
+func (transport *Transport) Listen(address string) net.Listener {
 	addr, resolveErr := pt.ResolveAddr(address)
 	if resolveErr != nil {
 		fmt.Println(resolveErr.Error())
-		return nil, resolveErr
+		return nil
 	}
 
 	ln, err := net.ListenTCP("tcp", addr)
 	if err != nil {
 		fmt.Println(err.Error())
-		return nil, err
+		return nil
 	}
 
-	return newObfs4TransportListener(transport.serverFactory, ln), nil
-}
-
-func (transport *TransportServer) Listen() (net.Listener, error) {
-	addr, resolveErr := pt.ResolveAddr(transport.Address)
-	if resolveErr != nil {
-		golog.Error(resolveErr.Error())
-		return nil, resolveErr
-	}
-
-	ln, err := net.ListenTCP("tcp", addr)
-	if err != nil {
-		golog.Error(err.Error())
-		return nil, err
-	}
-
-	return newObfs4TransportListener(transport.ServerFactory, ln), nil
+	return newObfs4TransportListener(transport.serverFactory, ln)
 }
 
 // Close closes the transport listener.

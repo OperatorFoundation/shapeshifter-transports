@@ -95,19 +95,19 @@ func (transport *MeekTransport) NetworkDialer() proxy.Dialer {
 }
 
 // Dial creates outgoing transport connection
-func (transport *MeekTransport) Dial() (net.Conn, error) {
+func (transport *MeekTransport) Dial() net.Conn {
 	// FIXME - should use dialer
 	transportConn, err := newMeekClientConn(transport.clientArgs)
 	if err != nil {
-		return nil, err
+		return nil
 	}
 
-	return transportConn, nil
+	return transportConn
 }
 
 // Listen for the meek transport does not have a corresponding server, only a client
-func (transport *MeekTransport) Listen() (net.Listener, error) {
-	return nil, nil
+func (transport *MeekTransport) Listen() net.Listener {
+	return nil
 }
 
 // End methods that implement the base.Transport interface
@@ -123,31 +123,23 @@ func (ca *meekClientArgs) Network() string {
 
 //Transport contains parameters used in Optimizer
 type Transport struct {
-	URL    *gourl.URL
-	Front  string
-	Dialer proxy.Dialer
+	URL     *gourl.URL `json:"url"`
+	Front   string     `json:"front"`
+	Address string
+	Dialer  proxy.Dialer
 }
 
 //Config puts the parameters in a json compatible format
 type Config struct {
-	URL     *gourl.URL `json:"url"`
-	Front   string     `json:"front"`
-	Address string     `json:"address"`
-}
-
-func NewMeekFactoryTransportWithFront(url *gourl.URL, front string, dialer proxy.Dialer) *Transport {
-	return &Transport{url, front, dialer}
+	URL   *gourl.URL `json:"url"`
+	Front string     `json:"front"`
 }
 
 // Dial creates outgoing transport connection
 func (transport Transport) Dial() (net.Conn, error) {
 	meekTransport := NewMeekTransportWithFront(transport.URL.String(), transport.Front, transport.Dialer)
-	conn, dialErr := meekTransport.Dial()
-	if dialErr != nil {
-		return nil, errors.New("failed to dial")
-	} else {
-		return conn, nil
-	}
+	conn := meekTransport.Dial()
+	return conn, nil
 }
 
 func (ca *meekClientArgs) String() string {
@@ -238,23 +230,23 @@ func (transportConn *meekConn) Read(p []byte) (n int, err error) {
 		return
 	}
 	select {
-	case <-time.After(20 * time.Second):
-		return 0, nil
-	// Wait for the worker to enqueue more incoming data.
-	case b, ok := <-transportConn.workerRdChan:
-		if !ok {
-			// Close() was called and the worker's shutting down.
-			return 0, io.ErrClosedPipe
-		}
+		case <-time.After(20*time.Second):
+			return 0, nil
+		// Wait for the worker to enqueue more incoming data.
+		case b, ok := <-transportConn.workerRdChan:
+			if !ok {
+				// Close() was called and the worker's shutting down.
+				return 0, io.ErrClosedPipe
+			}
 
-		// Ew, an extra copy, but who am I kidding, it's meek.
-		buf := bytes.NewBuffer(b)
-		n, err = buf.Read(p)
-		if buf.Len() > 0 {
-			// If there's data pending, stash the buffer so the next
-			// Read() call will use it to fulfill the Read().
-			transportConn.rdBuf = buf
-		}
+			// Ew, an extra copy, but who am I kidding, it's meek.
+			buf := bytes.NewBuffer(b)
+			n, err = buf.Read(p)
+			if buf.Len() > 0 {
+				// If there's data pending, stash the buffer so the next
+				// Read() call will use it to fulfill the Read().
+				transportConn.rdBuf = buf
+			}
 	}
 	return
 }
@@ -364,7 +356,7 @@ func (transportConn *meekConn) roundTrip(sndBuf []byte) (recvBuf []byte, err err
 			if resp.StatusCode == http.StatusInternalServerError {
 				return
 			}
-			time.Sleep(retryDelay)
+				time.Sleep(retryDelay)
 
 		} else {
 			_ = resp.Body.Close()

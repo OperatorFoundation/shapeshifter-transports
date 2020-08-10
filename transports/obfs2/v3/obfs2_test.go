@@ -32,7 +32,6 @@
 package obfs2
 
 import (
-	"github.com/kataras/golog"
 	"golang.org/x/net/proxy"
 	"os"
 	"testing"
@@ -98,7 +97,6 @@ func TestObfs2WithDialer(t *testing.T) {
 }
 
 func TestObfs2OptimizerTransportWithDialer(t *testing.T) {
-MakeLog()
 	config := New("127.0.0.1:1237", proxy.Direct)
 	//create client buffer
 	clientBuffer := make([]byte, 4)
@@ -129,8 +127,8 @@ func RunLocalObfs2Server() {
 	config := NewObfs2Transport()
 
 	//call listen on the server
-	serverListener, listenErr := config.Listen("127.0.0.1:1237")
-	if listenErr != nil {
+	serverListener := config.Listen("127.0.0.1:1237")
+	if serverListener == nil {
 		return
 	}
 
@@ -159,9 +157,4 @@ func RunLocalObfs2Server() {
 			}
 		}
 	}()
-}
-
-func MakeLog() {
-	golog.SetLevel("debug")
-	golog.SetOutput(os.Stderr)
 }

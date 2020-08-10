@@ -1,32 +1,15 @@
 package Dust
 
 /*
-	MIT License
+ * Copyright (c) 2019, Operator Foundation
+ *
+ */
 
-	Copyright (c) 2020 Operator Foundation
-
-	Permission is hereby granted, free of charge, to any person obtaining a copy
-	of this software and associated documentation files (the "Software"), to deal
-	in the Software without restriction, including without limitation the rights
-	to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-	copies of the Software, and to permit persons to whom the Software is
-	furnished to do so, subject to the following conditions:
-
-	The above copyright notice and this permission notice shall be included in all
-	copies or substantial portions of the Software.
-
-	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-	IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-	FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-	AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-	LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-	SOFTWARE.
-*/
+// Package Dust provides a PT 2.1 Go API wrapper around the Dust transport
 
 import (
 	"fmt"
-	"github.com/kataras/golog"
+	"github.com/OperatorFoundation/obfs4/common/log"
 	"golang.org/x/net/proxy"
 	"net"
 	"time"
@@ -38,7 +21,6 @@ import (
 type dustClient struct {
 	serverPubkey *Dust.ServerPublic
 	dialer       proxy.Dialer
-	Address      string `json:"address"`
 }
 
 type dustServer struct {
@@ -46,16 +28,16 @@ type dustServer struct {
 	dialer        proxy.Dialer
 }
 
-func NewDustClient(serverPublic string, dialer proxy.Dialer, address string) *dustClient {
+func NewDustClient(serverPublic string, dialer proxy.Dialer) *dustClient {
 	unparsed := make(map[string]string)
-	unparsed["p"] = serverPublic
+	unparsed["p"]=serverPublic
 
 	spub, err := Dust.ParseServerPublic(unparsed)
 	if err != nil {
 		return nil
 	}
 
-	return &dustClient{serverPubkey: spub, dialer: dialer, Address: address}
+	return &dustClient{serverPubkey: spub, dialer: dialer}
 }
 
 type dustTransportListener struct {
@@ -68,25 +50,13 @@ type Transport struct {
 	ServerPublic string
 	Address      string
 	Dialer       proxy.Dialer
-	ServerConfig *dustServer
 }
 
 type Config struct {
 	ServerPublic string `json:"server-public"`
-	Address      string `json:"address"`
 }
-
-func New(serverPublic string, address string, dialer proxy.Dialer, serverConfig *dustServer) Transport {
-	return Transport{
-		ServerPublic: serverPublic,
-		Address:      address,
-		Dialer:       dialer,
-		ServerConfig: serverConfig,
-	}
-}
-
 func (transport Transport) Dial() (net.Conn, error) {
-	dustTransport := NewDustClient(transport.ServerPublic, transport.Dialer, transport.Address)
+	dustTransport := NewDustClient(transport.ServerPublic, transport.Dialer)
 	conn, err := dustTransport.Dial(transport.Address)
 	if err != nil {
 		return nil, err
@@ -94,23 +64,6 @@ func (transport Transport) Dial() (net.Conn, error) {
 		return conn, nil
 	}
 }
-
-func (transport Transport) Listen() (net.Listener, error) {
-	addr, resolveErr := pt.ResolveAddr(transport.Address)
-	if resolveErr != nil {
-		fmt.Println(resolveErr.Error())
-		return nil, resolveErr
-	}
-
-	ln, err := net.ListenTCP("tcp", addr)
-	if err != nil {
-		fmt.Println(err.Error())
-		return nil, err
-	}
-
-	return newDustTransportListener(ln, transport.ServerConfig), nil
-}
-
 //end optimizer code
 
 func newDustTransportListener(listener *net.TCPListener, transport *dustServer) *dustTransportListener {
@@ -128,7 +81,7 @@ func (transport *dustClient) Dial(address string) (net.Conn, error) {
 	if err != nil {
 		closeErr := conn.Close()
 		if closeErr != nil {
-			golog.Error("could not close")
+			log.Errorf("could not close")
 		}
 		return conn, dialErr
 	}
@@ -137,20 +90,20 @@ func (transport *dustClient) Dial(address string) (net.Conn, error) {
 }
 
 // Create listener for incoming transport connection
-func (transport *dustServer) Listen(address string) (net.Listener, error) {
+func (transport *dustServer) Listen(address string) net.Listener {
 	addr, resolveErr := pt.ResolveAddr(address)
 	if resolveErr != nil {
 		fmt.Println(resolveErr.Error())
-		return nil, resolveErr
+		return nil
 	}
 
 	ln, err := net.ListenTCP("tcp", addr)
 	if err != nil {
 		fmt.Println(err.Error())
-		return nil, err
+		return nil
 	}
 
-	return newDustTransportListener(ln, transport), nil
+	return newDustTransportListener(ln, transport)
 }
 
 func (listener *dustTransportListener) Addr() net.Addr {

@@ -31,10 +31,10 @@ import (
 )
 
 // Create outgoing transport connection
-func (config ClientConfig) Dial(address string) (net.Conn, error) {
+func (config ClientConfig) Dial(address string) net.Conn {
 	conn, dialErr := net.Dial("tcp", address)
 	if dialErr != nil {
-		return nil, dialErr
+		return nil
 	}
 
 	transportConn, err := NewClientConnection(conn, config)
@@ -42,25 +42,25 @@ func (config ClientConfig) Dial(address string) (net.Conn, error) {
 		if conn != nil {
 			_ = conn.Close()
 		}
-		return nil, err
+		return nil
 	}
 
-	return transportConn, nil
+	return transportConn
 }
 
 // Create listener for incoming transport connection
-func (config ServerConfig) Listen(address string) (net.Listener, error) {
+func (config ServerConfig) Listen(address string) net.Listener {
 	addr, resolveErr := pt.ResolveAddr(address)
 	if resolveErr != nil {
-		return nil, resolveErr
+		return nil
 	}
 
 	ln, err := net.ListenTCP("tcp", addr)
 	if err != nil {
-		return nil, err
+		return nil
 	}
 
-	return newReplicantTransportListener(ln, config), nil
+	return newReplicantTransportListener(ln, config)
 }
 
 func (listener *replicantTransportListener) Addr() net.Addr {
@@ -77,7 +77,6 @@ func (listener *replicantTransportListener) Accept() (net.Conn, error) {
 	}
 
 	config := listener.config
-
 	return NewServerConnection(conn, config)
 }
 
@@ -88,13 +87,79 @@ func (listener *replicantTransportListener) Close() error {
 }
 
 func (sconn *Connection) Read(b []byte) (int, error) {
+
 	if sconn.state.polish != nil {
-		polished := make([]byte, sconn.state.polish.GetChunkSize())
+
+		if len(b) == 0 {
+			return 0, nil
+		}
+
+		if sconn.receiveBuffer.Len() > 0 {
+			if len(b) <= sconn.receiveBuffer.Len() {
+				// Read the decrypted data into the provided slice "b"
+				readLen, readError := sconn.receiveBuffer.Read(b)
+				if readError != nil {
+					return 0, readError
+				}
+
+				// We've delivered all unpolished data from the buffer, let's clear it out
+				// Read just moves the offset but leaves the data in place, we need to reset the buffer
+				if sconn.receiveBuffer.Len() == 0 {
+					sconn.receiveBuffer.Reset()
+				}
+
+				return readLen, nil
+			} else {
+				result := make([]byte, len(b))
+
+				// Read the decrypted data into the provided slice "b"
+				readLen, readError := sconn.receiveBuffer.Read(result)
+				sconn.receiveBuffer.Reset()
+				if readError != nil {
+					return 0, readError
+				}
+
+				stillNeeded := result[readLen:]
+				snReadLen, snReadError := sconn.Read(stillNeeded)
+				if snReadError != nil {
+					return 0, snReadError
+				}
+
+				// Keep reading until we get the full requested length, or an error
+				for snReadLen < len(stillNeeded) {
+					// Keep reading, we didn't get enough data
+					stillNeeded = stillNeeded[snReadLen:]
+					snReadLen, snReadError = sconn.Read(stillNeeded)
+					if snReadError != nil {
+						return 0, snReadError
+					}
+				}
+
+				copy(b, result)
+				return len(result), nil
+			}
+		}
+
+		// Make sure to discard stale data by overwriting b with zeros
+		zeros := make([]byte, len(b))
+		copy(b, zeros)
+
+		chunkSize := sconn.state.polish.GetChunkSize()
+		polished := make([]byte, chunkSize)
 
 		// Read encrypted data from the connection and put it into our polished slice
-		_, err := sconn.conn.Read(polished)
-		if err != nil {
-			return 0, err
+		connReadLen, connReadError := sconn.conn.Read(polished)
+		if connReadError != nil {
+			return 0, connReadError
+		}
+
+		for connReadLen < chunkSize {
+			// Keep reading, we didn't get enough data
+			partialPolish := polished[connReadLen:]
+			connReadLen, connReadError = sconn.conn.Read(partialPolish)
+			if connReadError != nil {
+				return 0, connReadError
+			}
 		}
 
 		// Decrypt the data
@@ -103,18 +168,23 @@ func (sconn *Connection) Read(b []byte) (int, error) {
 			return 0, unpolishError
 		}
 
-		// Empty the buffer and write the decrypted data to it
-		sconn.receiveBuffer.Reset()
-		sconn.receiveBuffer.Write(unpolished)
+		if len(unpolished) <= len(b) {
+			copy(b, unpolished)
+			return len(unpolished), nil
+		} else {
+			// This will copy only up to the length of b from unpolished to b
+			copy(b, unpolished)
 
-		// Read the decrypted data into the provided slice "b"
-		_, readError := sconn.receiveBuffer.Read(b)
-		if readError != nil {
-			return 0, readError
+			remainingUnpolished := unpolished[len(b):]
+
+			// Empty the buffer and write the decrypted data to it
+			sconn.receiveBuffer.Reset()
+			sconn.receiveBuffer.Write(remainingUnpolished)
+
+			// Return b, and leave the remaining unpolished in the buffer
+			return len(b), nil
 		}
-		sconn.receiveBuffer.Reset()
 
-		return len(b), nil
 	} else {
 		// Read from the connection directly into the provided slice "b"
 		return sconn.conn.Read(b)
