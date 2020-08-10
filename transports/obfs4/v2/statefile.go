@@ -40,7 +40,6 @@ import (
 	"github.com/OperatorFoundation/obfs4/common/csrand"
 	"github.com/OperatorFoundation/obfs4/common/drbg"
 	"github.com/OperatorFoundation/obfs4/common/ntor"
-	"github.com/OperatorFoundation/shapeshifter-ipc"
 )
 
 const (
@@ -113,14 +112,14 @@ func (st *obfs4ServerState) clientString() string {
 	return fmt.Sprintf("%s=%s %s=%d", certArg, st.cert, iatArg, st.iatMode)
 }
 
-func serverStateFromArgs(stateDir string, args *pt.Args) (*obfs4ServerState, error) {
+func serverStateFromArgs(stateDir string, args map[string]string) (*obfs4ServerState, error) {
 	var js jsonServerState
 	var nodeIDOk, privKeyOk, seedOk bool
 
-	js.NodeID, nodeIDOk = args.Get(nodeIDArg)
-	js.PrivateKey, privKeyOk = args.Get(privateKeyArg)
-	js.DrbgSeed, seedOk = args.Get(seedArg)
-	iatStr, iatOk := args.Get(iatArg)
+	js.NodeID, nodeIDOk = args[nodeIDArg]
+	js.PrivateKey, privKeyOk = args[privateKeyArg]
+	js.DrbgSeed, seedOk = args[seedArg]
+	iatStr, iatOk := args[iatArg]
 
 	// Either a private key, node id, and seed are ALL specified, or
 	// they should be loaded from the state file.

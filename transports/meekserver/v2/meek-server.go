@@ -162,7 +162,7 @@ func (a scrubbedAddr) String() string {
 	return "[scrubbed]"
 }
 
-// Replace the Addr in a net.OpError with "[scrubbed]" for golog.
+// Replace the Addr in a net.OpError with "[scrubbed]" for logging.
 func scrubError(err error) error {
 	if operr, ok := err.(*net.OpError); ok {
 		// net.OpError contains Op, Net, Addr, and a subsidiary Err. The

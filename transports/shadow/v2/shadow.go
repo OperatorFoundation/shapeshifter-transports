@@ -26,10 +26,9 @@
 package shadow
 
 import (
+	shadowsocks "github.com/shadowsocks/go-shadowsocks2/core"
 	"log"
 	"net"
-
-	shadowsocks "github.com/shadowsocks/go-shadowsocks2/core"
 )
 
 //Config contains the necessary command like arguments to run shadow
@@ -59,6 +58,7 @@ func NewTransport(password string, cipherName string, address string) Transport 
 		Password:   password,
 		CipherName: cipherName,
 		Address:    address,
+
 	}
 }
 
@@ -97,7 +97,7 @@ func (config Config) Dial(address string) (net.Conn, error) {
 func (transport *Transport) Dial() (net.Conn, error) {
 	cipher, err := shadowsocks.PickCipher(transport.CipherName, nil, transport.Password)
 	if err != nil {
-		log.Fatal("Failed generating ciphers:", err)
+		log.Fatalf("Failed generating ciphers: %s", err)
 	}
 
 	return shadowsocks.Dial("tcp", transport.Address, cipher)

@@ -3,9 +3,9 @@ module github.com/OperatorFoundation/shapeshifter-transports/transports/Optimize
 go 1.12
 
 require (
-	github.com/OperatorFoundation/shapeshifter-transports/transports/meeklite/v2 v2.1.22
-	github.com/OperatorFoundation/shapeshifter-transports/transports/obfs2/v2 v2.1.22
-	github.com/OperatorFoundation/shapeshifter-transports/transports/obfs4/v2 v2.1.22
-	github.com/OperatorFoundation/shapeshifter-transports/transports/shadow/v2 v2.1.22
+	github.com/OperatorFoundation/shapeshifter-transports/transports/meeklite/v2 v2.2.5
+	github.com/OperatorFoundation/shapeshifter-transports/transports/obfs2/v2 v2.2.5
+	github.com/OperatorFoundation/shapeshifter-transports/transports/obfs4/v2 v2.2.5
+	github.com/OperatorFoundation/shapeshifter-transports/transports/shadow/v2 v2.2.5
 	golang.org/x/net v0.0.0-20200226121028-0de0cce0169b
 )
