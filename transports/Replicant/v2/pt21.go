@@ -65,12 +65,35 @@ func (listener *replicantTransportListener) Close() error {
 
 func (sconn *Connection) Read(b []byte) (int, error) {
 	if sconn.state.polish != nil {
+		if sconn.receiveBuffer.Len() >= len(b) {
+			bytesRead, readError := sconn.receiveBuffer.Read(b)
+			if readError != nil {
+				return 0, readError
+			}
+			if bytesRead == len(b) {
+				sconn.receiveBuffer.Reset()
+			}
+			return len(b), nil
+		}
+
+		if sconn.receiveBuffer.Len() > 0 {
+			bytesCopied, readError := sconn.receiveBuffer.Read(b)
+			if readError != nil {
+				return 0, readError
+			}
+			sconn.receiveBuffer.Reset()
+			return bytesCopied, nil
+		}
+
 		polished := make([]byte, sconn.state.polish.GetChunkSize())
 
 		// Read encrypted data from the connection and put it into our polished slice
-		_, err := sconn.conn.Read(polished)
+		bytesRead, err := sconn.conn.Read(polished)
 		if err != nil {
 			return 0, err
+		}
+		if bytesRead <= 0 {
+			return 0, nil
 		}
 
 		// Decrypt the data
@@ -80,17 +103,18 @@ func (sconn *Connection) Read(b []byte) (int, error) {
 		}
 
 		// Empty the buffer and write the decrypted data to it
-		sconn.receiveBuffer.Reset()
 		sconn.receiveBuffer.Write(unpolished)
 
 		// Read the decrypted data into the provided slice "b"
-		_, readError := sconn.receiveBuffer.Read(b)
+		bytesCopied, readError := sconn.receiveBuffer.Read(b)
 		if readError != nil {
 			return 0, readError
 		}
-		sconn.receiveBuffer.Reset()
+		if bytesCopied == len(b) {
+			sconn.receiveBuffer.Reset()
+		}
 
-		return len(b), nil
+		return bytesCopied, nil
 	} else {
 		// Read from the connection directly into the provided slice "b"
 		return sconn.conn.Read(b)

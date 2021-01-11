@@ -3,12 +3,18 @@ package replicant
 import (
 	"bytes"
 	"github.com/OperatorFoundation/monolith-go/monolith"
+	"github.com/OperatorFoundation/obfs4/common/log"
 	"github.com/OperatorFoundation/shapeshifter-transports/transports/Replicant/v2/polish"
 	"github.com/OperatorFoundation/shapeshifter-transports/transports/Replicant/v2/toneburst"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"io"
 	"io/ioutil"
 	"math/rand"
+	"net"
 	"os"
 	"strconv"
+	"sync"
 	"testing"
 	"time"
 )
@@ -966,4 +972,116 @@ func createSampleConfigs() (*ClientConfig, *ServerConfig) {
 	}
 
 	return &clientConfig, &serverConfig
+}
+
+func TestRoundTrip(test *testing.T) {
+	rand.Seed(time.Now().UTC().UnixNano())
+	listener, listenError := net.Listen("tcp", "localhost:0")
+	require.NoError(test, listenError)
+
+	encodedServerConfig, serverConfigError := ioutil.ReadFile("RoundTripServerConfig.txt")
+	require.NoError(test, serverConfigError)
+	encodedClientConfig, clientConfigError := ioutil.ReadFile("RoundTripClientConfig.txt")
+	require.NoError(test, clientConfigError)
+
+	listener, listenError = Wrap(listener, string(encodedServerConfig))
+	require.NoError(test, listenError)
+	defer listener.Close()
+	log.Debugf("Listening at %v", listener.Addr())
+
+	go func() {
+		for {
+			conn, acceptErr := listener.Accept()
+			if acceptErr != nil {
+				return
+			}
+
+			for {
+				byteArray := make([]byte, 2)
+				bytesRead, readError := conn.Read(byteArray)
+				if readError != nil {
+					break
+				}
+				if bytesRead <= 0 {
+					break
+				}
+				bytesWritten, writeError := conn.Write(byteArray)
+				if writeError != nil {
+					break
+				}
+				if bytesWritten <= 0 {
+					break
+				}
+			}
+		}
+	}()
+
+	config, decodeError := DecodeClientConfig(string(encodedClientConfig))
+	require.NoError(test, decodeError)
+	dial := func(addr string) (net.Conn, error) {
+		clientConnection, dialError := net.Dial("tcp", addr)
+		if dialError != nil {
+			return nil, dialError
+		}
+		return NewClientConnection(clientConnection, *config)
+	}
+
+	iters := 1
+	var waitGroup sync.WaitGroup
+	waitGroup.Add(iters)
+	for i := 0; i < iters; i++ {
+		go func() {
+
+			defer waitGroup.Done()
+			dialConn, dialErr := dial(listener.Addr().String())
+			require.NoError(test, dialErr)
+			defer dialConn.Close()
+			checkBytes(dialConn, test)
+			checkBytes(dialConn, test)
+			checkBytes(dialConn, test)
+		}()
+	}
+
+	waitGroup.Wait()
+}
+
+func checkBytes(dialConn net.Conn, test *testing.T) {
+	byteBuf1 := make([]byte, 2)
+	rand.Read(byteBuf1)
+	bytesWritten, writeErr := dialConn.Write(byteBuf1)
+	require.NoError(test, writeErr)
+	assert.EqualValues(test, 2, bytesWritten)
+
+	byteBuf2 := make([]byte, 2)
+	bytesRead, readErr := io.ReadFull(dialConn, byteBuf2)
+	require.NoError(test, readErr)
+	assert.EqualValues(test, 2, bytesRead)
+	assert.EqualValues(test, string(byteBuf1), string(byteBuf2))
+}
+
+func Wrap(ll net.Listener, encodedConfig string) (net.Listener, error) {
+	serverConfig, err := DecodeServerConfig(encodedConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	return &ReplicantListener{
+		Listener: ll,
+		cfg:      serverConfig,
+	}, nil
+}
+
+type ReplicantListener struct {
+	net.Listener
+
+	cfg *ServerConfig
+}
+
+func (l ReplicantListener) Accept() (net.Conn, error) {
+	conn, err := l.Listener.Accept()
+	if err != nil {
+		return nil, err
+	}
+
+	return NewServerConnection(conn, *l.cfg)
 }
