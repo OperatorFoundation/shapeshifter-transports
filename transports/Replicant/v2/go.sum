@@ -1,7 +1,12 @@
+git.torproject.org/pluggable-transports/goptlib.git v1.1.0/go.mod h1:YT4XMSkuEXbtqlydr9+OxqFAyspUv0Gr9qhM3B++o/Q=
+github.com/OperatorFoundation/ed25519 v0.0.0-20200225224545-b22b4bd3ddef/go.mod h1:gQNGvsyT4Zmps9H/yzCqdc+RQzt8ZxCndRNtGTYnBzQ=
 github.com/OperatorFoundation/monolith-go/monolith v1.0.4 h1:9BmDs+f0VvDz94X8GW8G6L3UG6H7ziIFEw9H0AajnHI=
 github.com/OperatorFoundation/monolith-go/monolith v1.0.4/go.mod h1:qc60ZvCt83JnWf2ZtLq8nkVH6s1gStEwywhox+2y0FY=
+github.com/OperatorFoundation/obfs4 v1.0.0/go.mod h1:6apgxOLYwyvbpzujpFHWu6Jlc+mjn1aFK7WvNijIVWc=
 github.com/OperatorFoundation/shapeshifter-ipc/v2 v2.0.0 h1:6aQs+TF3KULMarpzbKu8DhFOF9D2UBCaAN5ZtbK53nQ=
 github.com/OperatorFoundation/shapeshifter-ipc/v2 v2.0.0/go.mod h1:gb/QiZH0QDXLSQ9PskyJ2oTflB7tsP4AYc8y+FppvB0=
+github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
+github.com/dchest/siphash v1.2.1/go.mod h1:q+IRvb2gOSrUnYoPqHiyHXS0FOBBOdl6tONBlVnOnt4=
 github.com/deckarep/golang-set v1.7.1 h1:SCQV0S6gTtp6itiFrTqI+pfmJ4LN85S1YzhDf9rTHJQ=
 github.com/deckarep/golang-set v1.7.1/go.mod h1:93vsz/8Wt4joVM7c2AVqh+YRMiUSc14yDtF28KmMOgQ=
 github.com/opentracing/opentracing-go v1.1.0 h1:pWlfV3Bxv7k65HYwkikxat0+s3pV4bsqf19k25Ur8rU=

@@ -161,9 +161,6 @@ func (sconn *Connection) Read(b []byte) (int, error) {
 				return 0, connReadError
 			}
 		}
-		if bytesRead <= 0 {
-			return 0, nil
-		}
 
 		// Decrypt the data
 		unpolished, unpolishError := sconn.state.polish.Unpolish(polished)
