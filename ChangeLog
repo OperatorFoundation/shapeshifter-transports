@@ -10,7 +10,7 @@ Changes in version 0.0.7 - 2016-11-15:
    reduce memory consumption.  Patch by oxtoacart.
 
 Changes in version 0.0.6 - 2016-01-25:
- - Delay transport factory initialization till after logging has been
+ - Delay transport factory initialization till after golog has been
    initialized.
  - Add a meek client implementation (WARNING: Does not support using a
    helper to normalize TLS signatures).  The brave people that want to use
@@ -22,7 +22,7 @@ Changes in version 0.0.5 - 2015-04-15:
  - Changed the go.net import path to the new location (golang.org/x/net).
  - Added limited support for detecting if the parent process crashes.
  - Support for tor feature #15335 (stdin based termination notification).
- - Moved the leveled logging wrappers into common/log so they are usable
+ - Moved the leveled golog wrappers into common/log so they are usable
    in transport implementations.
  - Added a DEBUG log level.
  - Use a bundled SOCKS 5 server instead of goptlib's SocksListener.

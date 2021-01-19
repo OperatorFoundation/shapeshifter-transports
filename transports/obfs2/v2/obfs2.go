@@ -36,15 +36,16 @@ import (
 	"crypto/sha256"
 	"encoding/binary"
 	"fmt"
+	"log"
 
 	"io"
 	"net"
 	"time"
 
-	"golang.org/x/net/proxy"
-
 	"github.com/OperatorFoundation/obfs4/common/csrand"
-	"github.com/OperatorFoundation/shapeshifter-ipc"
+	"github.com/OperatorFoundation/shapeshifter-ipc/v2"
+
+	"golang.org/x/net/proxy"
 )
 
 const (
@@ -82,6 +83,7 @@ func (transport OptimizerTransport) Dial() (net.Conn, error) {
 	transportConn, err := newObfs2ClientConn(conn)
 	if err != nil {
 		_ = dialConn.Close()
+		log.Fatalf("dial connection failed")
 		return nil, err
 	}
 
@@ -91,6 +93,7 @@ func (transport OptimizerTransport) Dial() (net.Conn, error) {
 // Transport is the obfs2 implementation of the base.Transport interface.
 type Transport struct {
 	dialer proxy.Dialer
+
 }
 
 //New initializes obfs2 for Optimizer

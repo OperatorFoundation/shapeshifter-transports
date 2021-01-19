@@ -3,8 +3,8 @@ github.com/OperatorFoundation/ed25519 v0.0.0-20200225224545-b22b4bd3ddef h1:1xEt
 github.com/OperatorFoundation/ed25519 v0.0.0-20200225224545-b22b4bd3ddef/go.mod h1:gQNGvsyT4Zmps9H/yzCqdc+RQzt8ZxCndRNtGTYnBzQ=
 github.com/OperatorFoundation/obfs4 v1.0.0 h1:OcfdNMzv69fKQrLTkTSwpaBkHyBZMLjigA5M3txZpAg=
 github.com/OperatorFoundation/obfs4 v1.0.0/go.mod h1:6apgxOLYwyvbpzujpFHWu6Jlc+mjn1aFK7WvNijIVWc=
-github.com/OperatorFoundation/shapeshifter-ipc v0.0.0-20170814234159-11746ba927e0 h1:zDYt6FDJwDSX4woVFVK2EMt7fkxU5L5qDNLUjQwA+BQ=
-github.com/OperatorFoundation/shapeshifter-ipc v0.0.0-20170814234159-11746ba927e0/go.mod h1:kB00Ak8Dgn1uZlZHLc/WsUta58Jc+n/ZhCetcPkh42Q=
+github.com/OperatorFoundation/shapeshifter-ipc/v2 v2.0.0 h1:6aQs+TF3KULMarpzbKu8DhFOF9D2UBCaAN5ZtbK53nQ=
+github.com/OperatorFoundation/shapeshifter-ipc/v2 v2.0.0/go.mod h1:gb/QiZH0QDXLSQ9PskyJ2oTflB7tsP4AYc8y+FppvB0=
 github.com/blanu/Dust v1.0.0/go.mod h1:jLFQI2Ufz4kBnGiTzh8O9+/p4U/9MLbouXkaympnTI0=
 github.com/blanu/Dust v1.0.1 h1:C1IiRXr9YP1A4iiuhhpQOCgl8785LoVq78lbDrVRVqc=
 github.com/blanu/Dust v1.0.1/go.mod h1:jLFQI2Ufz4kBnGiTzh8O9+/p4U/9MLbouXkaympnTI0=

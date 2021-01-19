@@ -1,7 +1,31 @@
+/*
+	MIT License
+
+	Copyright (c) 2020 Operator Foundation
+
+	Permission is hereby granted, free of charge, to any person obtaining a copy
+	of this software and associated documentation files (the "Software"), to deal
+	in the Software without restriction, including without limitation the rights
+	to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+	copies of the Software, and to permit persons to whom the Software is
+	furnished to do so, subject to the following conditions:
+
+	The above copyright notice and this permission notice shall be included in all
+	copies or substantial portions of the Software.
+
+	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+	IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+	FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+	AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+	LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+	SOFTWARE.
+*/
+
 package replicant
 
 import (
-	pt "github.com/OperatorFoundation/shapeshifter-ipc"
+	pt "github.com/OperatorFoundation/shapeshifter-ipc/v2"
 	"net"
 	"time"
 )
@@ -53,7 +77,6 @@ func (listener *replicantTransportListener) Accept() (net.Conn, error) {
 	}
 
 	config := listener.config
-
 	return NewServerConnection(conn, config)
 }
 
@@ -64,33 +87,79 @@ func (listener *replicantTransportListener) Close() error {
 }
 
 func (sconn *Connection) Read(b []byte) (int, error) {
+
 	if sconn.state.polish != nil {
-		if sconn.receiveBuffer.Len() >= len(b) {
-			bytesRead, readError := sconn.receiveBuffer.Read(b)
-			if readError != nil {
-				return 0, readError
-			}
-			if bytesRead == len(b) {
-				sconn.receiveBuffer.Reset()
-			}
-			return len(b), nil
+
+		if len(b) == 0 {
+			return 0, nil
 		}
 
 		if sconn.receiveBuffer.Len() > 0 {
-			bytesCopied, readError := sconn.receiveBuffer.Read(b)
-			if readError != nil {
-				return 0, readError
+			if len(b) <= sconn.receiveBuffer.Len() {
+				// Read the decrypted data into the provided slice "b"
+				readLen, readError := sconn.receiveBuffer.Read(b)
+				if readError != nil {
+					return 0, readError
+				}
+
+				// We've delivered all unpolished data from the buffer, let's clear it out
+				// Read just moves the offset but leaves the data in place, we need to reset the buffer
+				if sconn.receiveBuffer.Len() == 0 {
+					sconn.receiveBuffer.Reset()
+				}
+
+				return readLen, nil
+			} else {
+				result := make([]byte, len(b))
+
+				// Read the decrypted data into the provided slice "b"
+				readLen, readError := sconn.receiveBuffer.Read(result)
+				sconn.receiveBuffer.Reset()
+				if readError != nil {
+					return 0, readError
+				}
+
+				stillNeeded := result[readLen:]
+				snReadLen, snReadError := sconn.Read(stillNeeded)
+				if snReadError != nil {
+					return 0, snReadError
+				}
+
+				// Keep reading until we get the full requested length, or an error
+				for snReadLen < len(stillNeeded) {
+					// Keep reading, we didn't get enough data
+					stillNeeded = stillNeeded[snReadLen:]
+					snReadLen, snReadError = sconn.Read(stillNeeded)
+					if snReadError != nil {
+						return 0, snReadError
+					}
+				}
+
+				copy(b, result)
+				return len(result), nil
 			}
-			sconn.receiveBuffer.Reset()
-			return bytesCopied, nil
 		}
 
-		polished := make([]byte, sconn.state.polish.GetChunkSize())
+		// Make sure to discard stale data by overwriting b with zeros
+		zeros := make([]byte, len(b))
+		copy(b, zeros)
+
+		chunkSize := sconn.state.polish.GetChunkSize()
+		polished := make([]byte, chunkSize)
 
 		// Read encrypted data from the connection and put it into our polished slice
-		bytesRead, err := sconn.conn.Read(polished)
-		if err != nil {
-			return 0, err
+		connReadLen, connReadError := sconn.conn.Read(polished)
+		if connReadError != nil {
+			return 0, connReadError
+		}
+
+		for connReadLen < chunkSize {
+			// Keep reading, we didn't get enough data
+			partialPolish := polished[connReadLen:]
+			connReadLen, connReadError = sconn.conn.Read(partialPolish)
+			if connReadError != nil {
+				return 0, connReadError
+			}
 		}
 		if bytesRead <= 0 {
 			return 0, nil
@@ -102,19 +171,23 @@ func (sconn *Connection) Read(b []byte) (int, error) {
 			return 0, unpolishError
 		}
 
-		// Empty the buffer and write the decrypted data to it
-		sconn.receiveBuffer.Write(unpolished)
+		if len(unpolished) <= len(b) {
+			copy(b, unpolished)
+			return len(unpolished), nil
+		} else {
+			// This will copy only up to the length of b from unpolished to b
+			copy(b, unpolished)
 
-		// Read the decrypted data into the provided slice "b"
-		bytesCopied, readError := sconn.receiveBuffer.Read(b)
-		if readError != nil {
-			return 0, readError
-		}
-		if bytesCopied == len(b) {
+			remainingUnpolished := unpolished[len(b):]
+
+			// Empty the buffer and write the decrypted data to it
 			sconn.receiveBuffer.Reset()
+			sconn.receiveBuffer.Write(remainingUnpolished)
+
+			// Return b, and leave the remaining unpolished in the buffer
+			return len(b), nil
 		}
 
-		return bytesCopied, nil
 	} else {
 		// Read from the connection directly into the provided slice "b"
 		return sconn.conn.Read(b)

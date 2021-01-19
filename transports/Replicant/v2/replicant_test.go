@@ -78,7 +78,7 @@ func TestNilsMonotone(t *testing.T) {
 	replicantConnection(clientConfig, serverConfig, t)
 }
 
-func TestMarshalSilverRandomEnumeratedConfigs(t *testing.T) {
+func MarshalSilverRandomEnumeratedConfigs(t *testing.T) {
 	clientConfig, serverConfig := createSilverMonotoneConfigsRandomEnumeratedItems()
 
 	clientConfigJsonString, clientConfigJsonError := clientConfig.Marshal()

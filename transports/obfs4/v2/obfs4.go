@@ -1,29 +1,29 @@
 /*
- * Copyright (c) 2014, Yawning Angel <yawning at torproject dot org>
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
- *
- *  * Redistributions of source code must retain the above copyright notice,
- *    this list of conditions and the following disclaimer.
- *
- *  * Redistributions in binary form must reproduce the above copyright notice,
- *    this list of conditions and the following disclaimer in the documentation
- *    and/or other materials provided with the distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
- */
+* Copyright (c) 2014, Yawning Angel <yawning at torproject dot org>
+* All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification, are permitted provided that the following conditions are met:
+*
+*  * Redistributions of source code must retain the above copyright notice,
+*    this list of conditions and the following disclaimer.
+*
+*  * Redistributions in binary form must reproduce the above copyright notice,
+*    this list of conditions and the following disclaimer in the documentation
+*    and/or other materials provided with the distribution.
+*
+* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+* AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+* IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+* ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+* LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+* CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+* SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+* INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+* CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+* ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+* POSSIBILITY OF SUCH DAMAGE.
+*/
 
 // Package obfs4 provides an implementation of the Tor Project's obfs4
 // obfuscation protocol.
@@ -39,7 +39,7 @@ import (
 	"github.com/OperatorFoundation/obfs4/common/ntor"
 	"github.com/OperatorFoundation/obfs4/common/probdist"
 	"github.com/OperatorFoundation/obfs4/common/replayfilter"
-	"github.com/OperatorFoundation/shapeshifter-ipc"
+	"github.com/OperatorFoundation/shapeshifter-ipc/v2"
 	"github.com/OperatorFoundation/shapeshifter-transports/transports/obfs4/v2/framing"
 	"golang.org/x/net/proxy"
 	"math/rand"
@@ -89,7 +89,7 @@ type Transport struct {
 
 //ServerFactory contains arguments for server side
 type ServerFactory struct {
-	args *pt.Args
+	args map[string]string
 
 	nodeID       *ntor.NodeID
 	identityKey  *ntor.Keypair
@@ -112,8 +112,8 @@ type ClientArgs struct {
 
 //NewObfs4Server initializes the obfs4 server side
 func NewObfs4Server(stateDir string) (*Transport, error) {
-	args := make(pt.Args)
-	st, err := serverStateFromArgs(stateDir, &args)
+	args := make(map[string]string)
+	st, err := serverStateFromArgs(stateDir, args)
 	if err != nil {
 		return nil, err
 	}
@@ -129,10 +129,10 @@ func NewObfs4Server(stateDir string) (*Transport, error) {
 	}
 
 	// Store the arguments that should appear in our descriptor for the clients.
-	ptArgs := pt.Args{}
-	ptArgs.Add(certArg, st.cert.String())
+	ptArgs := make(map[string]string)
+	ptArgs[certArg] = st.cert.String()
 	log.Infof("certstring %s", certArg)
-	ptArgs.Add(iatArg, strconv.Itoa(st.iatMode))
+	ptArgs[iatArg] = strconv.Itoa(st.iatMode)
 
 	// Initialize the replay filter.
 	filter, err := replayfilter.New(replayTTL)
@@ -147,7 +147,7 @@ func NewObfs4Server(stateDir string) (*Transport, error) {
 	}
 	rng := rand.New(hashDrbg)
 
-	sf := &ServerFactory{&ptArgs, st.nodeID, st.identityKey, st.drbgSeed, iatSeed, st.iatMode, filter, rng.Intn(maxCloseDelayBytes), rng.Intn(maxCloseDelay)}
+	sf := &ServerFactory{ptArgs, st.nodeID, st.identityKey, st.drbgSeed, iatSeed, st.iatMode, filter, rng.Intn(maxCloseDelayBytes), rng.Intn(maxCloseDelay)}
 
 	return &Transport{dialer: nil, serverFactory: sf, clientArgs: nil}, nil
 }

@@ -1,0 +1,10 @@
+github.com/kataras/golog v0.0.18 h1:Td7hcKN25yzqB/0SO5iohOsMk5Mq5V9kDtM5apaJLY0=
+github.com/kataras/golog v0.0.18/go.mod h1:jRYl7dFYqP8aQj9VkwdBUXYZSfUktm+YYg1arJILfyw=
+github.com/kataras/pio v0.0.8 h1:6pX6nHJk7DAV3x1dEimibQF2CmJLlo0jWVmM9yE9KY8=
+github.com/kataras/pio v0.0.8/go.mod h1:NFfMp2kVP1rmV4N6gH6qgWpuoDKlrOeYi3VrAIWCGsE=
+golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2/go.mod h1:djNgcEr1/C05ACkg1iLfiJU5Ep61QUkGW8qpdssI0+w=
+golang.org/x/net v0.0.0-20200202094626-16171245cfb2 h1:CCH4IOTTfewWjGOlSp+zGcjutRKlBEZQ6wTn8ozI/nI=
+golang.org/x/net v0.0.0-20200202094626-16171245cfb2/go.mod h1:z5CRVTTTmAJ677TzLLGU+0bjPO0LkuOLi4/5GtJWs/s=
+golang.org/x/sys v0.0.0-20190215142949-d0b11bdaac8a h1:1BGLXjeY4akVXGgbC9HugT3Jv3hCI0z56oJR5vAMgBU=
+golang.org/x/sys v0.0.0-20190215142949-d0b11bdaac8a/go.mod h1:STP8DvDyc/dI5b8T5hshtkjS+E42TnysNCUPdjciGhY=
+golang.org/x/text v0.3.0/go.mod h1:NqM8EUOU14njkJ3fqMW+pc6Ldnwhi/IjpwHt7yyuwOQ=
