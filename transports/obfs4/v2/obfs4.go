@@ -507,6 +507,9 @@ func (transportConn *obfs4Conn) Write(b []byte) (n int, err error) {
 
 			// Write then sleep.
 			_, err = transportConn.Conn.Write(iatFrame[:iatWrLen])
+
+			log.Debugf("Obfs4 Write called")
+			log.Debugf(string(iatWrLen))
 			if err != nil {
 				return 0, err
 			}
@@ -514,6 +517,8 @@ func (transportConn *obfs4Conn) Write(b []byte) (n int, err error) {
 		}
 	} else {
 		_, err = transportConn.Conn.Write(frameBuf.Bytes())
+		log.Debugf("Obfs4 Write called")
+		log.Debugf(string(len(frameBuf.Bytes())))
 	}
 
 	return
