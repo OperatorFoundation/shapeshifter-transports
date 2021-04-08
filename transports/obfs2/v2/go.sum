@@ -3,6 +3,7 @@ github.com/OperatorFoundation/ed25519 v0.0.0-20200225224545-b22b4bd3ddef h1:1xEt
 github.com/OperatorFoundation/ed25519 v0.0.0-20200225224545-b22b4bd3ddef/go.mod h1:gQNGvsyT4Zmps9H/yzCqdc+RQzt8ZxCndRNtGTYnBzQ=
 github.com/OperatorFoundation/obfs4 v1.0.0 h1:OcfdNMzv69fKQrLTkTSwpaBkHyBZMLjigA5M3txZpAg=
 github.com/OperatorFoundation/obfs4 v1.0.0/go.mod h1:6apgxOLYwyvbpzujpFHWu6Jlc+mjn1aFK7WvNijIVWc=
+github.com/OperatorFoundation/shapeshifter-ipc v2.0.0+incompatible/go.mod h1:kB00Ak8Dgn1uZlZHLc/WsUta58Jc+n/ZhCetcPkh42Q=
 github.com/OperatorFoundation/shapeshifter-ipc/v2 v2.0.0 h1:6aQs+TF3KULMarpzbKu8DhFOF9D2UBCaAN5ZtbK53nQ=
 github.com/OperatorFoundation/shapeshifter-ipc/v2 v2.0.0/go.mod h1:gb/QiZH0QDXLSQ9PskyJ2oTflB7tsP4AYc8y+FppvB0=
 github.com/dchest/siphash v1.2.1 h1:4cLinnzVJDKxTCl9B01807Yiy+W7ZzVHj/KIroQRvT4=
