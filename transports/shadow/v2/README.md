@@ -10,7 +10,7 @@ shadow is one of the transports available in the [Shapeshifter Transports librar
 
 #### Create a shadow server
 
-config := NewConfig("password", "aes-128-ctr")
+config := NewConfig("password", "aes-128-gcm")
 
 serverListener, listenError := config.Listen("127.0.0.1:1234")
 if listenError != nil {
@@ -24,7 +24,7 @@ if acceptErr != nil {
 
 #### Create a shadow client
 
-config := NewConfig("password", "aes-128-ctr")
+config := NewConfig("password", "aes-128-gcm")
 
 clientConn, dialErr := config.Dial("127.0.0.1:1234")
 if dialErr != nil {

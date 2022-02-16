@@ -26,7 +26,7 @@
 package shadow
 
 import (
-	shadowsocks "github.com/shadowsocks/go-shadowsocks2/core"
+	shadowsocks "github.com/OperatorFoundation/go-shadowsocks2/core"
 	"log"
 	"net"
 )
