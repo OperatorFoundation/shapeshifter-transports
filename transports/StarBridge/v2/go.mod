@@ -1,4 +1,4 @@
-module github.com/OperatorFoundation/shapeshifter-transports/transports/StarBridge
+module github.com/OperatorFoundation/shapeshifter-transports/transports/StarBridge/v2
 
 go 1.16
 
