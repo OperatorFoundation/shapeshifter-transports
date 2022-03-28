@@ -3,9 +3,23 @@ package StarBridge
 import (
 	replicant "github.com/OperatorFoundation/shapeshifter-transports/transports/Replicant/v3"
 	"github.com/OperatorFoundation/shapeshifter-transports/transports/Replicant/v3/polish"
+	"golang.org/x/net/proxy"
 	"io/ioutil"
 	"net"
 )
+
+type Transport struct {
+	Config  ClientConfig
+	Address string
+	Dialer  proxy.Dialer
+}
+
+type ClientConfig struct {
+	Address string
+}
+
+type ServerConfig struct {
+}
 
 func NewClientConnection(conn net.Conn) (*replicant.Connection, error) {
 	config := getClientConfig()
