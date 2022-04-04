@@ -32,22 +32,22 @@ type ToneBurst interface {
 	Perform(conn net.Conn) error
 }
 
-// func New(config *Config) ToneBurst {
-// 	if config == nil {
+// func New(Config *Config) ToneBurst {
+// 	if Config == nil {
 // 		return nil
 // 	}
-// 	switch config.Selector {
+// 	switch Config.Selector {
 // 	case "whalesong":
-// 		if config.Whalesong == nil {
+// 		if Config.Whalesong == nil {
 // 			return nil
 // 		} else {
-// 			return NewWhalesong(*config.Whalesong)
+// 			return NewWhalesong(*Config.Whalesong)
 // 		}
 // 	case "monolith":
-// 		if config.Monotone == nil {
+// 		if Config.Monotone == nil {
 // 			return nil
 // 		} else {
-// 			return NewMonotone(*config.Monotone)
+// 			return NewMonotone(*Config.Monotone)
 // 		}
 // 	default:
 // 		return nil

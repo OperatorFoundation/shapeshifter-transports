@@ -41,9 +41,9 @@ func (config MonotoneConfig) Construct() (ToneBurst, error) {
 }
 
 type Monotone struct {
-	config MonotoneConfig
-	buffer *monolith.Buffer
-	context *monolith.Context
+	Config  MonotoneConfig
+	Buffer  *monolith.Buffer
+	Context *monolith.Context
 }
 
 func NewMonotone(config MonotoneConfig) *Monotone {
@@ -51,9 +51,9 @@ func NewMonotone(config MonotoneConfig) *Monotone {
 	context := monolith.NewEmptyContext()
 
 	return &Monotone{
-		config:  config,
-		buffer:  buffer,
-		context: context,
+		Config:  config,
+		Buffer:  buffer,
+		Context: context,
 	}
 }
 
@@ -63,15 +63,15 @@ func (monotone *Monotone) Perform(conn net.Conn) error {
 	var addMessages []monolith.Message
 	var removeParts []monolith.Monolith
 
-	if monotone.config.AddSequences != nil {
-		addMessages = monotone.config.AddSequences.Messages()
+	if monotone.Config.AddSequences != nil {
+		addMessages = monotone.Config.AddSequences.Messages()
 	}
 
-	if monotone.config.RemoveSequences != nil {
-		removeParts = monotone.config.RemoveSequences.Parts
+	if monotone.Config.RemoveSequences != nil {
+		removeParts = monotone.Config.RemoveSequences.Parts
 	}
 
-	if monotone.config.SpeakFirst {
+	if monotone.Config.SpeakFirst {
 		if addMessages == nil || len(addMessages) < 1 {
 			println("Invalid configuration, cannot speak first when there is nothing to add.")
 			return errors.New("invalid configuration, cannot speak first when there is nothing to add")
@@ -130,8 +130,8 @@ func (monotone Monotone) readAll(conn net.Conn, part monolith.Monolith) (bool, e
 		return false, readError
 	}
 
-	monotone.buffer.Push(receivedData)
-	validated := part.Validate(monotone.buffer, monotone.context)
+	monotone.Buffer.Push(receivedData)
+	validated := part.Validate(monotone.Buffer, monotone.Context)
 
 	switch validated {
 
