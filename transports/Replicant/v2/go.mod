@@ -3,7 +3,7 @@ module github.com/OperatorFoundation/shapeshifter-transports/transports/Replican
 go 1.12
 
 require (
-	github.com/OperatorFoundation/monolith-go/monolith v1.0.4
+	github.com/OperatorFoundation/monolith-go/monolith v1.0.8
 	github.com/OperatorFoundation/obfs4 v1.0.0
 	github.com/OperatorFoundation/shapeshifter-ipc/v2 v2.0.0
 	github.com/opentracing/opentracing-go v1.1.0

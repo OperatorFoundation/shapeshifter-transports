@@ -25,6 +25,7 @@
 package toneburst
 
 import (
+	"bufio"
 	"errors"
 	"github.com/OperatorFoundation/monolith-go/monolith"
 	"net"
@@ -123,30 +124,73 @@ func (monotone *Monotone) Perform(conn net.Conn) error {
 }
 
 func (monotone Monotone) readAll(conn net.Conn, part monolith.Monolith) (bool, error) {
-	receivedData := make([]byte, part.Count())
-	_, readError := conn.Read(receivedData)
-	if readError != nil {
-		println("Received an error while trying to receive data: ", readError.Error())
-		return false, readError
+	switch partType := part.(type) {
+	case monolith.BytesPart:
+		receivedData := make([]byte, partType.Count())
+		_, readError := conn.Read(receivedData)
+		if readError != nil {
+			println("Received an error while trying to receive data: ", readError.Error())
+			return false, readError
+		}
+
+		monotone.Buffer.Push(receivedData)
+		validated := part.Validate(monotone.Buffer, monotone.Context)
+
+		switch validated {
+
+		case monolith.Valid:
+			return true, nil
+		case monolith.Invalid:
+			println("Failed to validate the received data.")
+			return false, errors.New("failed to validate the received data")
+		case monolith.Incomplete:
+			println("Failed to validate the received data, data was incomplete.")
+			return false, errors.New("failed to validate the received data, data was incomplete")
+		default:
+			println("Validate returned an unknown value.")
+			return false, errors.New("validate returned an unknown value")
+		}
+
+	case monolith.StringsPart:
+		for _, item := range partType.Items {
+			var receivedBuffer []byte
+			switch stringsType := item.(type) {
+			case monolith.VariableStringType:
+				receivedString, readError := bufio.NewReader(conn).ReadString(stringsType.EndDelimiter)
+				if readError != nil {
+					return false, readError
+				}
+
+				receivedBuffer = []byte(receivedString)
+			case monolith.FixedStringType:
+				receivedBuffer = make([]byte, stringsType.Count())
+				_, readError := conn.Read(receivedBuffer)
+				if readError != nil {
+					println("Received an error while trying to receive data: ", readError.Error())
+					return false, readError
+				}
+			}
+
+			monotone.Buffer.Push(receivedBuffer)
+			validated := part.Validate(monotone.Buffer, monotone.Context)
+
+			switch validated {
+			case monolith.Valid:
+				continue
+			case monolith.Invalid:
+				println("Failed to validate the received data.")
+				return false, errors.New("failed to validate the received data")
+			case monolith.Incomplete:
+				println("Failed to validate the received data, data was incomplete.")
+				return false, errors.New("failed to validate the received data, data was incomplete")
+			default:
+				println("Validate returned an unknown value.")
+				return false, errors.New("validate returned an unknown value")
+			}
+		}
 	}
 
-	monotone.Buffer.Push(receivedData)
-	validated := part.Validate(monotone.Buffer, monotone.Context)
-
-	switch validated {
-
-	case monolith.Valid:
-		return true, nil
-	case monolith.Invalid:
-		println("Failed to validate the received data.")
-		return false, errors.New("failed to validate the received data")
-	case monolith.Incomplete:
-		println("Failed to validate the received data, data was incomplete.")
-		return false, errors.New("failed to validate the received data, data was incomplete")
-	default:
-		println("Validate returned an unknown value.")
-		return false, errors.New("validate returned an unknown value")
-	}
+	return true, nil
 }
 
 func writeAll(conn net.Conn, addBytes []byte) error {
