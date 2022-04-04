@@ -130,7 +130,7 @@ func getClientConfig() replicant.ClientConfig {
 	rand.Seed(time.Now().UnixNano())
 
 	clientDesc, serverDesc := createStarBridgeToneburstDescriptions()
-	clientInstance, _ := createStarBridgeToneburstInstances(clientDesc, serverDesc)
+	clientInstance := createStarBridgeToneburstClientInstance(clientDesc)
 
 	// The client speaks second.
 	monotoneClientConfig := toneburst.MonotoneConfig{
@@ -146,7 +146,7 @@ func getServerConfig() replicant.ServerConfig {
 	rand.Seed(time.Now().UnixNano())
 
 	clientDesc, serverDesc := createStarBridgeToneburstDescriptions()
-	_, serverInstance := createStarBridgeToneburstInstances(clientDesc, serverDesc)
+	serverInstance := createStarBridgeToneburstServerInstance(serverDesc)
 
 	// The server speaks first.
 	monotoneServerConfig := toneburst.MonotoneConfig{
@@ -161,18 +161,23 @@ func getServerConfig() replicant.ServerConfig {
 // Generate instances from descriptions.
 // Instances are using for sending, they are fully specified.
 // Note: this is where arguments would go if we add some
-func createStarBridgeToneburstInstances(clientDesc *monolith.Description, serverDesc *monolith.Description) (*monolith.Instance, *monolith.Instance) {
+//TODO: split into two functions
+func createStarBridgeToneburstClientInstance(clientDesc *monolith.Description) *monolith.Instance {
 	clientInstance := monolith.Instance{
 		Desc: *clientDesc,
 		Args: monolith.NewEmptyArgs(),
 	}
 
+	return &clientInstance
+}
+
+func createStarBridgeToneburstServerInstance(serverDesc *monolith.Description) *monolith.Instance {
 	serverInstance := monolith.Instance{
 		Desc: *serverDesc,
 		Args: monolith.NewEmptyArgs(),
 	}
 
-	return &clientInstance, &serverInstance
+	return &serverInstance
 }
 
 // Generate the descriptions using the parts.
