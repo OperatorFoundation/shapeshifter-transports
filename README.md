@@ -70,7 +70,7 @@ You can find more information on using Optimizer in the [ReadMe](https://github.
 Shadowsocks is a simple, but effective and popular network traffic obfuscation tool that uses basic encryption with a shared password.
 shadow is a wrapper for Shadowsocks that makes it available as a Pluggable Transport.
 
-More information can be found on the [ReadMe](https://github.com/OperatorFoundation/shapeshifter-transports/blob/master/transports/shadow/README.md)
+More information can be found on the readme: [v3](https://github.com/OperatorFoundation/shapeshifter-transports/tree/main/transports/shadow/v3/README.md), [v4](https://github.com/OperatorFoundation/shapeshifter-transports/blob/main/transports/shadow/v2/README.md)
 
 #### meeklite
 
