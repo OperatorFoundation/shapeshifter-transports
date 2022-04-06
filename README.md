@@ -39,8 +39,8 @@ programming language. If you are looking for a tool which you can install and
 use from the command line, take a look at the dispatcher instead:
 <https://github.com/OperatorFoundation/shapeshifter-transports>
 
-The transports implement the Pluggable Transports 2.1 specification available here:
-<https://www.pluggabletransports.info/spec/#build> Specifically,
+The transports implement the Pluggable Transports 3.0 specification available here:
+<https://github.com/Pluggable-Transports/Pluggable-Transports-spec/tree/main/releases/PTSpecV3.0> Specifically,
 they implement the Go Transports API v2.1.
 
 The purpose of the transport library is to provide a set of different
