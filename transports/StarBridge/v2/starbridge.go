@@ -19,7 +19,7 @@ type Transport struct {
 }
 
 type ClientConfig struct {
-	Address string
+	Address string `json:"serverAddress"`
 }
 
 type ServerConfig struct {
@@ -202,7 +202,7 @@ func createStarBridgeToneburstParts() ([]monolith.Monolith, []monolith.Monolith)
 	part3 := createStarBridgeToneburstServerBytesPart3()
 	part5 := createStarBridgeToneburstServerBytesPart5()
 
-	clientParts := []monolith.Monolith{
+	serverParts := []monolith.Monolith{
 		part1,
 		part3,
 		part5,
@@ -211,7 +211,7 @@ func createStarBridgeToneburstParts() ([]monolith.Monolith, []monolith.Monolith)
 	part2 := createStarBridgeToneburstClientBytesPart2()
 	part4 := createStarBridgeToneburstClientBytesPart4()
 
-	serverParts := []monolith.Monolith{
+	clientParts := []monolith.Monolith{
 		part2,
 		part4,
 	}
