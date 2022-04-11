@@ -172,7 +172,7 @@ func (monotone Monotone) readAll(conn net.Conn, part monolith.Monolith) (bool, e
 			}
 
 			monotone.Buffer.Push(receivedBuffer)
-			validated := part.Validate(monotone.Buffer, monotone.Context)
+			validated := item.Validate(monotone.Buffer, monotone.Context)
 
 			switch validated {
 			case monolith.Valid:
