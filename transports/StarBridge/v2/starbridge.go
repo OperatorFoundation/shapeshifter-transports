@@ -231,7 +231,8 @@ func createStarBridgeToneburstServerBytesPart1() monolith.StringsPart {
 	serverPart := monolith.StringsPart{
 		Items: []monolith.StringType{
 			monolith.FixedStringType{String: "220 "},
-			monolith.VariableStringType{EndDelimiter: " "[0]},
+			// FIXME: needs to be a variable string type
+			monolith.FixedStringType{String: "mail.imc.org "},
 			monolith.FixedStringType{String: "SMTP service ready\r\n"},
 		},
 	}
