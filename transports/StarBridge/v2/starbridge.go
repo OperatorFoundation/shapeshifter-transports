@@ -249,8 +249,8 @@ func createStarBridgeToneburstClientBytesPart2() monolith.StringsPart {
 	clientPart := monolith.StringsPart{
 		Items: []monolith.StringType{
 			monolith.FixedStringType{String: "EHLO "},
-			// TODO: should we have the first message return the variable and pass it into this one?
-			monolith.VariableStringType{EndDelimiter: "\r\n"[0]},
+			// FIXME: eventually needs to be variable string type
+			monolith.FixedStringType{String: "mail.imc.org\r\n"},
 		},
 	}
 
@@ -275,10 +275,18 @@ func createStarBridgeToneburstServerBytesPart3() monolith.StringsPart {
 	serverPart := monolith.StringsPart{
 		Items: []monolith.StringType{
 			monolith.FixedStringType{String: "250-"},
-			monolith.VariableStringType{EndDelimiter: " "[0]},
+			// FIXME: needs to eventually be variable string type
+			monolith.FixedStringType{String: "mail.imc.org"},
 			monolith.FixedStringType{String: " offers a warm hug of welcome\r\n"},
 			monolith.FixedStringType{String: "250-"},
-			monolith.VariableStringType{EndDelimiter: "\r\n"[0]},
+			// FIXME: needs to eventually be variable string type
+			monolith.FixedStringType{String: "8BITMIME\r\n"},
+			monolith.FixedStringType{String: "250-"},
+			// FIXME: needs to eventually be variable string type
+			monolith.FixedStringType{String: "STARTTLS\r\n"},
+			monolith.FixedStringType{String: "250 "},
+			// FIXME: needs to eventually be variable string type
+			monolith.FixedStringType{String: "DSN\r\n"},
 		},
 	}
 
@@ -312,7 +320,8 @@ func createStarBridgeToneburstServerBytesPart5() monolith.StringsPart {
 	serverPart := monolith.StringsPart{
 		Items: []monolith.StringType{
 			monolith.FixedStringType{String: "220 "},
-			monolith.VariableStringType{EndDelimiter: "\r\n"[0]},
+			// FIXME: eventually needs to be variable string type
+			monolith.FixedStringType{String: "Go ahead\r\n"},
 		},
 	}
 
