@@ -37,7 +37,7 @@ the need to write code or use the command line.
 This is the repository for the shapeshifter transports library for the Go
 programming language. If you are looking for a tool which you can install and
 use from the command line, take a look at the dispatcher instead:
-<https://github.com/OperatorFoundation/shapeshifter-transports>
+<https://github.com/OperatorFoundation/shapeshifter-dispatcher>
 
 The transports implement the Pluggable Transports 3.0 specification available here:
 <https://github.com/Pluggable-Transports/Pluggable-Transports-spec/tree/main/releases/PTSpecV3.0> Specifically,
@@ -57,46 +57,29 @@ The following transports are currently provided by the library:
 Replicant is Operator's flagship transport which can be tuned for each adversary. It is designed to be more effective and efficient that older transports.
 It can be quickly reconfigured as filtering conditions change by updating just the configuration file.
 
+You can find Replicant [here](https://github.com/OperatorFoundation/Replicant-go)
+
 #### Optimizer
 
 Optimizer is a pluggable transport that works with your other transports to find the best option. It has multiple configurable strategies to find
 the optimal choice among the available transports. It can be used for numerous optimization tasks, such as round
 robin load spreading among multiple transport servers or minimizing latency given multiple transport configurations.
 
-You can find more information on using Optimizer in the [ReadMe](https://github.com/OperatorFoundation/shapeshifter-transports/tree/master/transports/Optimizer)
+You can find Optimizer [here](https://github.com/OperatorFoundation/Optimizer-go)
 
 #### shadow (Shadowsocks)
 
 Shadowsocks is a simple, but effective and popular network traffic obfuscation tool that uses basic encryption with a shared password.
 shadow is a wrapper for Shadowsocks that makes it available as a Pluggable Transport.
 
-More information can be found on the readme: [v3](https://github.com/OperatorFoundation/shapeshifter-transports/tree/main/transports/shadow/v3/README.md), [v4](https://github.com/OperatorFoundation/shapeshifter-transports/blob/main/transports/shadow/v2/README.md)
-
-#### meeklite
-
-meeklite is a transport which implements Domain Fronting techniques to hide traffic inside of HTTPS requests. In order to use meeklite, you need
-the meekserver and to set up special hosting through a compatible CDN such as Azure.
-
-#### obfs4
-
-obfs4 is a looks-like-nothing obfuscation protocol that incorporates ideas from Philipp Winter's deprecated ScrambleSuit transport.
-
-obfs4 uses the ntor cryptographic handshake protocol with Elligator keys and NaCl encryption.
-
-More information can be found on the [Readme](https://github.com/OperatorFoundation/shapeshifter-transports/blob/master/transports/obfs4/README.md)
-
-#### Dust
-
-Dust is the original polymorphic protocol shapeshifting transport. It is contemporary with other tunable transports such as ScrambleSuit, FTE, and Marionette.
-While Dust is highly configurable, it also has high overhead. It is recommended that most users try Replicant first, which incorporates
-some of the ideas of Dust while being more efficient in terms of the bandwidth used.
-
-#### obfs2
-
-obfs2 is an older transport which provides basic encryption. It is not recommended that you use obfs2, however it is included
-as some users are still using it in areas where it remains effective.
+You can find Shadow [here](https://github.com/OperatorFoundation/Shadow-go)
 
 #### Installation
+
+For individual installation instructions, see the README's for the transports:
+[Shadow](https://github.com/OperatorFoundation/Shadow-go/blob/main/README.md)
+[Replicant](https://github.com/OperatorFoundation/Replicant-go/blob/main/README.md)
+[Optimizer](https://github.com/OperatorFoundation/Optimizer-go/blob/main/README.md)
 
 The Shapeshifter transports are written in the Go programming language. To compile it you need
 to install Go:
@@ -107,7 +90,7 @@ If you already have Go installed, make sure it is a compatible version:
 
     go version
 
-The version should be 1.14 or higher.
+The version should be 1.17 or higher.
 
 If you get the error "go: command not found", then trying exiting your terminal
 and starting a new one.
@@ -121,17 +104,9 @@ To use in your project, simply import the specific transport that you want to us
     
 Your go build tools should automatically add this module to your go.mod and go.sum files. Otherwise, you can add it to the go.mod file directly. See the official Go modules guide for more information on this.    
 
-Please note that the import path includes "/v2" to indicate that you want to use the version of the module compatible with the PT v2.0 specification. This is required by the Go modules guide.
-The modules are actually compatible with the PT2.1 specification, but Go modules only let you specify the major version number, v2.
+Please note that the import path includes "/v3" to indicate that you want to use the version of the module compatible with the PT v3.0 specification. This is required by the Go modules guide.
 
 When you build your project, it should automatically fetch the correct version of the transport module.
-
-#### Using the Library
-
-The Shapeshifter Transports are just a Go library. In order to use the
-transports, you will need to integrate them into your application, which is
-presumably also written in Go. For details on the Go API for Pluggable
-Transports, refer to the [Pluggable Transports 2.0 draft 1 specification](https://www.pluggabletransports.info/spec/#build).
 
 #### Frequently Asked Questions
 
@@ -139,11 +114,6 @@ Transports, refer to the [Pluggable Transports 2.0 draft 1 specification](https:
 
 Try Replicant, Operator's flagship transport which can be tuned for each adversary. Email contact@operatorfoundation.org for a sample config file for the adversary of interest.
 shadow is also a good choice as it works on many networks and is easy to configure.
-
-obfs4 is a popular choice, however we receive many comments from users that are frustrated when trying to set up obfs4.
-Therefore, we recommend that you try Replicant or shadow first and use obfs4 if you need it for your specific network.
-When trying to install obfs4, please read the shapeshifter-dispatcher documentation examples carefully as most issues we
-see with setting up obfs4 are the result of not properly following the instructions.
 
 If you are an application developer using Pluggable Transports, feel free to reach out to the Operator Foundation for
 help in determining which transport might work best for your application. Email contact@operatorfoundation.org.
@@ -161,9 +131,4 @@ application here: <https://github.com/OperatorFoundation/shapeshifter-dispatcher
 
 ### Credits
 
-shapeshifter-transports is a collection of different transports written by different authors:
-
  * Operator Foundation - Replicant, Optimizer, and shadow (wrapper for Shadowsocks)
- * David Fifield - meeklite and meekserver
- * Yawning Angel - obfs4 (design and implementation) and obfs2 (implementation)
- * Dr. Brandon Wiley - Dust
