@@ -99,4 +99,4 @@ In addition, we have native Swift implementations available for those developers
 ### Credits
 
  * Replicant, Starbridge, Shadow, and Optimizer were developed by [Operator Foundation](https://operatorfoundation.org)
- * Shadowsocks was developed by the Shadowsocks team. [whitepaper](https://shadowsocks.org/assets/whitepaper.pdf)
+ * [Shadowsocks](https://shadowsocks.org/guide/what-is-shadowsocks.html) was developed by the Shadowsocks team.
