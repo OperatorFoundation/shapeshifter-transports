@@ -88,7 +88,7 @@ control a separate process (called the dispatcher) which provides access to the
 transports through a proxy interface. When using this method, your application
 can be written in any language. You just need to implement the IPC protocol so
 that you can communicate with the dispatcher. The IPC protocol is specified in
-the [Pluggable Transports 2.1 specification](https://www.pluggabletransports.info/spec/#build) section 3.3 and an implementation of the [dispatcher](https://github.com/OperatorFoundation/shapeshifter-dispatcher) is available which you can bundle with your
+the [Pluggable Transports 3.0 specification](https://github.com/Pluggable-Transports/Pluggable-Transports-spec/blob/main/releases/PTSpecV3.0/Pluggable%20Transport%20Specification%20v3.0%20-%20Dispatcher%20IPC%20Interface%20v3.0.md) and an implementation of the [dispatcher](https://github.com/OperatorFoundation/shapeshifter-dispatcher) is available which you can bundle with your
 application.
 
 In addition, we have native Swift implementations available for those developers looking to integrate transports directly into their iOS, macOS, or Linux applications:
